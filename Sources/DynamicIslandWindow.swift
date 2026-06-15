@@ -1,32 +1,59 @@
 import SwiftUI
 import AppKit
 
-enum DynamicIslandType: Equatable {
+// MARK: - Dynamic Island State
+enum DynamicIslandState: Equatable {
     case capsule
     case charging
     case alert(title: String, message: String, isWarning: Bool)
     case expanded
 }
 
+// MARK: - Dynamic Island State Manager (Observable)
+@MainActor
+class DynamicIslandStateManager: ObservableObject {
+    static let shared = DynamicIslandStateManager()
+    
+    @Published var state: DynamicIslandState = .capsule
+    
+    func trigger(_ newState: DynamicIslandState) {
+        withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+            state = newState
+        }
+        // Auto-collapse charging state after 4 seconds
+        if case .charging = newState {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) { [weak self] in
+                guard let self = self else { return }
+                if case .charging = self.state {
+                    withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                        self.state = .capsule
+                    }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Dynamic Island View
 struct DynamicIslandView: View {
     @ObservedObject var tracker: BatteryTracker
-    @State var currentType: DynamicIslandType = .capsule
+    @ObservedObject var stateManager = DynamicIslandStateManager.shared
     @State private var hoverState: Bool = false
     
     var body: some View {
         ZStack {
-            // Background glassmorphism container
+            // Glassmorphism background
             RoundedRectangle(cornerRadius: containerCornerRadius)
-                .fill(Color.black.opacity(0.85))
+                .fill(Color.black.opacity(0.88))
                 .overlay(
                     RoundedRectangle(cornerRadius: containerCornerRadius)
-                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                        .stroke(Color.white.opacity(0.12), lineWidth: 1)
                 )
                 .shadow(color: Color.black.opacity(0.5), radius: 15, x: 0, y: 8)
             
-            // Content according to type
+            // Content
             VStack {
-                switch currentType {
+                switch stateManager.state {
                 case .capsule:
                     capsuleContent
                 case .charging:
@@ -41,12 +68,13 @@ struct DynamicIslandView: View {
             .padding(.vertical, 10)
         }
         .frame(width: containerWidth, height: containerHeight)
+        .animation(.spring(response: 0.45, dampingFraction: 0.72), value: stateManager.state)
         .contentShape(Rectangle())
         .onHover { inside in
             hoverState = inside
             withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
                 if inside {
-                    currentType = .expanded
+                    stateManager.state = .expanded
                 } else {
                     collapseToDefault()
                 }
@@ -54,78 +82,65 @@ struct DynamicIslandView: View {
         }
         .onTapGesture {
             withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
-                if currentType == .expanded {
+                if case .expanded = stateManager.state {
                     collapseToDefault()
                 } else {
-                    currentType = .expanded
+                    stateManager.state = .expanded
                 }
             }
         }
-        .onReceive(NotificationCenter.default.publisher(for: .dynamicIslandTrigger)) { notification in
-            if let type = notification.userInfo?["type"] as? DynamicIslandType {
-                withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-                    currentType = type
-                }
-                
-                // If it is auto-collapsing state, reset after timer
-                if case .charging = type {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
-                        if !hoverState {
-                            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-                                collapseToDefault()
-                            }
-                        }
-                    }
-                }
-            }
+        // React to tracker alert changes
+        .onChange(of: tracker.highTempAlert) { _, _ in
+            if !hoverState { collapseToDefault() }
+        }
+        .onChange(of: tracker.continuousACAlert) { _, _ in
+            if !hoverState { collapseToDefault() }
         }
     }
     
     private func collapseToDefault() {
         if tracker.highTempAlert {
-            currentType = .alert(
+            stateManager.state = .alert(
                 title: "Yüksek Pil Sıcaklığı",
                 message: String(format: "Pil sıcaklığı %.1f°C seviyesine ulaştı.", tracker.batteryTemperature),
                 isWarning: false
             )
         } else if tracker.continuousACAlert {
-            currentType = .alert(
+            stateManager.state = .alert(
                 title: "Sürekli Prizde Kullanım",
                 message: "Mac'iniz 24 saattir prizde. Pili deşarj edin.",
                 isWarning: true
             )
         } else {
-            currentType = .capsule
+            stateManager.state = .capsule
         }
     }
     
-    // MARK: - Dimensions helper
+    // MARK: - Dimensions
     private var containerWidth: CGFloat {
-        switch currentType {
-        case .capsule: return 150
+        switch stateManager.state {
+        case .capsule:  return 150
         case .charging: return 280
-        case .alert: return 300
+        case .alert:    return 300
         case .expanded: return 320
         }
     }
     
     private var containerHeight: CGFloat {
-        switch currentType {
-        case .capsule: return 28
+        switch stateManager.state {
+        case .capsule:  return 28
         case .charging: return 50
-        case .alert: return 75
+        case .alert:    return 75
         case .expanded: return 120
         }
     }
     
     private var containerCornerRadius: CGFloat {
-        switch currentType {
-        case .capsule: return 14
-        default: return 20
-        }
+        if case .capsule = stateManager.state { return 14 }
+        return 20
     }
     
-    // MARK: - State contents
+    // MARK: - State Views
     private var capsuleContent: some View {
         HStack(spacing: 8) {
             Image(systemName: tracker.isPluggedIn ? "battery.100.bolt" : "battery.75")
@@ -183,7 +198,6 @@ struct DynamicIslandView: View {
     
     private var expandedContent: some View {
         VStack(alignment: .leading, spacing: 10) {
-            // Top row
             HStack {
                 Text("MacWake Status")
                     .font(.system(size: 12, weight: .bold))
@@ -196,7 +210,6 @@ struct DynamicIslandView: View {
             
             Divider().background(Color.white.opacity(0.1))
             
-            // Detailed Stats
             HStack(spacing: 16) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Ekran Süresi")
@@ -237,17 +250,9 @@ struct DynamicIslandView: View {
     private func formatDuration(_ duration: TimeInterval) -> String {
         let hours = Int(duration) / 3600
         let minutes = (Int(duration) % 3600) / 60
-        if hours > 0 {
-            return "\(hours)sa \(minutes)dk"
-        } else {
-            return "\(minutes)dk"
-        }
+        if hours > 0 { return "\(hours)sa \(minutes)dk" }
+        return "\(minutes)dk"
     }
-}
-
-// MARK: - Notification Extension
-extension Notification.Name {
-    static let dynamicIslandTrigger = Notification.Name("dynamicIslandTrigger")
 }
 
 // MARK: - Dynamic Island Window Manager
@@ -260,12 +265,9 @@ class DynamicIslandManager {
     private weak var tracker: BatteryTracker?
     
     func setup(with tracker: BatteryTracker) {
-        // Retrieve settings from tracker's published property
         self.isEnabled = tracker.enableDynamicIsland
         self.tracker = tracker
-        
         guard isEnabled else { return }
-        
         createWindow(for: tracker)
     }
     
@@ -274,14 +276,12 @@ class DynamicIslandManager {
             rootView: DynamicIslandView(tracker: tracker)
         )
         
-        // Window definition as a non-activating panel (like notch overlays)
         let panel = NSPanel(
             contentRect: NSRect(x: 0, y: 0, width: 320, height: 120),
             styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
             defer: false
         )
-        
         panel.isReleasedWhenClosed = false
         panel.backgroundColor = .clear
         panel.isOpaque = false
@@ -292,18 +292,14 @@ class DynamicIslandManager {
         
         self.window = panel
         repositionWindow()
-        
         panel.orderFrontRegardless()
         
-        // Observe screen changes to keep window centered
         NotificationCenter.default.addObserver(
             forName: NSApplication.didChangeScreenParametersNotification,
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            Task { @MainActor in
-                self?.repositionWindow()
-            }
+            Task { @MainActor in self?.repositionWindow() }
         }
     }
     
@@ -321,26 +317,19 @@ class DynamicIslandManager {
         }
     }
     
-    func trigger(type: DynamicIslandType) {
+    /// Trigger a state change in the Dynamic Island overlay
+    func trigger(_ state: DynamicIslandState) {
         guard isEnabled else { return }
-        NotificationCenter.default.post(
-            name: .dynamicIslandTrigger,
-            object: nil,
-            userInfo: ["type": type]
-        )
+        DynamicIslandStateManager.shared.trigger(state)
     }
     
     private func repositionWindow() {
         guard let screen = NSScreen.main else { return }
         let screenFrame = screen.frame
-        
-        // Dynamic Island lies exactly at the top center of the screen
-        // If there's a notch, it wraps nicely below/around it.
         let width: CGFloat = 320
         let height: CGFloat = 120
         let x = screenFrame.origin.x + (screenFrame.width - width) / 2
-        let y = screenFrame.origin.y + screenFrame.height - height - 1 // Aligned to the top edge
-        
+        let y = screenFrame.origin.y + screenFrame.height - height - 1
         window?.setFrame(NSRect(x: x, y: y, width: width, height: height), display: true)
     }
 }

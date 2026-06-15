@@ -247,8 +247,10 @@ class BatteryTracker: ObservableObject {
         // Setup desktop widget manager
         WidgetManager.shared.setup(with: self)
         
-        // Setup Dynamic Island manager
-        DynamicIslandManager.shared.setup(with: self)
+        // Setup Dynamic Island manager — deferred to allow SwiftUI view hierarchy to fully initialize first
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            DynamicIslandManager.shared.setup(with: self)
+        }
     }
 
     private func updateFanSpeed() {
@@ -499,7 +501,7 @@ class BatteryTracker: ObservableObject {
             
             // Handle animations on power state change
             if plugged {
-                DynamicIslandManager.shared.trigger(type: .charging)
+                DynamicIslandManager.shared.trigger(.charging)
                 if enableAnimations {
                     ChargingAnimationManager.shared.show(batteryLevel: level)
                     startMenuBarAnimation()
@@ -636,7 +638,7 @@ class BatteryTracker: ObservableObject {
         let temp = self.batteryTemperature
         if temp > 38.0 && (isPluggedIn || isACPowerConnected()) {
             if !highTempAlert {
-                DynamicIslandManager.shared.trigger(type: .alert(
+                DynamicIslandManager.shared.trigger(.alert(
                     title: "Yüksek Pil Sıcaklığı",
                     message: String(format: "Pil sıcaklığı %.1f°C seviyesine ulaştı.", temp),
                     isWarning: false
@@ -665,7 +667,7 @@ class BatteryTracker: ObservableObject {
         let duration = Date().timeIntervalSince(startTime)
         if duration >= 86400.0 && currentBatteryLevel >= 99 {
             if !continuousACAlert {
-                DynamicIslandManager.shared.trigger(type: .alert(
+                DynamicIslandManager.shared.trigger(.alert(
                     title: "Sürekli Prizde Kullanım",
                     message: "Mac'iniz 24 saattir prizde. Pili deşarj edin.",
                     isWarning: true
