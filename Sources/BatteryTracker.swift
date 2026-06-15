@@ -616,19 +616,13 @@ class BatteryTracker: ObservableObject {
                 batteryHealth = maxCap
             }
             
-            // Calculate dynamic watts ONLY if plugged in
-            if isPluggedIn || isACPowerConnected() {
-                if let pd = dict["PowerDistribution"] as? [String: Any],
-                   let ipdInputPower = pd["IPDInputPower"] as? NSNumber, ipdInputPower.doubleValue > 0 {
-                    // IPDInputPower is the total power drawn from the adapter in mW
-                    wattsVal = ipdInputPower.doubleValue / 1000.0
-                } else if let amperage = dict["InstantAmperage"] as? Int,
-                          let voltage = dict["Voltage"] as? Int {
-                    // Fallback to battery charging power
-                    if amperage > 0 {
-                        wattsVal = Double(amperage) * Double(voltage) / 1000000.0
-                    }
-                }
+            // Calculate dynamic watts whether plugged in or not
+            if let amperage = dict["InstantAmperage"] as? Int,
+               let voltage = dict["Voltage"] as? Int {
+                // InstantAmperage is in mA, Voltage in mV. Multiply and divide by 1,000,000 to get Watts.
+                // It's positive when charging, negative when discharging. We use abs() to get the absolute wattage.
+                let watts = Double(abs(amperage)) * Double(voltage) / 1000000.0
+                wattsVal = watts
             }
         }
         
@@ -1263,14 +1257,20 @@ extension BatteryTracker {
     }
 
     var menuBarText: String {
-        if isPluggedIn {
-            if let dyn = dynamicWatts {
-                return String(format: "%.1fW", dyn)
-            } else if let watts = powerAdapterWatts {
-                return "\(watts)W"
-            }
-            return ""
+        // If at limit or 100%, show only percentage
+        if isPluggedIn && (currentBatteryLevel >= chargeLimit || currentBatteryLevel == 100) {
+            return "\(currentBatteryLevel)%"
         }
+        
+        // Always try to show dynamic watts (works for charging and discharging)
+        if let dyn = dynamicWatts {
+            return String(format: "%.1fW", dyn)
+        } else if isPluggedIn, let watts = powerAdapterWatts {
+            // Fallback to static adapter power if plugged in but no dynamic watts
+            return "\(watts)W"
+        }
+        
+        // If not plugged in and no session/active status, just show percentage
         if let session = currentSession, !isPluggedIn {
             let delta = appState == "active" ? Date().timeIntervalSince(lastStateChange) : 0
             let total = session.screenOnDuration + delta
