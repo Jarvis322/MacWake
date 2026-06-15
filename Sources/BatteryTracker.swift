@@ -1245,12 +1245,18 @@ extension BatteryTracker {
 
     var menuBarText: String {
         if isPluggedIn {
+            if currentBatteryLevel >= chargeLimit || currentBatteryLevel == 100 {
+                return "\(currentBatteryLevel)%"
+            }
             if let dyn = dynamicWatts {
+                if dyn < 1.0 {
+                    return "\(currentBatteryLevel)%"
+                }
                 return String(format: "%.1fW", dyn)
             } else if let watts = powerAdapterWatts {
                 return "\(watts)W"
             }
-            return ""
+            return "\(currentBatteryLevel)%"
         }
         if let session = currentSession, !isPluggedIn {
             let delta = appState == "active" ? Date().timeIntervalSince(lastStateChange) : 0
