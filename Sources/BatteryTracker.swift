@@ -618,16 +618,15 @@ class BatteryTracker: ObservableObject {
             
             // Calculate dynamic watts ONLY if plugged in
             if isPluggedIn || isACPowerConnected() {
-                if let telemetry = dict["PowerTelemetryData"] as? [String: Any],
-                   let systemPowerIn = telemetry["SystemPowerIn"] as? Int {
-                    wattsVal = Double(systemPowerIn) / 1000.0
+                if let pd = dict["PowerDistribution"] as? [String: Any],
+                   let ipdInputPower = pd["IPDInputPower"] as? NSNumber, ipdInputPower.doubleValue > 0 {
+                    // IPDInputPower is the total power drawn from the adapter in mW
+                    wattsVal = ipdInputPower.doubleValue / 1000.0
                 } else if let amperage = dict["InstantAmperage"] as? Int,
                           let voltage = dict["Voltage"] as? Int {
-                    // On Apple Silicon, charging amperage is positive.
-                    // If it's discharging, it's negative. We only want charging watts.
+                    // Fallback to battery charging power
                     if amperage > 0 {
-                        let watts = Double(amperage) * Double(voltage) / 1000000.0
-                        wattsVal = watts
+                        wattsVal = Double(amperage) * Double(voltage) / 1000000.0
                     }
                 }
             }
