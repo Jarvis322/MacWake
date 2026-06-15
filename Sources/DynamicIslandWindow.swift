@@ -38,6 +38,7 @@ struct DynamicIslandPanelView: View {
     @ObservedObject var tracker: BatteryTracker
     @ObservedObject private var sm = DynamicIslandStateManager.shared
     @State private var hoverState = false
+    @State private var isPressed = false
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -93,7 +94,9 @@ struct DynamicIslandPanelView: View {
             }
             .frame(width: panelWidth)
         }
+        .scaleEffect(isPressed ? 0.97 : 1.0)
         .animation(.spring(response: 0.4, dampingFraction: 0.75), value: sm.state)
+        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isPressed)
         .onHover { isHovered in
             self.hoverState = isHovered
             if isHovered && sm.state == .compact {
@@ -102,6 +105,9 @@ struct DynamicIslandPanelView: View {
                 sm.show(.compact)
             }
         }
+        .onLongPressGesture(minimumDuration: .infinity, maximumDistance: .infinity, pressing: { pressing in
+            self.isPressed = pressing
+        }, perform: {})
     }
 
     private var panelWidth: CGFloat {
@@ -436,8 +442,8 @@ class DynamicIslandManager {
 
         // Notch is at the top center of the screen
         let x = sf.minX + (sf.width - w) / 2
-        // We anchor to the top so it expands downwards
-        let y = sf.maxY - notchH - h + 36 
+        // Touch the absolute top of the screen to integrate seamlessly with the physical notch
+        let y = sf.maxY - h
 
         if let win = islandWindow {
             win.setFrame(NSRect(x: x, y: y, width: w, height: h), display: true, animate: true)
