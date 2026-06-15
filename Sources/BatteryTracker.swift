@@ -958,6 +958,9 @@ class BatteryTracker: ObservableObject {
 
     private func saveHeartbeat() {
         let now = Date()
+        
+        loadSettings() // reload charge limit and other preferences
+        
         let level = getBatteryLevel()
         let plugged = isACPowerConnected()
 
