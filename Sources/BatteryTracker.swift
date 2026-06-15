@@ -1257,11 +1257,6 @@ extension BatteryTracker {
     }
 
     var menuBarText: String {
-        // If at limit or 100%, show only percentage
-        if isPluggedIn && (currentBatteryLevel >= chargeLimit || currentBatteryLevel == 100) {
-            return "\(currentBatteryLevel)%"
-        }
-        
         // Always try to show dynamic watts (works for charging and discharging)
         if let dyn = dynamicWatts {
             return String(format: "%.1fW", dyn)
