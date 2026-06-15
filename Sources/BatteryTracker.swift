@@ -340,10 +340,30 @@ class BatteryTracker: ObservableObject {
             self.enableDynamicIsland = true
         }
         
-        // Use UserDefaults to read the value from cfprefsd (memory cache) to ensure we get real-time updates when changed in System Settings
+        // Use UserDefaults to read the value from cfprefsd (memory cache)
         if let defaults = UserDefaults(suiteName: "com.apple.batteryui.charging.mac") {
-            let limit = defaults.integer(forKey: "com.apple.batteryui.charging.mac.prior.limit")
-            self.chargeLimit = limit > 0 ? limit : 100
+            let priorLimit = defaults.integer(forKey: "com.apple.batteryui.charging.mac.prior.limit")
+            var finalLimit = priorLimit > 0 ? priorLimit : 100
+            
+            // Check if limit is actively enforced by powerd
+            let powerdPath = "/Library/Preferences/com.apple.powerd.charging.plist"
+            if let dict = NSDictionary(contentsOfFile: powerdPath) as? [String: Any],
+               let policiesData = dict["policies"] as? Data {
+                do {
+                    if let unarchived = try NSKeyedUnarchiver.unarchivedObject(ofClasses: [NSArray.self, NSDictionary.self, NSString.self, NSNumber.self, NSDate.self], from: policiesData) as? NSArray {
+                        if unarchived.count == 0 {
+                            finalLimit = 100
+                        }
+                    }
+                } catch {
+                    // If it throws an error (e.g. unknown custom class), it means policies exist and are active.
+                }
+            } else {
+                // If powerd charging plist is missing, we can assume no active policy.
+                finalLimit = 100
+            }
+            
+            self.chargeLimit = finalLimit
         } else {
             self.chargeLimit = 100
         }
@@ -601,10 +621,12 @@ class BatteryTracker: ObservableObject {
                 if let telemetry = dict["PowerTelemetryData"] as? [String: Any],
                    let systemPowerIn = telemetry["SystemPowerIn"] as? Int {
                     wattsVal = Double(systemPowerIn) / 1000.0
-                } else if let amperage = dict["Amperage"] as? Int,
+                } else if let amperage = dict["InstantAmperage"] as? Int,
                           let voltage = dict["Voltage"] as? Int {
-                    let watts = Double(amperage) * Double(voltage) / 1000000.0
-                    if watts > 0 {
+                    // On Apple Silicon, charging amperage is positive.
+                    // If it's discharging, it's negative. We only want charging watts.
+                    if amperage > 0 {
+                        let watts = Double(amperage) * Double(voltage) / 1000000.0
                         wattsVal = watts
                     }
                 }
