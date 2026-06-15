@@ -1,102 +1,102 @@
 # 🔋 MacWake
 
-**MacWake**, macOS için tasarlanmış, detaylı pil sağlığı, kullanım analizi ve şarj alışkanlıklarını takip eden şık bir menü bar ve masaüstü widget uygulamasıdır. Swift ve SwiftUI kullanılarak, macOS'in modern tasarım çizgilerine (glassmorphism, vibrant efektler) sadık kalınarak geliştirilmiştir.
+**MacWake** is an elegant menu bar and desktop widget application designed for macOS to track detailed battery health, usage analytics, and charging habits. Built with Swift and SwiftUI, it faithfully embraces modern macOS design guidelines (glassmorphism, vibrant effects).
 
-![MacWake Ekran Görüntüsü](Screenshots/preview.png)
-
----
-
-## ✨ Özellikler
-
-*   **📊 Detaylı Oturum Takibi (Current Session):** 
-    *   Ekran açık kalma süresi (Screen On) ve uykuda geçen süre.
-    *   Yeniden başlatma/kapatma tespiti ile kesintisiz veri bütünlüğü.
-    *   %1 şarj başına düşen ortalama ekran süresi verimlilik hesaplaması.
-*   **🖱️ Yarı Saydam Masaüstü Widget'ı:**
-    *   Kilitlenebilir ve masaüstünde istenilen yere konumlandırılabilir yüzen widget.
-    *   Apple tarzı dairesel pil seviyesi göstergesi.
-    *   Anlık batarya sıcaklığı ve döngü sayısı (Cycle Count) takibi.
-*   **🔌 Akıllı Güç Adaptörü Analizi & Hibrit Algoritma:**
-    *   **⚡️ Hibrit Güç Tüketimi:** Root (`sudo`) iznine ihtiyaç duymadan cihazın doğrudan adaptörden çektiği toplam ana gücü (`SystemPowerIn`) ve pildeyken harcadığı gücü (`InstantAmperage`) kusursuz birleştirerek menü çubuğunda anlık (dinamik) Watt tüketimini yansıtır.
-    *   Bağlı adaptörün nominal gücünü (Örn: 30W) ve gerçek şarj durumunu izleme.
-    *   Apple Orijinal adaptör doğrulaması (MFI Check).
-    *   Kullanılan port tespiti (MagSafe, USB-C veya Thunderbolt).
-    *   Düşük verimli şarj durumlarında **Yavaş Şarj Uyarısı** (Slow Charging Alert).
-    *   Kullanılan tüm şarj cihazlarının geçmiş kaydı ve kullanım sayıları (Adapter History).
-*   **🔋 macOS İyileştirilmiş Şarj Sınırı Uyumluluğu:**
-    *   macOS'in arka plandaki `powerd` servisinden aktif şarj sınırlarını okur (Örn: %80 Limiti) ve batarya o limite ulaştığında bile sistemin tükettiği anlık W değerini göstermeye devam eder.
-*   **⏰ Hızlı Deşarj Bildirimleri (Fast Battery Drain):**
-    *   Pildeyken son 10 dakika içindeki ani pil düşüşlerini (örn: %5 ve üzeri) algılayarak anında yerel bildirim gönderir.
-*   **💫 iPhone Stili Şarj Animasyonu:**
-    *   Şarj kablosu takıldığında ekranın ortasında beliren, anlık şarj yüzdesini gösteren şık bir geçiş animasyonu (Ayarlar panelinden açılıp kapatılabilir).
-*   **🌀 Fan Hızı ve Geçmişi Takibi (Fan Status):**
-    *   SMC (System Management Controller) üzerinden cihazın anlık fan devrini (RPM) okuma.
-    *   Fanı olan cihazlarda son 1 saatlik fan hız değişim grafiği (Sparkline chart).
-    *   MacBook Air gibi fansız (fanless) cihazlarda alternatif şık bilgilendirme paneli.
-*   **🛡️ Akıllı Pil Koruması & Sıcaklık Uyarıları (Smart Battery Protection):**
-    *   Pil sıcaklığı 38°C eşik değerini aştığında anlık görsel uyarı kartı ve yerel bildirim.
-    *   Cihaz kesintisiz olarak 24 saatten uzun süre %99+ şarj seviyesinde prizde kaldığında pil sağlığını korumak için deşarj etme uyarısı.
-*   **📈 Pil Sağlığı Değişim Günlüğü (Battery Health Decay Log):**
-    *   Pil maksimum kapasitesi her değiştiğinde tarihi ve döngü sayısını (Cycle Count) kaydeden otomatik geçmiş günlüğü.
-    *   Hardware sekmesinde geriye dönük değişim geçmişini şık bir zaman çizelgesi (timeline) ile gösterme.
-*   **🚀 Kolay Erişim & Otomatik Başlatma:**
-    *   Girişte otomatik açılma (Launch at Login) seçeneği.
-    *   Gelişmiş koyu/açık mod uyumlu dinamik renk paleti.
+![MacWake Screenshot](Screenshots/preview.png)
 
 ---
 
-## 🛠️ Kurulum & Çalıştırma
+## ✨ Features
 
-### Gereksinimler
-*   **macOS 14.0 (Sonoma)** veya üzeri bir macOS sürümü.
-*   **Swift Command Line Tools** veya **Xcode** (Derleme işlemi için).
+*   **📊 Detailed Session Tracking (Current Session):** 
+    *   Tracks screen-on time and sleep duration.
+    *   Seamless data integrity with restart/shutdown detection.
+    *   Efficiency calculation showing average screen time per 1% battery drop.
+*   **🖱️ Translucent Desktop Widget:**
+    *   Floating widget that can be locked and positioned anywhere on the desktop.
+    *   Apple-style circular battery level indicator.
+    *   Real-time battery temperature and cycle count monitoring.
+*   **🔌 Smart Power Adapter Analysis & Hybrid Algorithm:**
+    *   **⚡️ Hybrid Power Draw:** Seamlessly combines total system power draw (`SystemPowerIn`) when plugged in and discharge rate (`InstantAmperage`) when on battery to accurately display real-time (dynamic) Watt consumption in the menu bar, without requiring root (`sudo`) privileges.
+    *   Monitors the nominal wattage (e.g., 30W) and actual charging status of the connected adapter.
+    *   Apple Genuine adapter verification (MFI Check).
+    *   Identifies the port in use (MagSafe, USB-C, or Thunderbolt).
+    *   **Slow Charging Alert** for low-efficiency charging scenarios.
+    *   Adapter History logging to track the usage count of all past chargers.
+*   **🔋 macOS Optimized Battery Charging Compatibility:**
+    *   Reads active charging limits (e.g., 80% Limit) from the background `powerd` service and continues to accurately display system power consumption even when the battery reaches its limit.
+*   **⏰ Fast Battery Drain Notifications:**
+    *   Detects sudden battery drops (e.g., 5% or more) within the last 10 minutes while on battery and sends an immediate local notification.
+*   **💫 iPhone-Style Charging Animation:**
+    *   An elegant, fullscreen transition animation that appears in the center of the screen when the charging cable is plugged in, displaying the current percentage (can be toggled in settings).
+*   **🌀 Fan Speed and History Tracking (Fan Status):**
+    *   Reads real-time fan speed (RPM) directly via the SMC (System Management Controller).
+    *   Displays a sparkline chart of fan speed changes over the last hour for actively cooled devices.
+    *   Alternative sleek info panel for fanless devices like the MacBook Air.
+*   **🛡️ Smart Battery Protection & Temperature Alerts:**
+    *   Immediate visual warning card and local notification when battery temperature exceeds the 38°C threshold.
+    *   Discharge warning to protect battery health if the device remains plugged in at 99%+ charge for more than 24 consecutive hours.
+*   **📈 Battery Health Decay Log:**
+    *   Automated historical log that records the date and cycle count every time the maximum battery capacity changes.
+    *   Displays a stylish timeline of retroactive capacity degradation in the Hardware tab.
+*   **🚀 Easy Access & Auto-Start:**
+    *   Option to automatically Launch at Login.
+    *   Advanced dynamic color palette compatible with dark/light modes.
 
-### Derleme ve Yükleme
-Uygulamayı derlemek, yerel olarak kod imzalamak (codesign) ve `/Applications` (Uygulamalar) klasörüne taşımak için hazırlanan derleme betiğini kullanabilirsiniz:
+---
+
+## 🛠️ Installation & Execution
+
+### Requirements
+*   **macOS 14.0 (Sonoma)** or any newer macOS version.
+*   **Swift Command Line Tools** or **Xcode** (for compilation).
+
+### Build and Install
+You can use the provided build script to compile the application, code-sign it locally, and move it to the `/Applications` folder:
 
 ```bash
-# Proje dizinine gidin
+# Navigate to the project directory
 cd MacWake
 
-# Derleme betiğini çalıştırılabilir yapın ve çalıştırın
+# Make the build script executable and run it
 chmod +x build.sh
 ./build.sh
 ```
 
-Betiğin çalışması tamamlandığında uygulama `/Applications/MacWake.app` olarak yüklenecek ve otomatik olarak çalıştırılabilir hale gelecektir.
+Once the script completes, the app will be installed as `/Applications/MacWake.app` and will launch automatically.
 
-### Manuel Terminal Komutları
-Eğer uygulamayı terminalden yönetmek isterseniz:
+### Manual Terminal Commands
+If you wish to manage the app via the terminal:
 
-*   **Uygulamayı Başlatma:**
+*   **To Launch the App:**
     ```bash
     open /Applications/MacWake.app
     ```
-*   **Uygulamayı Kapatma:**
+*   **To Quit the App:**
     ```bash
     killall MacWake
     ```
 
 ---
 
-## 📂 Proje Yapısı
+## 📂 Project Structure
 
-*   `Sources/MacWakeApp.swift`: Uygulama yaşam döngüsü, menü bar entegrasyonu ve tekil örnek kontrolü.
-*   `Sources/BatteryTracker.swift`: Güç durumu takibi (IOKit & IOPS), oturum verilerinin depolanması ve bildirim mantığı.
-*   `Sources/SMCHelper.swift`: SMC (System Management Controller) donanım verilerini ve fan hızlarını doğrudan okuma modülü.
-*   `Sources/MacWakeMenuView.swift`: Menü bar tıklandığında açılan ana arayüz bileşenleri ve zaman tüneli grafiği.
-*   `Sources/WidgetWindow.swift`: Masaüstündeki yüzen widget penceresi, sürükleme mantığı ve dairesel gösterge.
-*   `Sources/ChargingAnimation.swift`: Şarj kablosu takıldığında beliren tam ekran animasyon katmanı.
-*   `Sources/LaunchAgentManager.swift`: macOS `SMAppService` API'si ile girişte çalıştırma ayarları.
-
----
-
-## 🔒 Güvenlik & İzinler
-
-Uygulamanın pil durumunu ve şarj adaptörlerini izleyebilmesi için herhangi bir yönetici (root) iznine ihtiyacı yoktur, tamamen standart macOS IOKit API'lerini kullanır. 
-*   **Bildirimler:** Hızlı deşarj uyarılarını alabilmek için uygulama ilk açıldığında bildirim izni vermeniz önerilir (Menü altındaki "Enable/Settings" butonuyla kontrol edebilirsiniz).
+*   `Sources/MacWakeApp.swift`: Application lifecycle, menu bar integration, and single-instance management.
+*   `Sources/BatteryTracker.swift`: Power state tracking (IOKit & IOPS), session data storage, and notification logic.
+*   `Sources/SMCHelper.swift`: Module for direct reading of hardware data and fan speeds from the SMC (System Management Controller).
+*   `Sources/MacWakeMenuView.swift`: Main UI components and timeline graphs revealed upon clicking the menu bar icon.
+*   `Sources/WidgetWindow.swift`: Floating desktop widget window, drag logic, and circular indicator.
+*   `Sources/ChargingAnimation.swift`: Fullscreen animation layer triggered when the charging cable is connected.
+*   `Sources/LaunchAgentManager.swift`: Login item configuration using the macOS `SMAppService` API.
 
 ---
 
-## 📄 Lisans
-Bu proje **Telif Hakkı Saklıdır (All Rights Reserved)** kapsamında lisanslanmıştır. Kaynak kodları, tasarımları ve derlenmiş sürümleri dahil tüm fikri mülkiyet hakları saklıdır. Bu yazılımın izinsiz kopyalanması, değiştirilmesi, dağıtılması veya App Store dahil herhangi bir platformda yayınlanması yasaktır.
+## 🔒 Security & Permissions
+
+The application does not require any administrator (root) privileges to monitor battery status and charging adapters; it relies entirely on standard macOS IOKit APIs. 
+*   **Notifications:** To receive fast discharge alerts, it is recommended to grant notification permissions when the app first launches (this can be managed via the "Enable/Settings" button under the Menu).
+
+---
+
+## 📄 License
+This project is licensed under **All Rights Reserved**. All intellectual property rights, including source code, designs, and compiled builds, are reserved. Unauthorized copying, modification, distribution, or publishing on any platform, including the App Store, is strictly prohibited.
