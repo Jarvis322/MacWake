@@ -25,6 +25,22 @@ struct MacWakeMenuView: View {
                     slowChargingWarningCard(alert)
                 }
                 
+                if tracker.highTempAlert {
+                    smartProtectionWarningCard(
+                        title: "Yüksek Pil Sıcaklığı",
+                        message: String(format: "Pil sıcaklığı %.1f°C seviyesine ulaştı. Aşırı ısınma pil ömrünü kısaltabilir. Prizden çekmeniz önerilir.", tracker.batteryTemperature),
+                        icon: "thermometer.high",
+                        color: .red
+                    )
+                } else if tracker.continuousACAlert {
+                    smartProtectionWarningCard(
+                        title: "Sürekli Prizde Kullanım",
+                        message: "Mac'iniz 24 saattir kesintisiz prizde şarj edildi. Sağlığı korumak için pilde deşarj etmeniz önerilir.",
+                        icon: "powerplug",
+                        color: .orange
+                    )
+                }
+                
                 // Tab Selection Bar
                 tabSelectorBar
                 
@@ -101,6 +117,10 @@ struct MacWakeMenuView: View {
     private var hardwareTabContent: some View {
         VStack(alignment: .leading, spacing: 11) {
             batteryHealthSection
+            
+            Divider()
+            
+            batteryHealthDecaySection
             
             Divider()
             
@@ -813,6 +833,79 @@ struct MacWakeMenuView: View {
 
     private func formatDecimal(_ value: Double) -> String {
         String(format: "%.1f", value)
+    }
+
+    private var batteryHealthDecaySection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("BATTERY HEALTH DECAY LOG")
+                .font(.caption2)
+                .fontWeight(.bold)
+                .foregroundColor(.secondary)
+            
+            if tracker.healthHistory.isEmpty {
+                Text("No health changes recorded yet.")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                    .padding(.vertical, 4)
+            } else {
+                VStack(spacing: 6) {
+                    ForEach(Array(tracker.healthHistory.sorted(by: { $0.date > $1.date }).prefix(3))) { record in
+                        HStack {
+                            Image(systemName: "heart.text.square.fill")
+                                .foregroundColor(.red)
+                                .font(.system(size: 14))
+                            
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text("Battery Health: \(record.health)%")
+                                    .font(.caption)
+                                    .fontWeight(.medium)
+                                Text("Recorded at \(record.cycleCount) cycles")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                            }
+                            
+                            Spacer()
+                            
+                            Text(formatDate(record.date))
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(8)
+                        .background(Color.secondary.opacity(0.04))
+                        .cornerRadius(6)
+                    }
+                }
+            }
+        }
+    }
+
+    private func smartProtectionWarningCard(title: String, message: String, icon: String, color: Color) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: icon)
+                .foregroundColor(color)
+                .font(.title3)
+                .padding(.top, 2)
+            
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.caption)
+                    .fontWeight(.bold)
+                    .foregroundColor(color)
+                Text(message)
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                    .lineLimit(3)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(color.opacity(0.1))
+        .cornerRadius(8)
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(color.opacity(0.2), lineWidth: 1)
+        )
     }
 }
 

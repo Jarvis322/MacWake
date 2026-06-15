@@ -29,6 +29,14 @@ class BatteryTracker: ObservableObject {
     @Published var fanSpeedHistory: [FanSpeedSample] = []
     @Published var currentFanSpeed: Double? = nil
     @Published var hasFans: Bool = false
+    @Published var healthHistory: [HealthRecord] = []
+    @Published var continuousACAlert: Bool = false
+    @Published var highTempAlert: Bool = false
+    
+    // Background tracking states
+    private var lastTemperatureAlertSent: Date?
+    private var acPowerStartTime: Date?
+    private var lastContinuousACAlertSent: Date?
     
     @Published var showWidget: Bool = false {
         didSet {
@@ -172,6 +180,13 @@ class BatteryTracker: ObservableObject {
         }
     }
 
+    struct HealthRecord: Codable, Identifiable {
+        var id = UUID()
+        var date: Date
+        var health: Int
+        var cycleCount: Int
+    }
+
     struct GoalProgress: Identifiable {
         var id: String { title }
         var title: String
@@ -198,6 +213,8 @@ class BatteryTracker: ObservableObject {
         var adapterHistory: [PowerAdapterRecord]?
         var lastRapidDrainAlert: Date?
         var fanSpeedHistory: [FanSpeedSample]?
+        var healthHistory: [HealthRecord]?
+        var acPowerStartTime: Date?
     }
 
     private var dataURL: URL {
@@ -258,8 +275,16 @@ class BatteryTracker: ObservableObject {
         self.appState = plugged ? "charging" : "active"
         
         // Start menu bar animation if already plugged in
-        if plugged && enableAnimations {
-            startMenuBarAnimation()
+        if plugged {
+            if enableAnimations {
+                startMenuBarAnimation()
+            }
+            if acPowerStartTime == nil {
+                acPowerStartTime = Date()
+            }
+        } else {
+            acPowerStartTime = nil
+            continuousACAlert = false
         }
         
         // If we are on battery and don't have a session, start one
@@ -325,6 +350,8 @@ class BatteryTracker: ObservableObject {
                 self.adapterHistory = persisted.adapterHistory ?? []
                 self.lastRapidDrainAlert = persisted.lastRapidDrainAlert
                 self.fanSpeedHistory = persisted.fanSpeedHistory ?? []
+                self.healthHistory = persisted.healthHistory ?? []
+                self.acPowerStartTime = persisted.acPowerStartTime
                 
                 // Recovery Check: If there is an active session, check if we rebooted
                 if var session = self.currentSession {
@@ -391,7 +418,9 @@ class BatteryTracker: ObservableObject {
             batterySamples: batterySamples,
             adapterHistory: adapterHistory,
             lastRapidDrainAlert: lastRapidDrainAlert,
-            fanSpeedHistory: fanSpeedHistory
+            fanSpeedHistory: fanSpeedHistory,
+            healthHistory: healthHistory,
+            acPowerStartTime: acPowerStartTime
         )
         do {
             let encoder = JSONEncoder()
@@ -441,6 +470,15 @@ class BatteryTracker: ObservableObject {
         self.isPluggedIn = plugged
         updatePowerAdapterDetails()
         recordBatterySample(level: level, timestamp: Date())
+        
+        if plugged {
+            if acPowerStartTime == nil {
+                acPowerStartTime = Date()
+            }
+        } else {
+            acPowerStartTime = nil
+            continuousACAlert = false
+        }
         
         if oldPlugged != plugged {
             handlePowerSourceChange(toPlugged: plugged, batteryLevel: level)
@@ -559,7 +597,63 @@ class BatteryTracker: ObservableObject {
         }
         
         dynamicWatts = wattsVal
+        checkAndRecordHealthHistory()
+        checkTemperatureAlert()
+        checkContinuousACAlert()
         checkSlowCharging()
+    }
+
+    private func checkAndRecordHealthHistory() {
+        let currentHealth = self.batteryHealth
+        let currentCycles = self.batteryCycles
+        let now = Date()
+        
+        if healthHistory.isEmpty {
+            healthHistory.append(HealthRecord(date: now, health: currentHealth, cycleCount: currentCycles))
+            saveData()
+        } else if let last = healthHistory.last, last.health != currentHealth {
+            healthHistory.append(HealthRecord(date: now, health: currentHealth, cycleCount: currentCycles))
+            saveData()
+        }
+    }
+    
+    private func checkTemperatureAlert() {
+        let temp = self.batteryTemperature
+        if temp > 38.0 && (isPluggedIn || isACPowerConnected()) {
+            highTempAlert = true
+            let now = Date()
+            if lastTemperatureAlertSent == nil || now.timeIntervalSince(lastTemperatureAlertSent!) > 7200 {
+                lastTemperatureAlertSent = now
+                sendNotification(
+                    title: "⚠️ Pil Sıcaklığı Yüksek!",
+                    body: String(format: "Pil sıcaklığı %.1f°C seviyesine ulaştı. Sağlığını korumak için prizden çekmeniz önerilir.", temp)
+                )
+            }
+        } else {
+            highTempAlert = false
+        }
+    }
+    
+    private func checkContinuousACAlert() {
+        guard let startTime = acPowerStartTime else {
+            continuousACAlert = false
+            return
+        }
+        
+        let duration = Date().timeIntervalSince(startTime)
+        if duration >= 86400.0 && currentBatteryLevel >= 99 {
+            continuousACAlert = true
+            let now = Date()
+            if lastContinuousACAlertSent == nil || now.timeIntervalSince(lastContinuousACAlertSent!) > 86400 {
+                lastContinuousACAlertSent = now
+                sendNotification(
+                    title: "🔌 Sürekli Prizde Kullanım Uyarısı",
+                    body: "Mac'iniz 24 saattir kesintisiz prizde ve dolu durumda. Pil sağlığını korumak için deşarj etmeniz önerilir."
+                )
+            }
+        } else {
+            continuousACAlert = false
+        }
     }
 
     private func checkSlowCharging() {

@@ -28,6 +28,12 @@
     *   SMC (System Management Controller) üzerinden cihazın anlık fan devrini (RPM) okuma.
     *   Fanı olan cihazlarda son 1 saatlik fan hız değişim grafiği (Sparkline chart).
     *   MacBook Air gibi fansız (fanless) cihazlarda alternatif şık bilgilendirme paneli.
+*   **🛡️ Akıllı Pil Koruması & Sıcaklık Uyarıları (Smart Battery Protection):**
+    *   Pil sıcaklığı 38°C eşik değerini aştığında anlık görsel uyarı kartı ve yerel bildirim.
+    *   Cihaz kesintisiz olarak 24 saatten uzun süre %99+ şarj seviyesinde prizde kaldığında pil sağlığını korumak için deşarj etme uyarısı.
+*   **📈 Pil Sağlığı Değişim Günlüğü (Battery Health Decay Log):**
+    *   Pil maksimum kapasitesi her değiştiğinde tarihi ve döngü sayısını (Cycle Count) kaydeden otomatik geçmiş günlüğü.
+    *   Hardware sekmesinde geriye dönük değişim geçmişini şık bir zaman çizelgesi (timeline) ile gösterme.
 *   **🚀 Kolay Erişim & Otomatik Başlatma:**
     *   Girişte otomatik açılma (Launch at Login) seçeneği.
     *   Gelişmiş koyu/açık mod uyumlu dinamik renk paleti.
