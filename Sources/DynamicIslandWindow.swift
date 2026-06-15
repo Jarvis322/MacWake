@@ -394,24 +394,31 @@ class DynamicIslandManager {
         NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { [weak self] _ in
             Task { @MainActor in self?.positionWindow() }
         }
+        
+        setupClickMonitor()
     }
 
-    func startMonitoring() {
-        // We handle hover inside the SwiftUI view now, but global monitor helps if mouse leaves fast
-        globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved]) { [weak self] _ in
-            Task { @MainActor in self?.evaluateHover() }
+    func setupClickMonitor() {
+        if globalMonitor == nil {
+            globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
+                Task { @MainActor in self?.handleOutsideClick() }
+            }
+        }
+        if localMonitor == nil {
+            localMonitor = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
+                Task { @MainActor in self?.handleOutsideClick() }
+                return event
+            }
         }
     }
 
-    private func evaluateHover() {
+    private func handleOutsideClick() {
         guard isEnabled, let window = islandWindow else { return }
         let mouse = NSEvent.mouseLocation
         let over = window.frame.contains(mouse)
         let state = DynamicIslandStateManager.shared.state
 
-        if over && state == .compact {
-            DynamicIslandStateManager.shared.show(.expanded)
-        } else if !over && state == .expanded {
+        if !over && state == .expanded {
             DynamicIslandStateManager.shared.show(.compact)
         }
     }
