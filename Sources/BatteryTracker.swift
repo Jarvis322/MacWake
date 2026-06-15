@@ -343,10 +343,10 @@ class BatteryTracker: ObservableObject {
         let home = FileManager.default.homeDirectoryForCurrentUser
         let plistURL = home.appendingPathComponent("Library/Preferences/com.apple.batteryui.charging.mac.plist")
         if let dict = NSDictionary(contentsOf: plistURL),
-           let limit = dict["com.apple.batteryui.charging.mac.prior.limit"] as? Int {
+           let limit = dict["com.apple.batteryui.charging.mac.limit"] as? Int {
             self.chargeLimit = limit
         } else {
-            self.chargeLimit = 100 // fallback
+            self.chargeLimit = 100 // fallback if no limit is set (i.e. 100%)
         }
         print("Loaded macOS charge limit: \(self.chargeLimit)%, showWidget: \(self.showWidget), isWidgetLocked: \(self.isWidgetLocked)")
     }
@@ -1245,18 +1245,12 @@ extension BatteryTracker {
 
     var menuBarText: String {
         if isPluggedIn {
-            if currentBatteryLevel >= chargeLimit || currentBatteryLevel == 100 {
-                return "\(currentBatteryLevel)%"
-            }
             if let dyn = dynamicWatts {
-                if dyn < 1.0 {
-                    return "\(currentBatteryLevel)%"
-                }
                 return String(format: "%.1fW", dyn)
             } else if let watts = powerAdapterWatts {
                 return "\(watts)W"
             }
-            return "\(currentBatteryLevel)%"
+            return ""
         }
         if let session = currentSession, !isPluggedIn {
             let delta = appState == "active" ? Date().timeIntervalSince(lastStateChange) : 0
