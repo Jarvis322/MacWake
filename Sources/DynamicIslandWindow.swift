@@ -222,21 +222,25 @@ struct DynamicIslandPanelView: View {
                 }
                 
                 // Controls row (like media controls)
-                HStack(spacing: 16) {
-                    miniControlBtn(icon: "bolt.fill", isActive: tracker.isPluggedIn, tooltip: "Güç Kaynağı Durumu")
-                    miniControlBtn(icon: "hare.fill", isActive: tracker.currentBatteryLevel > 20, tooltip: "Performans Modu")
-                    miniControlBtn(icon: "leaf.fill", isActive: !tracker.isPluggedIn, tooltip: "Enerji Tasarrufu")
+                HStack(spacing: 12) {
+                    miniControlBtn(icon: "bolt.fill", label: "Güç", isActive: tracker.isPluggedIn, tooltip: "Güç Kaynağı Durumu")
+                    miniControlBtn(icon: "hare.fill", label: "Performans", isActive: tracker.currentBatteryLevel > 20, tooltip: "Performans Modu")
+                    miniControlBtn(icon: "leaf.fill", label: "Tasarruf", isActive: !tracker.isPluggedIn, tooltip: "Enerji Tasarrufu")
                 }
                 .padding(.top, 4)
             }
         }
     }
 
-    private func miniControlBtn(icon: String, isActive: Bool, tooltip: String) -> some View {
-        Image(systemName: icon)
-            .font(.system(size: 14))
-            .foregroundColor(isActive ? .white : .white.opacity(0.3))
-            .help(tooltip)
+    private func miniControlBtn(icon: String, label: String, isActive: Bool, tooltip: String) -> some View {
+        HStack(spacing: 4) {
+            Image(systemName: icon)
+                .font(.system(size: 12))
+            Text(label)
+                .font(.system(size: 11, weight: .medium))
+        }
+        .foregroundColor(isActive ? .white : .white.opacity(0.3))
+        .help(tooltip)
     }
 
     // MARK: - Right Widget (Calendar / Stats style)
