@@ -5,6 +5,7 @@ struct MacWakeMenuView: View {
     @ObservedObject var tracker: BatteryTracker
     @Environment(\.colorScheme) var colorScheme
     @State private var isLaunchAtLoginEnabled: Bool = LaunchAgentManager.isEnabled
+    @State private var selectedTab: Int = 0
     private let timer = Timer.publish(every: 1.0, on: .main, in: .common).autoconnect()
     
     private var greenColor: Color { .dynamicGreen(for: colorScheme) }
@@ -17,51 +18,43 @@ struct MacWakeMenuView: View {
                 .ignoresSafeArea()
             
             VStack(spacing: 11) {
-                // Header
+                // Header (Always Visible)
                 headerSection
                 
                 if let alert = tracker.slowChargingAlert {
                     slowChargingWarningCard(alert)
                 }
                 
+                // Tab Selection Bar
+                tabSelectorBar
+                
                 Divider()
                 
-                // Current Session or Active Tracking
-                if let session = tracker.currentSession {
-                    currentSessionSection(tracker.liveSession(session))
-                } else {
-                    noActiveSessionSection
+                // Conditional Tab Content
+                ScrollView(.vertical, showsIndicators: false) {
+                    switch selectedTab {
+                    case 0:
+                        dashboardTabContent
+                    case 1:
+                        historyTabContent
+                    case 2:
+                        hardwareTabContent
+                    case 3:
+                        settingsTabContent
+                    default:
+                        EmptyView()
+                    }
                 }
-                
-                Divider()
-
-                weeklySummarySection
-
-                batteryHealthSection
-
-                Divider()
-
-                fanStatusSection
-
-                Divider()
-
-                if !tracker.adapterHistory.isEmpty {
-                    adapterHistorySection
-
-                    Divider()
-                }
-                
-                // History
-                historySection
+                .frame(maxHeight: .infinity, alignment: .top)
                 
                 Divider()
                 
-                // Settings and Controls
-                footerSection
+                // Credits Link (Always Visible)
+                creditsSection
             }
             .padding(14)
         }
-        .frame(width: 360)
+        .frame(width: 360, height: 450)
         .ignoresSafeArea()
         .onAppear {
             tracker.updateDynamicWatts()
@@ -71,6 +64,136 @@ struct MacWakeMenuView: View {
         }
     }
     
+    // MARK: - Tab Selector Bar
+    private var tabSelectorBar: some View {
+        HStack(spacing: 4) {
+            TabButton(title: "Session", icon: "chart.bar.fill", isSelected: selectedTab == 0, activeColor: greenColor) { selectedTab = 0 }
+            TabButton(title: "History", icon: "clock.fill", isSelected: selectedTab == 1, activeColor: orangeColor) { selectedTab = 1 }
+            TabButton(title: "Hardware", icon: "cpu", isSelected: selectedTab == 2, activeColor: blueColor) { selectedTab = 2 }
+            TabButton(title: "Settings", icon: "gearshape.fill", isSelected: selectedTab == 3, activeColor: .purple) { selectedTab = 3 }
+        }
+        .padding(4)
+        .background(Color.secondary.opacity(0.08))
+        .cornerRadius(8)
+    }
+
+    // MARK: - Tab Contents
+    private var dashboardTabContent: some View {
+        VStack(spacing: 11) {
+            if let session = tracker.currentSession {
+                currentSessionSection(tracker.liveSession(session))
+            } else {
+                noActiveSessionSection
+            }
+        }
+    }
+
+    private var historyTabContent: some View {
+        VStack(alignment: .leading, spacing: 11) {
+            weeklySummarySection
+            
+            Divider()
+            
+            historySection
+        }
+    }
+
+    private var hardwareTabContent: some View {
+        VStack(alignment: .leading, spacing: 11) {
+            batteryHealthSection
+            
+            Divider()
+            
+            fanStatusSection
+            
+            if !tracker.adapterHistory.isEmpty {
+                Divider()
+                adapterHistorySection
+            }
+        }
+    }
+
+    private var settingsTabContent: some View {
+        VStack(spacing: 10) {
+            notificationPermissionRow
+            
+            Toggle(isOn: $tracker.showWidget) {
+                Text("Show Desktop Widget")
+                    .font(.subheadline)
+            }
+            .toggleStyle(SwitchToggleStyle())
+            
+            if tracker.showWidget {
+                Toggle(isOn: $tracker.isWidgetLocked) {
+                    Text("Lock Widget Position")
+                        .font(.subheadline)
+                }
+                .toggleStyle(SwitchToggleStyle())
+            }
+
+            Toggle(isOn: $isLaunchAtLoginEnabled) {
+                Text("Launch at Login")
+                    .font(.subheadline)
+            }
+            .toggleStyle(SwitchToggleStyle())
+            .onChange(of: isLaunchAtLoginEnabled) { oldValue, newValue in
+                LaunchAgentManager.setEnabled(newValue)
+            }
+            
+            Toggle(isOn: $tracker.enableAnimations) {
+                HStack(spacing: 4) {
+                    Text("Enable Animations")
+                        .font(.subheadline)
+                    Image(systemName: "sparkles")
+                        .font(.caption)
+                        .foregroundColor(.purple)
+                }
+            }
+            .toggleStyle(SwitchToggleStyle())
+            
+            HStack(spacing: 12) {
+                Button(action: {
+                    tracker.resetCurrentSession()
+                }) {
+                    HStack {
+                        Image(systemName: "arrow.clockwise")
+                        Text("Reset Session")
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                
+                Button(action: {
+                    NSApplication.shared.terminate(nil)
+                }) {
+                    HStack {
+                        Image(systemName: "power")
+                        Text("Quit")
+                    }
+                    .foregroundColor(.red)
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+            }
+            .padding(.top, 4)
+        }
+    }
+
+    private var creditsSection: some View {
+        Link(destination: URL(string: "https://x.com/yigitech")!) {
+            HStack(spacing: 4) {
+                Text("Developed by")
+                    .font(.system(size: 9))
+                    .foregroundColor(.secondary)
+                Text("x.com/yigitech")
+                    .font(.system(size: 9, weight: .bold))
+                    .foregroundColor(blueColor)
+            }
+        }
+        .buttonStyle(.plain)
+        .frame(maxWidth: .infinity, alignment: .center)
+    }
+
     // MARK: - Header
     private var headerSection: some View {
         HStack {
@@ -135,7 +258,7 @@ struct MacWakeMenuView: View {
         return "On Battery"
     }
     
-    // MARK: - Current Session
+    // MARK: - Current Session Components
     private func currentSessionSection(_ session: BatteryTracker.Session) -> some View {
         let totalDuration = (session.endTime ?? Date()).timeIntervalSince(session.startTime)
         
@@ -252,11 +375,8 @@ struct MacWakeMenuView: View {
         if let watts = tracker.powerAdapterWatts {
             return "Charging from a \(watts)W adapter. Tracking will start automatically when you unplug the power cable."
         }
-
         return "Tracking will start automatically when you unplug the power cable (limit: \(tracker.chargeLimit)%)."
     }
-
-
 
     // MARK: - Weekly Summary
     private var weeklySummarySection: some View {
@@ -363,10 +483,9 @@ struct MacWakeMenuView: View {
                                 .font(.caption2)
                                 .foregroundColor(.secondary)
                             
-                            // Simple sparkline representation using HStack of small bars
                             HStack(alignment: .bottom, spacing: 2) {
                                 let maxSpeed = max(1000.0, tracker.fanSpeedHistory.map(\.rpm).max() ?? 2000.0)
-                                ForEach(tracker.fanSpeedHistory.suffix(20)) { sample in
+                                ForEach(Array(tracker.fanSpeedHistory.suffix(20))) { sample in
                                     let heightPct = CGFloat(sample.rpm / maxSpeed)
                                     RoundedRectangle(cornerRadius: 1)
                                         .fill(blueColor.opacity(0.6))
@@ -416,7 +535,7 @@ struct MacWakeMenuView: View {
                 .fontWeight(.bold)
                 .foregroundColor(.secondary)
             VStack(spacing: 6) {
-                ForEach(tracker.adapterHistory.prefix(2)) { adapter in
+                ForEach(Array(tracker.adapterHistory.prefix(2))) { adapter in
                     HStack {
                         Image(systemName: "powerplug.fill")
                             .foregroundColor(blueColor)
@@ -424,16 +543,16 @@ struct MacWakeMenuView: View {
  
                         VStack(alignment: .leading, spacing: 1) {
                             HStack(spacing: 4) {
-                                Text(adapter.displayName)
-                                    .font(.caption)
-                                    .fontWeight(.medium)
-                                    .lineLimit(1)
-                                
-                                if let mfg = adapter.manufacturer, mfg.lowercased().contains("apple") {
-                                    Image(systemName: "checkmark.seal.fill")
-                                        .font(.system(size: 9))
-                                        .foregroundColor(greenColor)
-                                }
+                                  Text(adapter.displayName)
+                                      .font(.caption)
+                                      .fontWeight(.medium)
+                                      .lineLimit(1)
+                                  
+                                  if let mfg = adapter.manufacturer, mfg.lowercased().contains("apple") {
+                                      Image(systemName: "checkmark.seal.fill")
+                                          .font(.system(size: 9))
+                                          .foregroundColor(greenColor)
+                                  }
                             }
                             Text("Last seen \(formatRelativeDate(adapter.lastSeen))")
                                 .font(.caption2)
@@ -471,7 +590,7 @@ struct MacWakeMenuView: View {
                     .padding(.vertical, 8)
             } else {
                 VStack(spacing: 8) {
-                    ForEach(tracker.history.prefix(3)) { pastSession in
+                    ForEach(Array(tracker.history.prefix(3))) { pastSession in
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(formatDate(pastSession.startTime))
@@ -508,90 +627,6 @@ struct MacWakeMenuView: View {
         }
     }
     
-    // MARK: - Footer & Settings
-    private var footerSection: some View {
-        VStack(spacing: 8) {
-            notificationPermissionRow
-
-            // Desktop Widget Toggles
-            Toggle(isOn: $tracker.showWidget) {
-                Text("Show Desktop Widget")
-                    .font(.subheadline)
-            }
-            .toggleStyle(SwitchToggleStyle())
-            
-            if tracker.showWidget {
-                Toggle(isOn: $tracker.isWidgetLocked) {
-                    Text("Lock Widget Position")
-                        .font(.subheadline)
-                }
-                .toggleStyle(SwitchToggleStyle())
-            }
-
-            // Autostart Toggle
-            Toggle(isOn: $isLaunchAtLoginEnabled) {
-                Text("Launch at Login")
-                    .font(.subheadline)
-            }
-            .toggleStyle(SwitchToggleStyle())
-            .onChange(of: isLaunchAtLoginEnabled) { oldValue, newValue in
-                LaunchAgentManager.setEnabled(newValue)
-            }
-            
-            // Animation Toggle
-            Toggle(isOn: $tracker.enableAnimations) {
-                HStack(spacing: 4) {
-                    Text("Enable Animations")
-                        .font(.subheadline)
-                    Image(systemName: "sparkles")
-                        .font(.caption)
-                        .foregroundColor(.purple)
-                }
-            }
-            .toggleStyle(SwitchToggleStyle())
-            
-            // Buttons
-            HStack(spacing: 12) {
-                Button(action: {
-                    tracker.resetCurrentSession()
-                }) {
-                    HStack {
-                        Image(systemName: "arrow.clockwise")
-                        Text("Reset Session")
-                    }
-                    .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
-                
-                Button(action: {
-                    NSApplication.shared.terminate(nil)
-                }) {
-                    HStack {
-                        Image(systemName: "power")
-                        Text("Quit")
-                    }
-                    .foregroundColor(.red)
-                    .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
-            }
-
-            // Credits Link
-            Link(destination: URL(string: "https://x.com/yigitech")!) {
-                HStack(spacing: 4) {
-                    Text("Developed by")
-                        .font(.system(size: 9))
-                        .foregroundColor(.secondary)
-                    Text("x.com/yigitech")
-                        .font(.system(size: 9, weight: .bold))
-                        .foregroundColor(blueColor)
-                }
-                .padding(.top, 4)
-            }
-            .buttonStyle(.plain)
-        }
-    }
-
     private var notificationPermissionRow: some View {
         HStack {
             Label(notificationStatusText, systemImage: notificationStatusIcon)
@@ -781,23 +816,29 @@ struct MacWakeMenuView: View {
     }
 }
 
-extension Color {
-    static func dynamicGreen(for scheme: ColorScheme) -> Color {
-        scheme == .dark
-            ? Color(red: 0.15, green: 0.85, blue: 0.40)
-            : Color(red: 0.05, green: 0.50, blue: 0.22)
-    }
+// MARK: - Tab Button Component
+struct TabButton: View {
+    let title: String
+    let icon: String
+    let isSelected: Bool
+    let activeColor: Color
+    let action: () -> Void
     
-    static func dynamicOrange(for scheme: ColorScheme) -> Color {
-        scheme == .dark
-            ? Color(red: 1.0, green: 0.60, blue: 0.10)
-            : Color(red: 0.78, green: 0.35, blue: 0.00)
-    }
-    
-    static func dynamicBlue(for scheme: ColorScheme) -> Color {
-        scheme == .dark
-            ? Color(red: 0.25, green: 0.68, blue: 1.00)
-            : Color(red: 0.00, green: 0.35, blue: 0.72)
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 3) {
+                Image(systemName: icon)
+                    .font(.system(size: 13))
+                Text(title)
+                    .font(.system(size: 9, weight: .semibold))
+            }
+            .foregroundColor(isSelected ? activeColor : .secondary)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 6)
+            .background(isSelected ? activeColor.opacity(0.1) : Color.clear)
+            .cornerRadius(6)
+        }
+        .buttonStyle(.plain)
     }
 }
 
@@ -852,7 +893,7 @@ struct TimelineBarView: View {
     }
 }
 
-// MARK: - Visual Effect View (for Glassmorphic effect)
+// MARK: - Visual Effect View
 struct VisualEffectView: NSViewRepresentable {
     func makeNSView(context: Context) -> NSVisualEffectView {
         let view = NSVisualEffectView()
@@ -863,4 +904,24 @@ struct VisualEffectView: NSViewRepresentable {
     }
     
     func updateNSView(_ nsView: NSVisualEffectView, context: Context) {}
+}
+
+extension Color {
+    static func dynamicGreen(for scheme: ColorScheme) -> Color {
+        scheme == .dark
+            ? Color(red: 0.15, green: 0.85, blue: 0.40)
+            : Color(red: 0.05, green: 0.50, blue: 0.22)
+    }
+    
+    static func dynamicOrange(for scheme: ColorScheme) -> Color {
+        scheme == .dark
+            ? Color(red: 1.0, green: 0.60, blue: 0.10)
+            : Color(red: 0.78, green: 0.35, blue: 0.00)
+    }
+    
+    static func dynamicBlue(for scheme: ColorScheme) -> Color {
+        scheme == .dark
+            ? Color(red: 0.25, green: 0.68, blue: 1.00)
+            : Color(red: 0.00, green: 0.35, blue: 0.72)
+    }
 }
