@@ -4,5 +4,9 @@
 <dict>
     <key>com.apple.security.app-sandbox</key>
     <true/>
+    <key>com.apple.security.temporary-exception.iokit-user-client-class</key>
+    <array>
+        <string>AppleSMCClient</string>
+    </array>
 </dict>
 </plist>
