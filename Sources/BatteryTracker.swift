@@ -340,15 +340,13 @@ class BatteryTracker: ObservableObject {
             self.enableDynamicIsland = true
         }
         
-        let home = FileManager.default.homeDirectoryForCurrentUser
-        let plistURL = home.appendingPathComponent("Library/Preferences/com.apple.batteryui.charging.mac.plist")
-        if let dict = NSDictionary(contentsOf: plistURL),
-           let limit = dict["com.apple.batteryui.charging.mac.limit"] as? Int {
-            self.chargeLimit = limit
+        // Use UserDefaults to read the value from cfprefsd (memory cache) to ensure we get real-time updates when changed in System Settings
+        if let defaults = UserDefaults(suiteName: "com.apple.batteryui.charging.mac") {
+            let limit = defaults.integer(forKey: "com.apple.batteryui.charging.mac.prior.limit")
+            self.chargeLimit = limit > 0 ? limit : 100
         } else {
-            self.chargeLimit = 100 // fallback if no limit is set (i.e. 100%)
+            self.chargeLimit = 100
         }
-        print("Loaded macOS charge limit: \(self.chargeLimit)%, showWidget: \(self.showWidget), isWidgetLocked: \(self.isWidgetLocked)")
     }
 
     // Load data from file and perform recovery check
