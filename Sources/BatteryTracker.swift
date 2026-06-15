@@ -250,6 +250,7 @@ class BatteryTracker: ObservableObject {
         // Setup Dynamic Island manager — deferred to allow SwiftUI view hierarchy to fully initialize first
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             DynamicIslandManager.shared.setup(with: self)
+            DynamicIslandManager.shared.startMonitoring()
         }
     }
 
