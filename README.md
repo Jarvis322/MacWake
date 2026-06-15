@@ -88,4 +88,4 @@ Uygulamanın pil durumunu ve şarj adaptörlerini izleyebilmesi için herhangi b
 ---
 
 ## 📄 Lisans
-Bu proje MIT Lisansı altında lisanslanmıştır. Detaylar için kaynak kodları inceleyebilirsiniz.
+Bu proje **Telif Hakkı Saklıdır (All Rights Reserved)** kapsamında lisanslanmıştır. Kaynak kodları, tasarımları ve derlenmiş sürümleri dahil tüm fikri mülkiyet hakları saklıdır. Bu yazılımın izinsiz kopyalanması, değiştirilmesi, dağıtılması veya App Store dahil herhangi bir platformda yayınlanması yasaktır.
