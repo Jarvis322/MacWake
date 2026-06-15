@@ -32,7 +32,7 @@ struct CircularBatteryGauge: View {
             
             VStack(spacing: 1) {
                 Text("\(tracker.currentBatteryLevel)%")
-                    .font(.system(.title3, design: .rounded))
+                    .font(.system(.title3))
                     .fontWeight(.bold)
                     .foregroundColor(.primary)
                 
@@ -61,23 +61,23 @@ struct WidgetView: View {
                     if tracker.isPluggedIn {
                         VStack(alignment: .leading, spacing: 1) {
                             Text("CHARGING")
-                                .font(.system(.caption2, design: .rounded))
+                                .font(.system(.caption2))
                                 .fontWeight(.bold)
                                 .foregroundColor(.secondary)
                             
                             if let dyn = tracker.dynamicWatts {
                                 Text(String(format: "%.1f W", dyn))
-                                    .font(.system(.title3, design: .rounded))
+                                    .font(.system(.title3))
                                     .fontWeight(.bold)
                                     .foregroundColor(Theme.darkBlue)
                             } else if let nominal = tracker.powerAdapterWatts {
                                 Text("\(nominal) W")
-                                    .font(.system(.title3, design: .rounded))
+                                    .font(.system(.title3))
                                     .fontWeight(.bold)
                                     .foregroundColor(Theme.darkBlue)
                             } else {
                                 Text("Plugged")
-                                    .font(.system(.title3, design: .rounded))
+                                    .font(.system(.title3))
                                     .fontWeight(.bold)
                                     .foregroundColor(Theme.darkBlue)
                             }
@@ -85,12 +85,12 @@ struct WidgetView: View {
                     } else {
                         VStack(alignment: .leading, spacing: 1) {
                             Text("ON BATTERY")
-                                .font(.system(.caption2, design: .rounded))
+                                .font(.system(.caption2))
                                 .fontWeight(.bold)
                                 .foregroundColor(.secondary)
                             
                             Text(tracker.menuBarText.isEmpty ? "Active" : tracker.menuBarText)
-                                .font(.system(.title3, design: .rounded))
+                                .font(.system(.title3))
                                 .fontWeight(.bold)
                                 .foregroundColor(Theme.darkGreen)
                         }
@@ -99,20 +99,20 @@ struct WidgetView: View {
                     HStack(spacing: 14) {
                         VStack(alignment: .leading, spacing: 1) {
                             Text("TEMP")
-                                .font(.system(.caption2, design: .rounded))
+                                .font(.system(.caption2))
                                 .foregroundColor(.secondary)
                             Text(String(format: "%.1f°C", tracker.batteryTemperature))
-                                .font(.system(.footnote, design: .rounded))
+                                .font(.system(.footnote))
                                 .fontWeight(.semibold)
                                 .foregroundColor(.primary)
                         }
                         
                         VStack(alignment: .leading, spacing: 1) {
                             Text("CYCLES")
-                                .font(.system(.caption2, design: .rounded))
+                                .font(.system(.caption2))
                                 .foregroundColor(.secondary)
                             Text("\(tracker.batteryCycles)")
-                                .font(.system(.footnote, design: .rounded))
+                                .font(.system(.footnote))
                                 .fontWeight(.semibold)
                                 .foregroundColor(.primary)
                         }
@@ -120,10 +120,10 @@ struct WidgetView: View {
                         if tracker.hasFans {
                             VStack(alignment: .leading, spacing: 1) {
                                 Text("FAN")
-                                    .font(.system(.caption2, design: .rounded))
+                                    .font(.system(.caption2))
                                     .foregroundColor(.secondary)
                                 Text(tracker.currentFanSpeed.map { String(format: "%.0f RPM", $0) } ?? "0")
-                                    .font(.system(.footnote, design: .rounded))
+                                    .font(.system(.footnote))
                                     .fontWeight(.semibold)
                                     .foregroundColor(.primary)
                             }

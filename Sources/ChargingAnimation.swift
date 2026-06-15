@@ -69,7 +69,7 @@ struct ChargingAnimationView: View {
                     .shadow(color: Color.green.opacity(0.3), radius: 40, x: 0, y: 0)
                 
                 Text("\(batteryLevel)% Charged")
-                    .font(.system(.title2, design: .rounded))
+                    .font(.system(.title2))
                     .fontWeight(.semibold)
                     .foregroundColor(.white)
                     .opacity(percentOpacity)

@@ -93,6 +93,7 @@ struct DynamicIslandPanelView: View {
             }
             .frame(width: panelWidth)
         }
+        .monospacedDigit()
         .scaleEffect(isPressed ? 0.97 : 1.0)
         .animation(.spring(response: 0.4, dampingFraction: 0.75), value: sm.state)
         .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isPressed)
@@ -137,7 +138,7 @@ struct DynamicIslandPanelView: View {
                             .font(.system(size: 11, weight: .bold))
                             .foregroundColor(tracker.isPluggedIn ? .blue : batteryColor)
                         Text("Power")
-                            .font(.system(size: 13, weight: .bold, design: .rounded))
+                            .font(.system(size: 13, weight: .bold))
                             .foregroundColor(.white)
                     }
                     .padding(.horizontal, 12)
@@ -156,7 +157,7 @@ struct DynamicIslandPanelView: View {
                         .font(.system(size: 10, weight: .bold))
                         .foregroundColor(tracker.isPluggedIn ? .blue : batteryColor)
                     Text("%\(tracker.currentBatteryLevel)")
-                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                        .font(.system(size: 11, weight: .bold))
                         .foregroundColor(.white)
                 }
                 Spacer()
@@ -212,7 +213,7 @@ struct DynamicIslandPanelView: View {
             VStack(alignment: .leading, spacing: 8) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(tracker.isPluggedIn ? "Şarj Ediliyor" : "Pilde Çalışıyor")
-                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .font(.system(size: 16, weight: .bold))
                         .foregroundColor(.white)
                     
                     Text("\(tracker.currentBatteryLevel)% Kapasite")
@@ -244,7 +245,7 @@ struct DynamicIslandPanelView: View {
             // Top Row: Like Calendar Days
             HStack(spacing: 12) {
                 Text("Stats")
-                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .font(.system(size: 20, weight: .bold))
                     .foregroundColor(.white)
                 
                 Spacer()
@@ -284,7 +285,7 @@ struct DynamicIslandPanelView: View {
                 .font(.system(size: 9, weight: .bold))
                 .foregroundColor(isHighlighted ? .red : .white.opacity(0.4))
             Text(value)
-                .font(.system(size: 13, weight: .bold, design: .rounded))
+                .font(.system(size: 13, weight: .bold))
                 .foregroundColor(isHighlighted ? .red : (label == "HLT" ? .blue : .white))
         }
     }
@@ -302,7 +303,7 @@ struct DynamicIslandPanelView: View {
             }
             VStack(alignment: .leading, spacing: 4) {
                 Text("Şarj Bağlandı")
-                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .font(.system(size: 20, weight: .bold))
                     .foregroundColor(.white)
                 Text("\(tracker.currentBatteryLevel)% • \(tracker.powerAdapterWatts.map { "\($0)W" } ?? "Güç Kaynağı")")
                     .font(.system(size: 14))
@@ -325,7 +326,7 @@ struct DynamicIslandPanelView: View {
             }
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
-                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .font(.system(size: 20, weight: .bold))
                     .foregroundColor(.white)
                 Text(message)
                     .font(.system(size: 14))
