@@ -41,6 +41,10 @@ struct MacWakeMenuView: View {
 
                 Divider()
 
+                fanStatusSection
+
+                Divider()
+
                 if !tracker.adapterHistory.isEmpty {
                     adapterHistorySection
 
@@ -324,6 +328,86 @@ struct MacWakeMenuView: View {
         }
     }
 
+    // MARK: - Fan Status
+    private var fanStatusSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("FAN STATUS")
+                .font(.caption2)
+                .fontWeight(.bold)
+                .foregroundColor(.secondary)
+            
+            if tracker.hasFans {
+                HStack(spacing: 12) {
+                    // Current Fan Speed Card
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Fan Speed")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                        Text(tracker.currentFanSpeed.map { String(format: "%.0f RPM", $0) } ?? "N/A")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundColor(blueColor)
+                        Text("Active cooling")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(10)
+                    .background(Color.secondary.opacity(0.08))
+                    .cornerRadius(8)
+                    
+                    // Mini Fan History Graph
+                    if !tracker.fanSpeedHistory.isEmpty {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("1h History")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                            
+                            // Simple sparkline representation using HStack of small bars
+                            HStack(alignment: .bottom, spacing: 2) {
+                                let maxSpeed = max(1000.0, tracker.fanSpeedHistory.map(\.rpm).max() ?? 2000.0)
+                                ForEach(tracker.fanSpeedHistory.suffix(20)) { sample in
+                                    let heightPct = CGFloat(sample.rpm / maxSpeed)
+                                    RoundedRectangle(cornerRadius: 1)
+                                        .fill(blueColor.opacity(0.6))
+                                        .frame(width: 4, height: max(2, heightPct * 24))
+                                }
+                            }
+                            .frame(height: 24)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .padding(.top, 4)
+                            
+                            Spacer()
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(10)
+                        .background(Color.secondary.opacity(0.08))
+                        .cornerRadius(8)
+                    }
+                }
+            } else {
+                HStack(spacing: 8) {
+                    Image(systemName: "wind.slash")
+                        .foregroundColor(.secondary)
+                        .font(.title3)
+                    
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Fanless Device")
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                        Text("This Mac operates silently without cooling fans.")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                .padding(10)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.secondary.opacity(0.05))
+                .cornerRadius(8)
+            }
+        }
+    }
+
     // MARK: - Adapter History
     private var adapterHistorySection: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -491,6 +575,20 @@ struct MacWakeMenuView: View {
                 }
                 .buttonStyle(.bordered)
             }
+
+            // Credits Link
+            Link(destination: URL(string: "https://x.com/yigitech")!) {
+                HStack(spacing: 4) {
+                    Text("Developed by")
+                        .font(.system(size: 9))
+                        .foregroundColor(.secondary)
+                    Text("x.com/yigitech")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundColor(blueColor)
+                }
+                .padding(.top, 4)
+            }
+            .buttonStyle(.plain)
         }
     }
 

@@ -24,6 +24,10 @@
     *   Pildeyken son 10 dakika içindeki ani pil düşüşlerini (örn: %5 ve üzeri) algılayarak anında yerel bildirim gönderir.
 *   **💫 iPhone Stili Şarj Animasyonu:**
     *   Şarj kablosu takıldığında ekranın ortasında beliren, anlık şarj yüzdesini gösteren şık bir geçiş animasyonu (Ayarlar panelinden açılıp kapatılabilir).
+*   **🌀 Fan Hızı ve Geçmişi Takibi (Fan Status):**
+    *   SMC (System Management Controller) üzerinden cihazın anlık fan devrini (RPM) okuma.
+    *   Fanı olan cihazlarda son 1 saatlik fan hız değişim grafiği (Sparkline chart).
+    *   MacBook Air gibi fansız (fanless) cihazlarda alternatif şık bilgilendirme paneli.
 *   **🚀 Kolay Erişim & Otomatik Başlatma:**
     *   Girişte otomatik açılma (Launch at Login) seçeneği.
     *   Gelişmiş koyu/açık mod uyumlu dinamik renk paleti.
@@ -68,6 +72,7 @@ Eğer uygulamayı terminalden yönetmek isterseniz:
 
 *   `Sources/MacWakeApp.swift`: Uygulama yaşam döngüsü, menü bar entegrasyonu ve tekil örnek kontrolü.
 *   `Sources/BatteryTracker.swift`: Güç durumu takibi (IOKit & IOPS), oturum verilerinin depolanması ve bildirim mantığı.
+*   `Sources/SMCHelper.swift`: SMC (System Management Controller) donanım verilerini ve fan hızlarını doğrudan okuma modülü.
 *   `Sources/MacWakeMenuView.swift`: Menü bar tıklandığında açılan ana arayüz bileşenleri ve zaman tüneli grafiği.
 *   `Sources/WidgetWindow.swift`: Masaüstündeki yüzen widget penceresi, sürükleme mantığı ve dairesel gösterge.
 *   `Sources/ChargingAnimation.swift`: Şarj kablosu takıldığında beliren tam ekran animasyon katmanı.

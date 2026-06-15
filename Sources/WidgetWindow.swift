@@ -116,6 +116,18 @@ struct WidgetView: View {
                                 .fontWeight(.semibold)
                                 .foregroundColor(.primary)
                         }
+
+                        if tracker.hasFans {
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text("FAN")
+                                    .font(.system(.caption2, design: .rounded))
+                                    .foregroundColor(.secondary)
+                                Text(tracker.currentFanSpeed.map { String(format: "%.0f RPM", $0) } ?? "0")
+                                    .font(.system(.footnote, design: .rounded))
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.primary)
+                            }
+                        }
                     }
                 }
             }

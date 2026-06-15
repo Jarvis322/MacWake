@@ -26,6 +26,9 @@ class BatteryTracker: ObservableObject {
     @Published var batteryTemperature: Double = 0.0
     @Published var adapterHistory: [PowerAdapterRecord] = []
     @Published var notificationStatus: UNAuthorizationStatus = .notDetermined
+    @Published var fanSpeedHistory: [FanSpeedSample] = []
+    @Published var currentFanSpeed: Double? = nil
+    @Published var hasFans: Bool = false
     
     @Published var showWidget: Bool = false {
         didSet {
@@ -60,6 +63,12 @@ class BatteryTracker: ObservableObject {
     private var menuBarAnimationIndex = 0
     
     // Structs for state serialization
+    struct FanSpeedSample: Codable, Identifiable {
+        var id = UUID()
+        var timestamp: Date
+        var rpm: Double
+    }
+
     struct Event: Codable, Identifiable {
         var id = UUID()
         var timestamp: Date
@@ -188,6 +197,7 @@ class BatteryTracker: ObservableObject {
         var batterySamples: [BatterySample]?
         var adapterHistory: [PowerAdapterRecord]?
         var lastRapidDrainAlert: Date?
+        var fanSpeedHistory: [FanSpeedSample]?
     }
 
     private var dataURL: URL {
@@ -209,9 +219,34 @@ class BatteryTracker: ObservableObject {
         initializePowerStatus()
         updatePowerAdapterDetails()
         recordBatterySample(level: currentBatteryLevel, timestamp: Date())
+        updateFanSpeed()
         
         // Setup desktop widget manager
         WidgetManager.shared.setup(with: self)
+    }
+
+    private func updateFanSpeed() {
+        let fanCount = SMCHelper.getFanCount()
+        self.hasFans = fanCount > 0
+        
+        if fanCount > 0 {
+            if let rpm = SMCHelper.getFanSpeed(fanIndex: 0) {
+                self.currentFanSpeed = rpm
+                
+                let now = Date()
+                if fanSpeedHistory.isEmpty || now.timeIntervalSince(fanSpeedHistory.last!.timestamp) >= 30 {
+                    fanSpeedHistory.append(FanSpeedSample(timestamp: now, rpm: rpm))
+                    
+                    if fanSpeedHistory.count > 120 {
+                        fanSpeedHistory.removeFirst()
+                    }
+                }
+            } else {
+                self.currentFanSpeed = nil
+            }
+        } else {
+            self.currentFanSpeed = nil
+        }
     }
     
     private func initializePowerStatus() {
@@ -289,6 +324,7 @@ class BatteryTracker: ObservableObject {
                 self.batterySamples = persisted.batterySamples ?? []
                 self.adapterHistory = persisted.adapterHistory ?? []
                 self.lastRapidDrainAlert = persisted.lastRapidDrainAlert
+                self.fanSpeedHistory = persisted.fanSpeedHistory ?? []
                 
                 // Recovery Check: If there is an active session, check if we rebooted
                 if var session = self.currentSession {
@@ -354,7 +390,8 @@ class BatteryTracker: ObservableObject {
             lastHeartbeat: Date(),
             batterySamples: batterySamples,
             adapterHistory: adapterHistory,
-            lastRapidDrainAlert: lastRapidDrainAlert
+            lastRapidDrainAlert: lastRapidDrainAlert,
+            fanSpeedHistory: fanSpeedHistory
         )
         do {
             let encoder = JSONEncoder()
@@ -826,6 +863,8 @@ class BatteryTracker: ObservableObject {
                 self.currentSession = session
             }
         }
+
+        updateFanSpeed()
         
         saveData()
     }
