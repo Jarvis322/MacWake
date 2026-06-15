@@ -533,8 +533,11 @@ class BatteryTracker: ObservableObject {
             }
             
             // Read Battery Health
-            if let rawMax = dict["AppleRawMaxCapacity"] as? Int,
+            if let nominalMax = dict["NominalChargeCapacity"] as? Int,
                let design = dict["DesignCapacity"] as? Int, design > 0 {
+                batteryHealth = min(100, nominalMax * 100 / design)
+            } else if let rawMax = dict["AppleRawMaxCapacity"] as? Int,
+                      let design = dict["DesignCapacity"] as? Int, design > 0 {
                 batteryHealth = min(100, rawMax * 100 / design)
             } else if let maxCap = dict["MaxCapacity"] as? Int {
                 batteryHealth = maxCap
