@@ -88,5 +88,6 @@ fi
 
 echo "=== Copying to /Applications ==="
 cp -R "${APP_DIR}" /Applications/
+rm -rf "${APP_DIR}"
 
 echo "=== Successfully built and installed MacWake to /Applications/MacWake.app ==="
