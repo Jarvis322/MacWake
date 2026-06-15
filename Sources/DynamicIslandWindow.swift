@@ -55,7 +55,6 @@ struct DynamicIslandPanelView: View {
                         RoundedRectangle(cornerRadius: 32, style: .continuous)
                             .stroke(Color.white.opacity(0.1), lineWidth: 1)
                     )
-                    .shadow(color: .black.opacity(0.5), radius: 30, y: 15)
                     .frame(height: panelHeight)
                     .transition(.asymmetric(
                         insertion: .opacity.combined(with: .scale(scale: 0.95, anchor: .top)),
@@ -99,9 +98,11 @@ struct DynamicIslandPanelView: View {
         .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isPressed)
         .onHover { isHovered in
             self.hoverState = isHovered
-            if isHovered && sm.state == .compact {
+        }
+        .onTapGesture {
+            if sm.state == .compact {
                 sm.show(.expanded)
-            } else if !isHovered && sm.state == .expanded {
+            } else if sm.state == .expanded {
                 sm.show(.compact)
             }
         }
@@ -143,24 +144,10 @@ struct DynamicIslandPanelView: View {
                     .padding(.vertical, 4)
                     .background(Color.white.opacity(0.15))
                     .cornerRadius(12)
-
-                    HStack(spacing: 6) {
-                        Image(systemName: "tray.fill")
-                            .font(.system(size: 11, weight: .bold))
-                        Text("Tray")
-                            .font(.system(size: 13, weight: .bold, design: .rounded))
-                    }
-                    .foregroundColor(.white.opacity(0.6))
                 }
                 .padding(.leading, 16)
                 
                 Spacer()
-                
-                // Right settings icon
-                Image(systemName: "gearshape.fill")
-                    .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.6))
-                    .padding(.trailing, 16)
             } else {
                 // Compact View inside notch
                 Spacer()
@@ -235,19 +222,20 @@ struct DynamicIslandPanelView: View {
                 
                 // Controls row (like media controls)
                 HStack(spacing: 16) {
-                    miniControlBtn(icon: "bolt.fill", isActive: tracker.isPluggedIn)
-                    miniControlBtn(icon: "hare.fill", isActive: tracker.currentBatteryLevel > 20)
-                    miniControlBtn(icon: "leaf.fill", isActive: !tracker.isPluggedIn)
+                    miniControlBtn(icon: "bolt.fill", isActive: tracker.isPluggedIn, tooltip: "Güç Kaynağı Durumu")
+                    miniControlBtn(icon: "hare.fill", isActive: tracker.currentBatteryLevel > 20, tooltip: "Performans Modu")
+                    miniControlBtn(icon: "leaf.fill", isActive: !tracker.isPluggedIn, tooltip: "Enerji Tasarrufu")
                 }
                 .padding(.top, 4)
             }
         }
     }
 
-    private func miniControlBtn(icon: String, isActive: Bool) -> some View {
+    private func miniControlBtn(icon: String, isActive: Bool, tooltip: String) -> some View {
         Image(systemName: icon)
             .font(.system(size: 14))
             .foregroundColor(isActive ? .white : .white.opacity(0.3))
+            .help(tooltip)
     }
 
     // MARK: - Right Widget (Calendar / Stats style)
