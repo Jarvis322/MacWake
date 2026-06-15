@@ -171,6 +171,17 @@ struct MacWakeMenuView: View {
             }
             .toggleStyle(SwitchToggleStyle())
             
+            Toggle(isOn: $tracker.enableDynamicIsland) {
+                HStack(spacing: 4) {
+                    Text("Dynamic Island Overlay")
+                        .font(.subheadline)
+                    Image(systemName: "oval.portrait.tophalf.filled")
+                        .font(.caption)
+                        .foregroundColor(.indigo)
+                }
+            }
+            .toggleStyle(SwitchToggleStyle())
+            
             HStack(spacing: 12) {
                 Button(action: {
                     tracker.resetCurrentSession()

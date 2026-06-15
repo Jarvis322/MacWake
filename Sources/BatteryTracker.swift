@@ -58,6 +58,12 @@ class BatteryTracker: ObservableObject {
             }
         }
     }
+    @Published var enableDynamicIsland: Bool = true {
+        didSet {
+            UserDefaults.standard.set(enableDynamicIsland, forKey: "enableDynamicIsland")
+            DynamicIslandManager.shared.updateSettings(enabled: enableDynamicIsland)
+        }
+    }
     @Published var animatedMenuBarIcon: String = "battery.100.bolt"
     @Published var usbPortInfo: String?
     
@@ -240,6 +246,9 @@ class BatteryTracker: ObservableObject {
         
         // Setup desktop widget manager
         WidgetManager.shared.setup(with: self)
+        
+        // Setup Dynamic Island manager
+        DynamicIslandManager.shared.setup(with: self)
     }
 
     private func updateFanSpeed() {
@@ -322,6 +331,11 @@ class BatteryTracker: ObservableObject {
             self.enableAnimations = UserDefaults.standard.bool(forKey: "enableAnimations")
         } else {
             self.enableAnimations = true
+        }
+        if UserDefaults.standard.object(forKey: "enableDynamicIsland") != nil {
+            self.enableDynamicIsland = UserDefaults.standard.bool(forKey: "enableDynamicIsland")
+        } else {
+            self.enableDynamicIsland = true
         }
         
         let home = FileManager.default.homeDirectoryForCurrentUser
@@ -485,6 +499,7 @@ class BatteryTracker: ObservableObject {
             
             // Handle animations on power state change
             if plugged {
+                DynamicIslandManager.shared.trigger(type: .charging)
                 if enableAnimations {
                     ChargingAnimationManager.shared.show(batteryLevel: level)
                     startMenuBarAnimation()
@@ -620,6 +635,13 @@ class BatteryTracker: ObservableObject {
     private func checkTemperatureAlert() {
         let temp = self.batteryTemperature
         if temp > 38.0 && (isPluggedIn || isACPowerConnected()) {
+            if !highTempAlert {
+                DynamicIslandManager.shared.trigger(type: .alert(
+                    title: "Yüksek Pil Sıcaklığı",
+                    message: String(format: "Pil sıcaklığı %.1f°C seviyesine ulaştı.", temp),
+                    isWarning: false
+                ))
+            }
             highTempAlert = true
             let now = Date()
             if lastTemperatureAlertSent == nil || now.timeIntervalSince(lastTemperatureAlertSent!) > 7200 {
@@ -642,6 +664,13 @@ class BatteryTracker: ObservableObject {
         
         let duration = Date().timeIntervalSince(startTime)
         if duration >= 86400.0 && currentBatteryLevel >= 99 {
+            if !continuousACAlert {
+                DynamicIslandManager.shared.trigger(type: .alert(
+                    title: "Sürekli Prizde Kullanım",
+                    message: "Mac'iniz 24 saattir prizde. Pili deşarj edin.",
+                    isWarning: true
+                ))
+            }
             continuousACAlert = true
             let now = Date()
             if lastContinuousACAlertSent == nil || now.timeIntervalSince(lastContinuousACAlertSent!) > 86400 {
