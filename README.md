@@ -16,12 +16,15 @@
     *   Kilitlenebilir ve masaüstünde istenilen yere konumlandırılabilir yüzen widget.
     *   Apple tarzı dairesel pil seviyesi göstergesi.
     *   Anlık batarya sıcaklığı ve döngü sayısı (Cycle Count) takibi.
-*   **🔌 Akıllı Güç Adaptörü Analizi:**
-    *   Bağlı adaptörün anlık (dinamik) ve nominal gücünü (Watt) izleme.
+*   **🔌 Akıllı Güç Adaptörü Analizi & Hibrit Algoritma:**
+    *   **⚡️ Hibrit Güç Tüketimi:** Root (`sudo`) iznine ihtiyaç duymadan cihazın doğrudan adaptörden çektiği toplam ana gücü (`SystemPowerIn`) ve pildeyken harcadığı gücü (`InstantAmperage`) kusursuz birleştirerek menü çubuğunda anlık (dinamik) Watt tüketimini yansıtır.
+    *   Bağlı adaptörün nominal gücünü (Örn: 30W) ve gerçek şarj durumunu izleme.
     *   Apple Orijinal adaptör doğrulaması (MFI Check).
     *   Kullanılan port tespiti (MagSafe, USB-C veya Thunderbolt).
     *   Düşük verimli şarj durumlarında **Yavaş Şarj Uyarısı** (Slow Charging Alert).
     *   Kullanılan tüm şarj cihazlarının geçmiş kaydı ve kullanım sayıları (Adapter History).
+*   **🔋 macOS 15 İyileştirilmiş Şarj Sınırı Uyumluluğu:**
+    *   macOS'in arka plandaki `powerd` servisinden aktif şarj sınırlarını okur (Örn: %80 Limiti) ve batarya o limite ulaştığında bile sistemin tükettiği anlık W değerini göstermeye devam eder.
 *   **⏰ Hızlı Deşarj Bildirimleri (Fast Battery Drain):**
     *   Pildeyken son 10 dakika içindeki ani pil düşüşlerini (örn: %5 ve üzeri) algılayarak anında yerel bildirim gönderir.
 *   **💫 iPhone Stili Şarj Animasyonu:**
