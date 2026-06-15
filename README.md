@@ -2,6 +2,8 @@
 
 **MacWake**, macOS için tasarlanmış, detaylı pil sağlığı, kullanım analizi ve şarj alışkanlıklarını takip eden şık bir menü bar ve masaüstü widget uygulamasıdır. Swift ve SwiftUI kullanılarak, macOS'in modern tasarım çizgilerine (glassmorphism, vibrant efektler) sadık kalınarak geliştirilmiştir.
 
+![MacWake Ekran Görüntüsü](Screenshots/preview.png)
+
 ---
 
 ## ✨ Özellikler
