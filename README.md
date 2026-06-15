@@ -23,7 +23,7 @@
     *   Kullanılan port tespiti (MagSafe, USB-C veya Thunderbolt).
     *   Düşük verimli şarj durumlarında **Yavaş Şarj Uyarısı** (Slow Charging Alert).
     *   Kullanılan tüm şarj cihazlarının geçmiş kaydı ve kullanım sayıları (Adapter History).
-*   **🔋 macOS 15 İyileştirilmiş Şarj Sınırı Uyumluluğu:**
+*   **🔋 macOS İyileştirilmiş Şarj Sınırı Uyumluluğu:**
     *   macOS'in arka plandaki `powerd` servisinden aktif şarj sınırlarını okur (Örn: %80 Limiti) ve batarya o limite ulaştığında bile sistemin tükettiği anlık W değerini göstermeye devam eder.
 *   **⏰ Hızlı Deşarj Bildirimleri (Fast Battery Drain):**
     *   Pildeyken son 10 dakika içindeki ani pil düşüşlerini (örn: %5 ve üzeri) algılayarak anında yerel bildirim gönderir.
