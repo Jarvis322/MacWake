@@ -617,12 +617,26 @@ class BatteryTracker: ObservableObject {
             }
             
             // Calculate dynamic watts whether plugged in or not
-            if let amperage = dict["InstantAmperage"] as? Int,
-               let voltage = dict["Voltage"] as? Int {
-                // InstantAmperage is in mA, Voltage in mV. Multiply and divide by 1,000,000 to get Watts.
-                // It's positive when charging, negative when discharging. We use abs() to get the absolute wattage.
-                let watts = Double(abs(amperage)) * Double(voltage) / 1000000.0
-                wattsVal = watts
+            var calculatedWatts: Double = 0
+            
+            // 1. Try to get total system power in (Adapter draw)
+            if let telemetry = dict["PowerTelemetryData"] as? [String: Any],
+               let systemPowerIn = telemetry["SystemPowerIn"] as? NSNumber {
+                calculatedWatts = systemPowerIn.doubleValue / 1000.0
+            }
+            
+            // 2. If Adapter draw is near 0 (e.g., unplugged, or system cut off adapter power to discharge), 
+            // fallback to battery discharge/charge rate
+            if calculatedWatts < 1.0 {
+                if let amperage = dict["InstantAmperage"] as? NSNumber,
+                   let voltage = dict["Voltage"] as? NSNumber {
+                    let watts = abs(amperage.doubleValue) * voltage.doubleValue / 1000000.0
+                    calculatedWatts = max(calculatedWatts, watts)
+                }
+            }
+            
+            if calculatedWatts > 0 {
+                wattsVal = calculatedWatts
             }
         }
         
