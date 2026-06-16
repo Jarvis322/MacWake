@@ -1271,24 +1271,23 @@ extension BatteryTracker {
     }
 
     var menuBarText: String {
-        // Always try to show dynamic watts (works for charging and discharging)
-        if let dyn = dynamicWatts {
-            return String(format: "%.1fW", dyn)
-        } else if isPluggedIn, let watts = powerAdapterWatts {
-            // Fallback to static adapter power if plugged in but no dynamic watts
-            return "\(watts)W"
-        }
-        
-        // If not plugged in and no session/active status, just show percentage
-        if let session = currentSession, !isPluggedIn {
-            let delta = appState == "active" ? Date().timeIntervalSince(lastStateChange) : 0
-            let total = session.screenOnDuration + delta
-            let hours = Int(total) / 3600
-            let minutes = (Int(total) % 3600) / 60
-            if hours > 0 {
-                return "\(hours)h \(minutes)m"
-            } else {
-                return "\(minutes)m"
+        if isPluggedIn {
+            if let dyn = dynamicWatts {
+                return String(format: "%.1fW", dyn)
+            } else if let watts = powerAdapterWatts {
+                return "\(watts)W"
+            }
+        } else {
+            if let session = currentSession {
+                let delta = appState == "active" ? Date().timeIntervalSince(lastStateChange) : 0
+                let total = session.screenOnDuration + delta
+                let hours = Int(total) / 3600
+                let minutes = (Int(total) % 3600) / 60
+                if hours > 0 {
+                    return "\(hours)h \(minutes)m"
+                } else {
+                    return "\(minutes)m"
+                }
             }
         }
         return ""
