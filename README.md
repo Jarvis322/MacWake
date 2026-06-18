@@ -10,7 +10,7 @@
 
 ## 🖥️ Dynamic Island & Menu Bar
 
-A NotchNook / NotchDrop-style **Dynamic Island** lives in the notch: it stays
+A **Dynamic Island** lives in the notch: it stays
 collapsed and blends with the hardware, expands on hover or click with a bouncy
 spring, and gives haptic feedback. It surfaces live power, battery health, and
 system temperatures (CPU / SSD, plus GPU where the chip exposes it), alongside
@@ -33,7 +33,7 @@ The **menu bar** shows real-time power draw and CPU temperature at a glance
 ## ✨ Features
 
 *   **🏝️ Dynamic Island (Notch UI):**
-    *   NotchNook / NotchDrop-style panel that hugs the physical notch and blends with the hardware when collapsed.
+    *   Panel that hugs the physical notch and blends with the hardware when collapsed.
     *   Hover or click to expand with a bouncy spring animation and haptic feedback.
     *   At-a-glance power, battery health, and system temperatures, plus quick toggles (widget, reset, animations, notifications).
 *   **🌡️ System Temperatures (Apple Silicon):**
