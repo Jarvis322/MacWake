@@ -117,9 +117,14 @@ struct MacWakeMenuView: View {
     private var hardwareTabContent: some View {
         VStack(alignment: .leading, spacing: 11) {
             batteryHealthSection
-            
+
+            if tracker.cpuTemperature != nil || tracker.gpuTemperature != nil || tracker.ssdTemperature != nil {
+                Divider()
+                systemTemperaturesSection
+            }
+
             Divider()
-            
+
             batteryHealthDecaySection
             
             Divider()
@@ -477,6 +482,33 @@ struct MacWakeMenuView: View {
                 )
             }
         }
+    }
+
+    // MARK: - System Temperatures (Apple Silicon sensors)
+    private var systemTemperaturesSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("SYSTEM TEMPERATURES")
+                .font(.caption2)
+                .fontWeight(.bold)
+                .foregroundColor(.secondary)
+
+            HStack(spacing: 8) {
+                systemTempCard(title: "CPU", value: tracker.cpuTemperature)
+                systemTempCard(title: "GPU", value: tracker.gpuTemperature)
+                systemTempCard(title: "SSD", value: tracker.ssdTemperature)
+            }
+        }
+    }
+
+    private func systemTempCard(title: String, value: Double?) -> some View {
+        let color: Color = value.map { $0 > 85 ? .red : ($0 > 65 ? orangeColor : blueColor) } ?? .secondary
+        let subtitle: String = value.map { $0 > 85 ? "Hot" : ($0 > 65 ? "Warm" : "Normal") } ?? "Unavailable"
+        return statCard(
+            title: title,
+            value: value.map { String(format: "%.0f°C", $0) } ?? "N/A",
+            subtitle: subtitle,
+            color: color
+        )
     }
 
     // MARK: - Fan Status
