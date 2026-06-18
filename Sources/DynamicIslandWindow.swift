@@ -458,7 +458,14 @@ class DynamicIslandManager {
         let x = sf.minX + (sf.width - w) / 2
         let y = sf.maxY - h
 
-        win.setFrame(NSRect(x: x, y: y, width: w, height: h), display: true)
+        let targetFrame = NSRect(x: x, y: y, width: w, height: h)
+        win.setFrame(targetFrame, display: true)
+
+        // If mouse is already inside the panel area when the window is placed,
+        // mouseEntered never fires — trigger hover check manually.
+        if targetFrame.contains(NSEvent.mouseLocation) {
+            hoverDidEnter()
+        }
 
         if let cv = win.contentView {
             cv.trackingAreas.forEach { cv.removeTrackingArea($0) }
