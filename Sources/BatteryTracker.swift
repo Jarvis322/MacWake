@@ -24,6 +24,7 @@ class BatteryTracker: ObservableObject {
     @Published var batteryHealth: Int = 100
     @Published var batteryCycles: Int = 0
     @Published var batteryTemperature: Double = 0.0
+    @Published var temperatureSamples: [Double] = []
     @Published var adapterHistory: [PowerAdapterRecord] = []
     @Published var notificationStatus: UNAuthorizationStatus = .notDetermined
     @Published var fanSpeedHistory: [FanSpeedSample] = []
@@ -597,7 +598,13 @@ class BatteryTracker: ObservableObject {
         if result == kIOReturnSuccess, let dict = properties?.takeRetainedValue() as? [String: Any] {
             // Read Temperature (divided by 100.0)
             if let tempRaw = dict["Temperature"] as? Int {
-                batteryTemperature = Double(tempRaw) / 100.0
+                let temp = Double(tempRaw) / 100.0
+                batteryTemperature = temp
+                // append sample
+                temperatureSamples.append(temp)
+                if temperatureSamples.count > 5 {
+                    temperatureSamples.removeFirst()
+                }
             }
             
             // Read CycleCount
