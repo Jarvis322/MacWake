@@ -16,12 +16,21 @@ class DynamicIslandStateManager: ObservableObject {
     static let shared = DynamicIslandStateManager()
     @Published private(set) var state: DynamicIslandState = .compact
 
+    // Physical notch dimensions (set by the manager from the active screen)
+    @Published var notchWidth: CGFloat = 200
+    @Published var notchHeight: CGFloat = 32
+
+    // NotchDrop's signature spring — bouncy, organic open/close.
+    static let springAnimation: Animation = .interactiveSpring(
+        duration: 0.5, extraBounce: 0.25, blendDuration: 0.125
+    )
+
     func show(_ newState: DynamicIslandState, autoDismissAfter seconds: TimeInterval? = nil) {
-        withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) { state = newState }
+        withAnimation(Self.springAnimation) { state = newState }
         guard let seconds else { return }
         DispatchQueue.main.asyncAfter(deadline: .now() + seconds) { [weak self] in
             guard let self, self.state == newState else { return }
-            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) { self.state = .compact }
+            withAnimation(Self.springAnimation) { self.state = .compact }
         }
     }
 
@@ -33,136 +42,132 @@ class DynamicIslandStateManager: ObservableObject {
     }
 }
 
-// MARK: - TrackingHostingView
-final class TrackingHostingView<Content: View>: NSHostingView<Content> {
-    override func mouseEntered(with event: NSEvent) {
-        // NSHostingView is flipped (y=0 at top). The compact pill is at the visual top:
-        // x=190-390, y=0-36 in flipped view coords.
-        let loc = convert(event.locationInWindow, from: nil)
-        let pillArea = CGRect(x: (bounds.width - 200) / 2, y: 0, width: 200, height: 36)
-        let state = DynamicIslandStateManager.shared.state
-        guard state != .compact || pillArea.contains(loc) else { return }
-        DynamicIslandManager.shared.hoverDidEnter()
+// MARK: - Screen notch detection
+extension NSScreen {
+    /// Physical notch size, or .zero on non-notch displays. (NotchDrop technique)
+    var miNotchSize: CGSize {
+        guard safeAreaInsets.top > 0 else { return .zero }
+        let h = safeAreaInsets.top
+        let left = auxiliaryTopLeftArea?.width ?? 0
+        let right = auxiliaryTopRightArea?.width ?? 0
+        guard left > 0, right > 0 else { return .zero }
+        return CGSize(width: frame.width - left - right, height: h)
     }
-    override func mouseExited(with event: NSEvent) {
-        DynamicIslandManager.shared.hoverDidExit()
-    }
-    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 }
 
-// MARK: - Panel View
+// MARK: - Panel View (NotchDrop-style)
 struct DynamicIslandPanelView: View {
     @ObservedObject var tracker: BatteryTracker
     @ObservedObject private var sm = DynamicIslandStateManager.shared
 
-    private var isExpanded: Bool {
-        switch sm.state {
-        case .compact: return false
-        default: return true
-        }
+    private let openedSize = CGSize(width: 580, height: 232)
+    private let flareSpacing: CGFloat = 16   // size of the concave top-corner flare
+
+    private var isOpened: Bool { sm.state != .compact }
+
+    // The black body size: device-notch sized when closed, panel sized when opened.
+    private var notchSize: CGSize {
+        if isOpened { return openedSize }
+        return CGSize(
+            width: max(sm.notchWidth - 4, 0),
+            height: max(sm.notchHeight - 4, 0)
+        )
     }
+
+    private var cornerRadius: CGFloat { isOpened ? 32 : 8 }
 
     var body: some View {
-        // Panel is always 580×220. The visible shape morphs via SwiftUI spring —
-        // no NSWindow frame animation needed, giving a true NotchNook-style liquid expand.
         ZStack(alignment: .top) {
-            // Single continuous shape that morphs: compact pill → full panel
-            RoundedRectangle(cornerRadius: blobRadius, style: .continuous)
-                .fill(Color.black.opacity(0.88))
-                .background(
-                    RoundedRectangle(cornerRadius: blobRadius, style: .continuous)
-                        .fill(.ultraThinMaterial)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: blobRadius, style: .continuous)
-                        .stroke(Color.white.opacity(isExpanded ? 0.1 : 0), lineWidth: 1)
-                )
-                .frame(width: blobWidth, height: blobHeight)
+            notch
+                .zIndex(0)
 
-            VStack(spacing: 0) {
-                topBar
-                    .frame(height: 36)
-                    .padding(.top, 2)
-
-                if sm.state == .expanded {
-                    expandedContent
-                        .padding(.top, 8)
-                        .padding(.horizontal, 20)
-                        .transition(.move(edge: .top).combined(with: .opacity))
-                } else if sm.state == .charging {
-                    chargingContent
-                        .padding(.top, 12)
-                        .padding(.horizontal, 20)
-                        .transition(.move(edge: .top).combined(with: .opacity))
-                } else if case let .alert(t, m, w) = sm.state {
-                    alertContent(title: t, message: m, isWarning: w)
-                        .padding(.top, 12)
-                        .padding(.horizontal, 20)
-                        .transition(.move(edge: .top).combined(with: .opacity))
-                }
+            if isOpened {
+                openedContent
+                    .frame(width: openedSize.width, height: openedSize.height, alignment: .top)
+                    .zIndex(1)
+                    .transition(
+                        .scale.combined(with: .opacity)
+                            .combined(with: .offset(y: -openedSize.height / 2))
+                            .animation(DynamicIslandStateManager.springAnimation)
+                    )
             }
-            .frame(width: blobWidth)
         }
-        // Fill the fixed 580×220 NSPanel, content anchored at top
-        .frame(width: 580, height: 220, alignment: .top)
         .monospacedDigit()
-        .animation(.spring(response: 0.38, dampingFraction: 0.72), value: sm.state)
+        .preferredColorScheme(.dark)
+        .animation(DynamicIslandStateManager.springAnimation, value: sm.state)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
-    // Blob geometry — all morphed by SwiftUI spring, NSPanel never resizes
-    private var blobWidth: CGFloat {
-        switch sm.state {
-        case .compact: return 200
-        default: return 580
-        }
+    // MARK: - The notch body (black shape with concave top corners)
+    private var notch: some View {
+        Rectangle()
+            .foregroundStyle(.black)
+            .mask(notchMask)
+            .frame(
+                width: notchSize.width + cornerRadius * 2,
+                height: notchSize.height
+            )
+            .shadow(color: .black.opacity(isOpened ? 0.9 : 0), radius: 16)
     }
 
-    private var blobHeight: CGFloat {
-        switch sm.state {
-        case .compact: return 36
-        case .charging, .alert: return 120
-        case .expanded: return 220
-        }
+    /// NotchDrop's mask: a bottom-rounded rectangle, with the two top corners carved into
+    /// concave curves via `blendMode(.destinationOut)` so the body flares into the bezel.
+    private var notchMask: some View {
+        let r = cornerRadius
+        let s = flareSpacing
+        return Rectangle()
+            .foregroundStyle(.black)
+            .frame(width: notchSize.width, height: notchSize.height)
+            .clipShape(.rect(bottomLeadingRadius: r, bottomTrailingRadius: r))
+            .overlay {
+                // Top-left concave flare
+                ZStack(alignment: .topTrailing) {
+                    Rectangle()
+                        .frame(width: r, height: r)
+                        .foregroundStyle(.black)
+                    Rectangle()
+                        .clipShape(.rect(topTrailingRadius: r))
+                        .foregroundStyle(.white)
+                        .frame(width: r + s, height: r + s)
+                        .blendMode(.destinationOut)
+                }
+                .compositingGroup()
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .offset(x: -r - s + 0.5, y: -0.5)
+            }
+            .overlay {
+                // Top-right concave flare
+                ZStack(alignment: .topLeading) {
+                    Rectangle()
+                        .frame(width: r, height: r)
+                        .foregroundStyle(.black)
+                    Rectangle()
+                        .clipShape(.rect(topLeadingRadius: r))
+                        .foregroundStyle(.white)
+                        .frame(width: r + s, height: r + s)
+                        .blendMode(.destinationOut)
+                }
+                .compositingGroup()
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                .offset(x: r + s - 0.5, y: -0.5)
+            }
     }
 
-    private var blobRadius: CGFloat {
-        sm.state == .compact ? 20 : 32
-    }
-
-    // MARK: - Top Bar
-    private var topBar: some View {
-        HStack {
+    // MARK: - Opened content (battery panel), pushed clear of the physical notch
+    private var openedContent: some View {
+        Group {
             if sm.state == .expanded {
-                HStack(spacing: 16) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "bolt.fill")
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundColor(tracker.isPluggedIn ? .blue : batteryColor)
-                        Text("Power")
-                            .font(.system(size: 13, weight: .bold))
-                            .foregroundColor(.white)
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 4)
-                    .background(Color.white.opacity(0.15))
-                    .cornerRadius(12)
-                }
-                .padding(.leading, 16)
-
-                Spacer()
-            } else {
-                Spacer()
-                HStack(spacing: 6) {
-                    Image(systemName: tracker.isPluggedIn ? "bolt.fill" : "battery.75")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(tracker.isPluggedIn ? .blue : batteryColor)
-                    Text("\(tracker.currentBatteryLevel)%")
-                        .font(.system(size: 11, weight: .bold))
-                        .foregroundColor(.white)
-                }
-                Spacer()
+                expandedContent
+            } else if sm.state == .charging {
+                chargingContent
+            } else if case let .alert(t, m, w) = sm.state {
+                alertContent(title: t, message: m, isWarning: w)
             }
         }
+        .padding(.horizontal, 24)
+        .padding(.top, sm.notchHeight + 8)   // clear the camera/notch headline
+        .padding(.bottom, 18)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
     // MARK: - Expanded Content (two-column)
@@ -360,46 +365,59 @@ struct DynamicIslandPanelView: View {
     }
 }
 
-// MARK: - Window Manager
+// MARK: - Window Manager (NotchDrop-style)
 @MainActor
 class DynamicIslandManager {
     static let shared = DynamicIslandManager()
+
+    // The window is a fixed full-width strip across the top; the SwiftUI content
+    // morphs the notch shape. Height comfortably fits the opened panel.
+    private let stripHeight: CGFloat = 260
+    private let openedSize = CGSize(width: 580, height: 232)
+    private let hoverInset: CGFloat = -4   // expands the notch hover target a touch
 
     private var islandWindow: NSPanel?
     private weak var tracker: BatteryTracker?
     private(set) var isEnabled = true
     private var cancellables = Set<AnyCancellable>()
+    private var globalMonitor: Any?
+    private var localMonitor: Any?
     private var expandWorkItem: DispatchWorkItem?
     private var collapseWorkItem: DispatchWorkItem?
+
+    // Hit-test rects in screen coordinates.
+    private var deviceNotchRect: CGRect = .zero
+    private var openedRect: CGRect = .zero
 
     func hoverDidEnter() {
         collapseWorkItem?.cancel()
         collapseWorkItem = nil
         guard DynamicIslandStateManager.shared.state == .compact else { return }
-        let work = DispatchWorkItem { [weak self] in
-            guard self != nil else { return }
+        guard expandWorkItem == nil else { return }
+        let work = DispatchWorkItem {
             Task { @MainActor in
                 guard DynamicIslandStateManager.shared.state == .compact else { return }
                 DynamicIslandStateManager.shared.show(.expanded)
             }
         }
         expandWorkItem = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15, execute: work)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12, execute: work)
     }
 
     func hoverDidExit() {
         expandWorkItem?.cancel()
         expandWorkItem = nil
+        // Only auto-close the user-opened panel; charging/alert dismiss on their own timer.
         guard DynamicIslandStateManager.shared.state == .expanded else { return }
-        let work = DispatchWorkItem { [weak self] in
-            guard self != nil else { return }
+        guard collapseWorkItem == nil else { return }
+        let work = DispatchWorkItem {
             Task { @MainActor in
                 guard DynamicIslandStateManager.shared.state == .expanded else { return }
                 DynamicIslandStateManager.shared.show(.compact)
             }
         }
         collapseWorkItem = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.30, execute: work)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25, execute: work)
     }
 
     func setup(with tracker: BatteryTracker) {
@@ -412,61 +430,91 @@ class DynamicIslandManager {
     private func buildWindow(for tracker: BatteryTracker) {
         guard islandWindow == nil else { return }
 
-        islandWindow = NSPanel(
+        let panel = NSPanel(
             contentRect: .zero,
             styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered, defer: false
         )
-        islandWindow?.isReleasedWhenClosed = false
-        islandWindow?.backgroundColor = .clear
-        islandWindow?.isOpaque = false
-        islandWindow?.hasShadow = false
-        islandWindow?.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .ignoresCycle]
-        islandWindow?.level = .popUpMenu
-
-        islandWindow?.contentView = TrackingHostingView(rootView: DynamicIslandPanelView(tracker: tracker))
+        panel.isReleasedWhenClosed = false
+        panel.backgroundColor = .clear
+        panel.isOpaque = false
+        panel.hasShadow = false
+        panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
+        panel.level = .statusBar + 8       // above the menu bar, like NotchDrop
+        panel.ignoresMouseEvents = true    // never block menu-bar clicks; hover via global monitor
+        panel.contentView = NSHostingView(rootView: DynamicIslandPanelView(tracker: tracker))
+        islandWindow = panel
 
         positionWindow()
-        islandWindow?.orderFrontRegardless()
-
-        DynamicIslandStateManager.shared.$state
-            .receive(on: RunLoop.main)
-            .sink { [weak self] state in self?.updateWindowFrame(for: state) }
-            .store(in: &cancellables)
+        panel.orderFrontRegardless()
+        setupMouseMonitors()
 
         NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { [weak self] _ in
             Task { @MainActor in self?.positionWindow() }
         }
     }
 
-    private func positionWindow() {
-        updateWindowFrame(for: DynamicIslandStateManager.shared.state)
+    private func setupMouseMonitors() {
+        if globalMonitor == nil {
+            globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved]) { [weak self] _ in
+                Task { @MainActor in self?.handleMouseMoved() }
+            }
+        }
+        if localMonitor == nil {
+            localMonitor = NSEvent.addLocalMonitorForEvents(matching: [.mouseMoved]) { [weak self] event in
+                Task { @MainActor in self?.handleMouseMoved() }
+                return event
+            }
+        }
     }
 
-    private func updateWindowFrame(for state: DynamicIslandState) {
+    private func handleMouseMoved() {
+        guard isEnabled else { return }
+        let mouse = NSEvent.mouseLocation
+        let state = DynamicIslandStateManager.shared.state
+
+        if state == .compact {
+            if deviceNotchRect.insetBy(dx: hoverInset, dy: hoverInset).contains(mouse) {
+                hoverDidEnter()
+            } else {
+                expandWorkItem?.cancel()
+                expandWorkItem = nil
+            }
+        } else if state == .expanded {
+            if openedRect.contains(mouse) {
+                collapseWorkItem?.cancel()
+                collapseWorkItem = nil
+            } else {
+                hoverDidExit()
+            }
+        }
+    }
+
+    private func positionWindow() {
         guard let screen = NSScreen.main, let win = islandWindow else { return }
         let sf = screen.frame
 
-        // Panel is always 580×220 — SwiftUI spring morphs the visible blob shape.
-        // No NSWindow frame animation; avoids the jerky AppKit resize.
-        let w: CGFloat = 580
-        let h: CGFloat = 220
-        let x = sf.minX + (sf.width - w) / 2
-        let y = sf.maxY - h
+        // Detect the physical notch (falls back to a sensible pill on non-notch Macs).
+        var ns = screen.miNotchSize
+        if ns == .zero { ns = CGSize(width: 180, height: 32) }
+        DynamicIslandStateManager.shared.notchWidth = ns.width
+        DynamicIslandStateManager.shared.notchHeight = ns.height
 
-        let targetFrame = NSRect(x: x, y: y, width: w, height: h)
-        win.setFrame(targetFrame, display: true)
+        // Full-width strip pinned to the very top.
+        let frame = NSRect(x: sf.minX, y: sf.maxY - stripHeight, width: sf.width, height: stripHeight)
+        win.setFrame(frame, display: true)
 
-        if let cv = win.contentView {
-            cv.trackingAreas.forEach { cv.removeTrackingArea($0) }
-            let area = NSTrackingArea(
-                rect: CGRect(origin: .zero, size: CGSize(width: w, height: h)),
-                options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
-                owner: cv,
-                userInfo: nil
-            )
-            cv.addTrackingArea(area)
-        }
+        // Screen-coordinate hit-test rects.
+        deviceNotchRect = CGRect(
+            x: sf.minX + (sf.width - ns.width) / 2,
+            y: sf.maxY - ns.height,
+            width: ns.width, height: ns.height
+        )
+        openedRect = CGRect(
+            x: sf.minX + (sf.width - openedSize.width) / 2,
+            y: sf.maxY - openedSize.height,
+            width: openedSize.width, height: openedSize.height
+        )
     }
 
     func updateSettings(enabled: Bool) {
