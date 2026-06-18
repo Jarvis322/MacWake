@@ -60,7 +60,7 @@ struct DynamicIslandPanelView: View {
     @ObservedObject var tracker: BatteryTracker
     @ObservedObject private var sm = DynamicIslandStateManager.shared
 
-    private let openedSize = CGSize(width: 580, height: 232)
+    private let openedSize = CGSize(width: 580, height: 270)
     private let flareSpacing: CGFloat = 16   // size of the concave top-corner flare
 
     private var isOpened: Bool { sm.state != .compact }
@@ -157,7 +157,10 @@ struct DynamicIslandPanelView: View {
     private var openedContent: some View {
         Group {
             if sm.state == .expanded {
-                expandedContent
+                VStack(spacing: 14) {
+                    expandedContent
+                    controlsRow
+                }
             } else if sm.state == .charging {
                 chargingContent
             } else if case let .alert(t, m, w) = sm.state {
@@ -168,6 +171,58 @@ struct DynamicIslandPanelView: View {
         .padding(.top, sm.notchHeight + 8)   // clear the camera/notch headline
         .padding(.bottom, 18)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    }
+
+    // MARK: - Functional controls (real MacWake actions)
+    private var controlsRow: some View {
+        HStack(spacing: 10) {
+            controlButton(
+                icon: "rectangle.on.rectangle",
+                label: "Widget",
+                active: tracker.showWidget
+            ) { tracker.showWidget.toggle() }
+
+            controlButton(
+                icon: "arrow.counterclockwise",
+                label: "Reset",
+                active: false
+            ) { tracker.resetCurrentSession() }
+
+            controlButton(
+                icon: "sparkles",
+                label: "Animate",
+                active: tracker.enableAnimations
+            ) { tracker.enableAnimations.toggle() }
+
+            controlButton(
+                icon: "bell.fill",
+                label: "Notify",
+                active: tracker.notificationStatus == .authorized
+            ) {
+                if tracker.notificationStatus == .authorized {
+                    tracker.openNotificationSettings()
+                } else {
+                    tracker.requestNotificationAuthorization()
+                }
+            }
+        }
+    }
+
+    private func controlButton(icon: String, label: String, active: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.system(size: 15, weight: .semibold))
+                Text(label)
+                    .font(.system(size: 10, weight: .medium))
+            }
+            .foregroundColor(active ? .black : .white)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 9)
+            .background(active ? Color.white.opacity(0.92) : Color.white.opacity(0.12))
+            .cornerRadius(12)
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Expanded Content (two-column)
@@ -372,8 +427,8 @@ class DynamicIslandManager {
 
     // The window is a fixed full-width strip across the top; the SwiftUI content
     // morphs the notch shape. Height comfortably fits the opened panel.
-    private let stripHeight: CGFloat = 260
-    private let openedSize = CGSize(width: 580, height: 232)
+    private let stripHeight: CGFloat = 300
+    private let openedSize = CGSize(width: 580, height: 270)
     private let hoverInset: CGFloat = -4   // expands the notch hover target a touch
 
     private var islandWindow: NSPanel?
@@ -394,11 +449,8 @@ class DynamicIslandManager {
         collapseWorkItem = nil
         guard DynamicIslandStateManager.shared.state == .compact else { return }
         guard expandWorkItem == nil else { return }
-        let work = DispatchWorkItem {
-            Task { @MainActor in
-                guard DynamicIslandStateManager.shared.state == .compact else { return }
-                DynamicIslandStateManager.shared.show(.expanded)
-            }
+        let work = DispatchWorkItem { [weak self] in
+            Task { @MainActor in self?.openPanel() }
         }
         expandWorkItem = work
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.12, execute: work)
@@ -410,14 +462,30 @@ class DynamicIslandManager {
         // Only auto-close the user-opened panel; charging/alert dismiss on their own timer.
         guard DynamicIslandStateManager.shared.state == .expanded else { return }
         guard collapseWorkItem == nil else { return }
-        let work = DispatchWorkItem {
-            Task { @MainActor in
-                guard DynamicIslandStateManager.shared.state == .expanded else { return }
-                DynamicIslandStateManager.shared.show(.compact)
-            }
+        let work = DispatchWorkItem { [weak self] in
+            Task { @MainActor in self?.closePanel() }
         }
         collapseWorkItem = work
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25, execute: work)
+    }
+
+    // Centralized open/close with NotchDrop-style haptic feedback.
+    private func openPanel() {
+        guard DynamicIslandStateManager.shared.state == .compact else { return }
+        expandWorkItem = nil
+        performHaptic()
+        DynamicIslandStateManager.shared.show(.expanded)
+    }
+
+    private func closePanel() {
+        guard DynamicIslandStateManager.shared.state == .expanded else { return }
+        collapseWorkItem = nil
+        performHaptic()
+        DynamicIslandStateManager.shared.show(.compact)
+    }
+
+    private func performHaptic() {
+        NSHapticFeedbackManager.defaultPerformer.perform(.levelChange, performanceTime: .now)
     }
 
     func setup(with tracker: BatteryTracker) {
@@ -449,6 +517,15 @@ class DynamicIslandManager {
         panel.orderFrontRegardless()
         setupMouseMonitors()
 
+        // Make the panel clickable only while expanded (controls); pass clicks
+        // through to the menu bar otherwise.
+        DynamicIslandStateManager.shared.$state
+            .receive(on: RunLoop.main)
+            .sink { [weak self] state in
+                self?.islandWindow?.ignoresMouseEvents = (state != .expanded)
+            }
+            .store(in: &cancellables)
+
         NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { [weak self] _ in
             Task { @MainActor in self?.positionWindow() }
         }
@@ -456,15 +533,40 @@ class DynamicIslandManager {
 
     private func setupMouseMonitors() {
         if globalMonitor == nil {
-            globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved]) { [weak self] _ in
-                Task { @MainActor in self?.handleMouseMoved() }
+            globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved, .leftMouseDown]) { [weak self] event in
+                Task { @MainActor in
+                    if event.type == .leftMouseDown { self?.handleMouseDown() }
+                    else { self?.handleMouseMoved() }
+                }
             }
         }
         if localMonitor == nil {
-            localMonitor = NSEvent.addLocalMonitorForEvents(matching: [.mouseMoved]) { [weak self] event in
-                Task { @MainActor in self?.handleMouseMoved() }
+            localMonitor = NSEvent.addLocalMonitorForEvents(matching: [.mouseMoved, .leftMouseDown]) { [weak self] event in
+                Task { @MainActor in
+                    if event.type == .leftMouseDown { self?.handleMouseDown() }
+                    else { self?.handleMouseMoved() }
+                }
                 return event
             }
+        }
+    }
+
+    private func handleMouseDown() {
+        guard isEnabled else { return }
+        let mouse = NSEvent.mouseLocation
+        switch DynamicIslandStateManager.shared.state {
+        case .compact:
+            // Click on the notch opens the panel.
+            if deviceNotchRect.insetBy(dx: hoverInset, dy: hoverInset).contains(mouse) {
+                openPanel()
+            }
+        case .expanded:
+            // Click outside the panel closes it; clicks inside fall through to the controls.
+            if !openedRect.contains(mouse) {
+                closePanel()
+            }
+        default:
+            break
         }
     }
 
