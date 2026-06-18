@@ -36,6 +36,14 @@ class DynamicIslandStateManager: ObservableObject {
 // MARK: - TrackingHostingView
 final class TrackingHostingView<Content: View>: NSHostingView<Content> {
     override func mouseEntered(with event: NSEvent) {
+        // View is always 580×220. Compact pill occupies the top-center 200×36.
+        // In NSView coords (y=0 at bottom), pill is at y=184-220, x=190-390.
+        let loc = convert(event.locationInWindow, from: nil)
+        let h = bounds.height > 0 ? bounds.height : 220
+        let pillArea = CGRect(x: (bounds.width - 200) / 2, y: h - 36, width: 200, height: 36)
+        let state = DynamicIslandStateManager.shared.state
+        // In compact mode only trigger if over the visible pill; in other modes always allow.
+        guard state != .compact || pillArea.contains(loc) else { return }
         DynamicIslandManager.shared.hoverDidEnter()
     }
     override func mouseExited(with event: NSEvent) {
@@ -370,16 +378,6 @@ class DynamicIslandManager {
         collapseWorkItem?.cancel()
         collapseWorkItem = nil
         guard DynamicIslandStateManager.shared.state == .compact else { return }
-        // The NSPanel is always 580×220; only expand if mouse is over the compact pill (center 200×36).
-        let mouse = NSEvent.mouseLocation
-        guard let screen = NSScreen.main else { return }
-        let pillRect = CGRect(
-            x: screen.frame.midX - 100,
-            y: screen.frame.maxY - 36,
-            width: 200,
-            height: 36
-        )
-        guard pillRect.contains(mouse) else { return }
         let work = DispatchWorkItem { [weak self] in
             guard self != nil else { return }
             Task { @MainActor in
@@ -460,12 +458,6 @@ class DynamicIslandManager {
 
         let targetFrame = NSRect(x: x, y: y, width: w, height: h)
         win.setFrame(targetFrame, display: true)
-
-        // If mouse is already inside the panel area when the window is placed,
-        // mouseEntered never fires — trigger hover check manually.
-        if targetFrame.contains(NSEvent.mouseLocation) {
-            hoverDidEnter()
-        }
 
         if let cv = win.contentView {
             cv.trackingAreas.forEach { cv.removeTrackingArea($0) }
