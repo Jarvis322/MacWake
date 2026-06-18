@@ -2,7 +2,9 @@
 
 **MacWake** is an elegant menu bar and desktop widget application designed for macOS to track detailed battery health, usage analytics, and charging habits. Built with Swift and SwiftUI, it faithfully embraces modern macOS design guidelines (glassmorphism, vibrant effects).
 
-![MacWake Screenshot](Screenshots/preview.png)
+<p align="center">
+  <img src="Screenshots/menubar-popover.png" alt="MacWake menu bar panel" width="380">
+</p>
 
 ---
 
@@ -18,14 +20,12 @@ quick toggles for the widget, session reset, animations, and notifications.
   <img src="Screenshots/dynamic-island.png" alt="MacWake Dynamic Island" width="760">
 </p>
 
-The **menu bar** shows real-time power draw and CPU temperature at a glance, and
-clicking it opens the full panel — Session, History, Hardware (with system
-temperatures), and Settings.
+The **menu bar** shows real-time power draw and CPU temperature at a glance
+(shown above), and clicking it opens the full panel — Session, History, Hardware
+(with system temperatures), and Settings.
 
 <p align="center">
   <img src="Screenshots/menubar-item.png" alt="MacWake menu bar item" height="26">
-  &nbsp;&nbsp;&nbsp;
-  <img src="Screenshots/menubar-popover.png" alt="MacWake menu bar panel" width="360">
 </p>
 
 ---
