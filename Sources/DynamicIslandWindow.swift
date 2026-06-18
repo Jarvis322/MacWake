@@ -57,28 +57,21 @@ struct DynamicIslandPanelView: View {
     }
 
     var body: some View {
+        // Panel is always 580×220. The visible shape morphs via SwiftUI spring —
+        // no NSWindow frame animation needed, giving a true NotchNook-style liquid expand.
         ZStack(alignment: .top) {
-            if isExpanded {
-                RoundedRectangle(cornerRadius: 32, style: .continuous)
-                    .fill(Color.black.opacity(0.85))
-                    .background(
-                        RoundedRectangle(cornerRadius: 32, style: .continuous)
-                            .fill(.ultraThinMaterial)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 32, style: .continuous)
-                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
-                    )
-                    .frame(height: panelHeight)
-                    .transition(.asymmetric(
-                        insertion: .opacity.combined(with: .scale(scale: 0.95, anchor: .top)),
-                        removal: .opacity.combined(with: .scale(scale: 0.95, anchor: .top))
-                    ))
-            } else {
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(Color.black)
-                    .frame(width: 200, height: 32)
-            }
+            // Single continuous shape that morphs: compact pill → full panel
+            RoundedRectangle(cornerRadius: blobRadius, style: .continuous)
+                .fill(Color.black.opacity(0.88))
+                .background(
+                    RoundedRectangle(cornerRadius: blobRadius, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: blobRadius, style: .continuous)
+                        .stroke(Color.white.opacity(isExpanded ? 0.1 : 0), lineWidth: 1)
+                )
+                .frame(width: blobWidth, height: blobHeight)
 
             VStack(spacing: 0) {
                 topBar
@@ -102,25 +95,32 @@ struct DynamicIslandPanelView: View {
                         .transition(.move(edge: .top).combined(with: .opacity))
                 }
             }
-            .frame(width: panelWidth)
+            .frame(width: blobWidth)
         }
+        // Fill the fixed 580×220 NSPanel, content anchored at top
+        .frame(width: 580, height: 220, alignment: .top)
         .monospacedDigit()
-        .animation(.spring(response: 0.35, dampingFraction: 0.8), value: sm.state)
+        .animation(.spring(response: 0.38, dampingFraction: 0.72), value: sm.state)
     }
 
-    private var panelWidth: CGFloat {
+    // Blob geometry — all morphed by SwiftUI spring, NSPanel never resizes
+    private var blobWidth: CGFloat {
         switch sm.state {
         case .compact: return 200
         default: return 580
         }
     }
 
-    private var panelHeight: CGFloat {
+    private var blobHeight: CGFloat {
         switch sm.state {
         case .compact: return 36
         case .charging, .alert: return 120
         case .expanded: return 220
         }
+    }
+
+    private var blobRadius: CGFloat {
+        sm.state == .compact ? 20 : 32
     }
 
     // MARK: - Top Bar
@@ -370,6 +370,16 @@ class DynamicIslandManager {
         collapseWorkItem?.cancel()
         collapseWorkItem = nil
         guard DynamicIslandStateManager.shared.state == .compact else { return }
+        // The NSPanel is always 580×220; only expand if mouse is over the compact pill (center 200×36).
+        let mouse = NSEvent.mouseLocation
+        guard let screen = NSScreen.main else { return }
+        let pillRect = CGRect(
+            x: screen.frame.midX - 100,
+            y: screen.frame.maxY - 36,
+            width: 200,
+            height: 36
+        )
+        guard pillRect.contains(mouse) else { return }
         let work = DispatchWorkItem { [weak self] in
             guard self != nil else { return }
             Task { @MainActor in
@@ -438,34 +448,27 @@ class DynamicIslandManager {
     }
 
     private func updateWindowFrame(for state: DynamicIslandState) {
-        guard let screen = NSScreen.main else { return }
+        guard let screen = NSScreen.main, let win = islandWindow else { return }
         let sf = screen.frame
 
-        let w: CGFloat
-        let h: CGFloat
-        switch state {
-        case .compact: (w, h) = (200, 36)
-        case .charging, .alert: (w, h) = (580, 120)
-        case .expanded: (w, h) = (580, 220)
-        }
-
+        // Panel is always 580×220 — SwiftUI spring morphs the visible blob shape.
+        // No NSWindow frame animation; avoids the jerky AppKit resize.
+        let w: CGFloat = 580
+        let h: CGFloat = 220
         let x = sf.minX + (sf.width - w) / 2
         let y = sf.maxY - h
 
-        if let win = islandWindow {
-            win.setFrame(NSRect(x: x, y: y, width: w, height: h), display: true, animate: true)
-            if let cv = win.contentView {
-                cv.trackingAreas.forEach { cv.removeTrackingArea($0) }
-                // Use explicit size instead of cv.bounds — bounds may still be .zero
-                // when setFrame(animate:true) hasn't settled yet.
-                let area = NSTrackingArea(
-                    rect: CGRect(origin: .zero, size: CGSize(width: w, height: h)),
-                    options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
-                    owner: cv,
-                    userInfo: nil
-                )
-                cv.addTrackingArea(area)
-            }
+        win.setFrame(NSRect(x: x, y: y, width: w, height: h), display: true)
+
+        if let cv = win.contentView {
+            cv.trackingAreas.forEach { cv.removeTrackingArea($0) }
+            let area = NSTrackingArea(
+                rect: CGRect(origin: .zero, size: CGSize(width: w, height: h)),
+                options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
+                owner: cv,
+                userInfo: nil
+            )
+            cv.addTrackingArea(area)
         }
     }
 
