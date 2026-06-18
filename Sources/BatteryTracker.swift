@@ -25,6 +25,10 @@ class BatteryTracker: ObservableObject {
     @Published var batteryCycles: Int = 0
     @Published var batteryTemperature: Double = 0.0
     @Published var temperatureSamples: [Double] = []
+    // System thermal sensors (Apple Silicon). nil = sensor not available on this Mac.
+    @Published var cpuTemperature: Double? = nil
+    @Published var gpuTemperature: Double? = nil
+    @Published var ssdTemperature: Double? = nil
     @Published var adapterHistory: [PowerAdapterRecord] = []
     @Published var notificationStatus: UNAuthorizationStatus = .notDetermined
     @Published var fanSpeedHistory: [FanSpeedSample] = []
@@ -276,8 +280,18 @@ class BatteryTracker: ObservableObject {
         } else {
             self.currentFanSpeed = nil
         }
+
+        updateSystemSensors()
     }
-    
+
+    private func updateSystemSensors() {
+        let sensors = ThermalSensors.shared
+        guard sensors.isAvailable else { return }
+        self.cpuTemperature = sensors.cpuTemperature
+        self.gpuTemperature = sensors.gpuTemperature
+        self.ssdTemperature = sensors.ssdTemperature
+    }
+
     private func initializePowerStatus() {
         let level = getBatteryLevel()
         let plugged = isACPowerConnected()
@@ -1280,11 +1294,12 @@ extension BatteryTracker {
     }
 
     var menuBarText: String {
+        var base = ""
         if isPluggedIn {
             if let dyn = dynamicWatts {
-                return String(format: "%.1fW", dyn)
+                base = String(format: "%.1fW", dyn)
             } else if let watts = powerAdapterWatts {
-                return "\(watts)W"
+                base = "\(watts)W"
             }
         } else {
             if let session = currentSession {
@@ -1292,14 +1307,15 @@ extension BatteryTracker {
                 let total = session.screenOnDuration + delta
                 let hours = Int(total) / 3600
                 let minutes = (Int(total) % 3600) / 60
-                if hours > 0 {
-                    return "\(hours)h \(minutes)m"
-                } else {
-                    return "\(minutes)m"
-                }
+                base = hours > 0 ? "\(hours)h \(minutes)m" : "\(minutes)m"
             }
         }
-        return ""
+        // Append CPU temperature when available (Apple Silicon).
+        if let cpu = cpuTemperature {
+            let tempStr = String(format: "%.0f°", cpu)
+            return base.isEmpty ? tempStr : "\(base)  \(tempStr)"
+        }
+        return base
     }
     
     var currentScreenOnSeconds: TimeInterval {
