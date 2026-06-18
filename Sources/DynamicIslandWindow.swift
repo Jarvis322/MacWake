@@ -36,13 +36,11 @@ class DynamicIslandStateManager: ObservableObject {
 // MARK: - TrackingHostingView
 final class TrackingHostingView<Content: View>: NSHostingView<Content> {
     override func mouseEntered(with event: NSEvent) {
-        // View is always 580×220. Compact pill occupies the top-center 200×36.
-        // In NSView coords (y=0 at bottom), pill is at y=184-220, x=190-390.
+        // NSHostingView is flipped (y=0 at top). The compact pill is at the visual top:
+        // x=190-390, y=0-36 in flipped view coords.
         let loc = convert(event.locationInWindow, from: nil)
-        let h = bounds.height > 0 ? bounds.height : 220
-        let pillArea = CGRect(x: (bounds.width - 200) / 2, y: h - 36, width: 200, height: 36)
+        let pillArea = CGRect(x: (bounds.width - 200) / 2, y: 0, width: 200, height: 36)
         let state = DynamicIslandStateManager.shared.state
-        // In compact mode only trigger if over the visible pill; in other modes always allow.
         guard state != .compact || pillArea.contains(loc) else { return }
         DynamicIslandManager.shared.hoverDidEnter()
     }
