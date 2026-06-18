@@ -840,35 +840,21 @@ class BatteryTracker: ObservableObject {
                 print("Session completed and saved. Screen Time: \(session.screenOnDuration)s")
             }
         } else {
-            // Transitioned to Battery: Start or resume tracking
-            let threshold = chargeLimit - 3
-            if batteryLevel >= threshold || currentSession == nil {
-                // Start a brand new session
-                let newSession = Session(
-                    id: UUID(),
-                    startTime: now,
-                    endTime: nil,
-                    startBattery: batteryLevel,
-                    endBatteryLevel: nil,
-                    screenOnDuration: 0,
-                    sleepDuration: 0,
-                    shutdownDuration: 0,
-                    events: [Event(timestamp: now, type: "unplugged", battery: batteryLevel)]
-                )
-                self.currentSession = newSession
-                print("Started a new battery session at \(batteryLevel)%")
-            } else {
-                // Resume existing session
-                if var session = currentSession {
-                    // Remove old version from history since we are resuming it
-                    history.removeAll(where: { $0.id == session.id })
-                    session.endTime = nil
-                    session.endBatteryLevel = nil
-                    session.events.append(Event(timestamp: now, type: "unplugged", battery: batteryLevel))
-                    self.currentSession = session
-                    print("Resumed battery session at \(batteryLevel)%")
-                }
-            }
+            // Transitioned to Battery: always start a fresh session so each
+            // unplug→plug interval is tracked on its own, regardless of charge level.
+            let newSession = Session(
+                id: UUID(),
+                startTime: now,
+                endTime: nil,
+                startBattery: batteryLevel,
+                endBatteryLevel: nil,
+                screenOnDuration: 0,
+                sleepDuration: 0,
+                shutdownDuration: 0,
+                events: [Event(timestamp: now, type: "unplugged", battery: batteryLevel)]
+            )
+            self.currentSession = newSession
+            print("Started a new battery session at \(batteryLevel)%")
         }
         
         saveData()
