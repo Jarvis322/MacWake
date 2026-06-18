@@ -1300,6 +1300,12 @@ extension BatteryTracker {
         return ""
     }
     
+    var currentScreenOnSeconds: TimeInterval {
+        guard let session = currentSession else { return 0 }
+        let delta = appState == "active" ? Date().timeIntervalSince(lastStateChange) : 0
+        return session.screenOnDuration + delta
+    }
+
     var menuBarIcon: String {
         if isPluggedIn {
             return "battery.100.bolt"

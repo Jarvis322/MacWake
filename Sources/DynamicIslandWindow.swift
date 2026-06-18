@@ -33,20 +33,28 @@ class DynamicIslandStateManager: ObservableObject {
     }
 }
 
-// MARK: - Textream / NotchNook Style UI
+// MARK: - TrackingHostingView
+final class TrackingHostingView<Content: View>: NSHostingView<Content> {
+    override func mouseEntered(with event: NSEvent) {
+        DynamicIslandManager.shared.hoverDidEnter()
+    }
+    override func mouseExited(with event: NSEvent) {
+        DynamicIslandManager.shared.hoverDidExit()
+    }
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+}
+
+// MARK: - Panel View
 struct DynamicIslandPanelView: View {
     @ObservedObject var tracker: BatteryTracker
     @ObservedObject private var sm = DynamicIslandStateManager.shared
-    @State private var hoverState = false
     @State private var isPressed = false
 
     var body: some View {
         ZStack(alignment: .top) {
-            // Main Panel Background
-            // When expanded, we show the full panel. When compact, it's just the notch pill.
             if sm.state == .expanded || sm.state == .charging || sm.state == .alert(title: "", message: "", isWarning: false) {
                 RoundedRectangle(cornerRadius: 32, style: .continuous)
-                    .fill(Color.black.opacity(0.85)) // Dark material look
+                    .fill(Color.black.opacity(0.85))
                     .background(
                         RoundedRectangle(cornerRadius: 32, style: .continuous)
                             .fill(.ultraThinMaterial)
@@ -61,19 +69,16 @@ struct DynamicIslandPanelView: View {
                         removal: .opacity.combined(with: .scale(scale: 0.95, anchor: .top))
                     ))
             } else {
-                // Compact Pill Background
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
                     .fill(Color.black)
                     .frame(width: 200, height: 32)
             }
 
             VStack(spacing: 0) {
-                // TOP BAR (Notch level)
                 topBar
-                    .frame(height: 36) // Matches notch height approx
+                    .frame(height: 36)
                     .padding(.top, 2)
-                
-                // EXPANDED CONTENT
+
                 if sm.state == .expanded {
                     expandedContent
                         .padding(.top, 8)
@@ -97,16 +102,6 @@ struct DynamicIslandPanelView: View {
         .scaleEffect(isPressed ? 0.97 : 1.0)
         .animation(.spring(response: 0.4, dampingFraction: 0.75), value: sm.state)
         .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isPressed)
-        .onHover { isHovered in
-            self.hoverState = isHovered
-        }
-        .onTapGesture {
-            if sm.state == .compact {
-                sm.show(.expanded)
-            } else if sm.state == .expanded {
-                sm.show(.compact)
-            }
-        }
         .onLongPressGesture(minimumDuration: .infinity, maximumDistance: .infinity, pressing: { pressing in
             self.isPressed = pressing
         }, perform: {})
@@ -123,15 +118,14 @@ struct DynamicIslandPanelView: View {
         switch sm.state {
         case .compact: return 36
         case .charging, .alert: return 120
-        case .expanded: return 180
+        case .expanded: return 220
         }
     }
 
-    // MARK: - Top Bar (Nook / Tray style)
+    // MARK: - Top Bar
     private var topBar: some View {
         HStack {
             if sm.state == .expanded {
-                // Left Tabs
                 HStack(spacing: 16) {
                     HStack(spacing: 6) {
                         Image(systemName: "bolt.fill")
@@ -147,16 +141,15 @@ struct DynamicIslandPanelView: View {
                     .cornerRadius(12)
                 }
                 .padding(.leading, 16)
-                
+
                 Spacer()
             } else {
-                // Compact View inside notch
                 Spacer()
                 HStack(spacing: 6) {
                     Image(systemName: tracker.isPluggedIn ? "bolt.fill" : "battery.75")
                         .font(.system(size: 10, weight: .bold))
                         .foregroundColor(tracker.isPluggedIn ? .blue : batteryColor)
-                    Text("%\(tracker.currentBatteryLevel)")
+                    Text("\(tracker.currentBatteryLevel)%")
                         .font(.system(size: 11, weight: .bold))
                         .foregroundColor(.white)
                 }
@@ -165,40 +158,38 @@ struct DynamicIslandPanelView: View {
         }
     }
 
-    // MARK: - Expanded Content (Textream Split Layout)
+    // MARK: - Expanded Content (two-column)
     private var expandedContent: some View {
         HStack(spacing: 20) {
-            // LEFT SIDE: Media/Battery Player Style
             leftWidget
                 .frame(maxWidth: .infinity, alignment: .leading)
-            
-            // Subtle Divider
+
             Rectangle()
                 .fill(Color.white.opacity(0.1))
                 .frame(width: 1)
                 .padding(.vertical, 10)
-            
-            // RIGHT SIDE: Calendar / Stats Style
+
             rightWidget
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
-    // MARK: - Left Widget (Player style)
+    // MARK: - Left Widget (Power)
     private var leftWidget: some View {
         HStack(spacing: 16) {
-            // Big App/Status Icon (like album art)
             ZStack(alignment: .bottomTrailing) {
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(LinearGradient(colors: [.cyan.opacity(0.2), .blue.opacity(0.1)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                    .fill(LinearGradient(
+                        colors: [batteryColor.opacity(0.25), batteryColor.opacity(0.1)],
+                        startPoint: .topLeading, endPoint: .bottomTrailing))
                     .frame(width: 80, height: 80)
                     .overlay(
                         Image(systemName: tracker.isPluggedIn ? "bolt.batteryblock.fill" : "battery.100")
                             .font(.system(size: 32))
-                            .foregroundStyle(LinearGradient(colors: [.cyan, .blue], startPoint: .top, endPoint: .bottom))
+                            .foregroundStyle(LinearGradient(
+                                colors: [batteryColor.opacity(0.9), batteryColor],
+                                startPoint: .top, endPoint: .bottom))
                     )
-                
-                // Small indicator (like Spotify icon)
                 Circle()
                     .fill(batteryColor)
                     .frame(width: 24, height: 24)
@@ -209,89 +200,106 @@ struct DynamicIslandPanelView: View {
                     )
                     .offset(x: 6, y: 6)
             }
-            
-            VStack(alignment: .leading, spacing: 8) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(tracker.isPluggedIn ? "Şarj Ediliyor" : "Pilde Çalışıyor")
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(.white)
-                    
-                    Text("\(tracker.currentBatteryLevel)% Kapasite")
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundColor(.white.opacity(0.6))
-                }
-                
-                // Controls row (like media controls)
-                HStack(spacing: 12) {
-                    miniControlBtn(icon: "bolt.fill", label: "Güç", isActive: tracker.isPluggedIn, tooltip: "Güç Kaynağı Durumu")
-                    miniControlBtn(icon: "hare.fill", label: "Performans", isActive: tracker.currentBatteryLevel > 20, tooltip: "Performans Modu")
-                    miniControlBtn(icon: "leaf.fill", label: "Tasarruf", isActive: !tracker.isPluggedIn, tooltip: "Enerji Tasarrufu")
-                }
-                .padding(.top, 4)
-            }
-        }
-    }
 
-    private func miniControlBtn(icon: String, label: String, isActive: Bool, tooltip: String) -> some View {
-        HStack(spacing: 4) {
-            Image(systemName: icon)
-                .font(.system(size: 12))
-            Text(label)
-                .font(.system(size: 11, weight: .medium))
-        }
-        .foregroundColor(isActive ? .white : .white.opacity(0.3))
-        .help(tooltip)
-    }
-
-    // MARK: - Right Widget (Calendar / Stats style)
-    private var rightWidget: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            // Top Row: Like Calendar Days
-            HStack(spacing: 12) {
-                Text("Stats")
-                    .font(.system(size: 20, weight: .bold))
+            VStack(alignment: .leading, spacing: 6) {
+                Text(tracker.isPluggedIn ? "Charging" : "On Battery")
+                    .font(.system(size: 16, weight: .bold))
                     .foregroundColor(.white)
-                
-                Spacer()
-                
-                HStack(spacing: 8) {
-                    statDay(label: "TMP", value: String(format: "%.0f°", tracker.batteryTemperature), isHighlighted: tracker.batteryTemperature > 35)
-                    statDay(label: "HLT", value: "\(tracker.batteryHealth)%", isHighlighted: false)
-                    statDay(label: "CYC", value: "\(tracker.batteryCycles)", isHighlighted: false)
+                Text("\(tracker.currentBatteryLevel)% Capacity")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(.white.opacity(0.6))
+
+                if let dyn = tracker.dynamicWatts {
+                    Text(String(format: "%.1fW", dyn))
+                        .font(.system(size: 13, weight: .semibold).monospacedDigit())
+                        .foregroundColor(.cyan)
+                } else if let w = tracker.powerAdapterWatts {
+                    Text("\(w)W Adapter")
+                        .font(.system(size: 13))
+                        .foregroundColor(.white.opacity(0.55))
+                } else if let name = tracker.powerAdapterName {
+                    Text(name)
+                        .font(.system(size: 12))
+                        .foregroundColor(.white.opacity(0.45))
+                        .lineLimit(1)
+                }
+
+                if !tracker.isPluggedIn {
+                    let secs = Int(tracker.currentScreenOnSeconds)
+                    let h = secs / 3600
+                    let m = (secs % 3600) / 60
+                    Text(h > 0 ? "\(h)h \(m)m screen on" : "\(m)m screen on")
+                        .font(.system(size: 11))
+                        .foregroundColor(.white.opacity(0.4))
                 }
             }
-            
-            // Bottom Area: Like "Nothing for today"
-            VStack(alignment: .center, spacing: 6) {
-                Image(systemName: "chart.bar.fill")
-                    .font(.system(size: 16))
-                    .foregroundColor(.white.opacity(0.3))
-                
-                if let w = tracker.powerAdapterWatts {
-                    Text("\(w)W Adaptör Bağlı")
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundColor(.white.opacity(0.5))
+        }
+    }
+
+    // MARK: - Right Widget (Thermals)
+    private var rightWidget: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Fan")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.white.opacity(0.4))
+                    .textCase(.uppercase)
+                if tracker.hasFans, let rpm = tracker.currentFanSpeed {
+                    Text("\(Int(rpm)) RPM")
+                        .font(.system(size: 22, weight: .bold).monospacedDigit())
+                        .foregroundColor(.white)
                 } else {
-                    Text("Normal Kullanım")
-                        .font(.system(size: 13, weight: .medium))
+                    Text("Fanless")
+                        .font(.system(size: 18, weight: .semibold))
                         .foregroundColor(.white.opacity(0.5))
                 }
             }
-            .frame(maxWidth: .infinity)
-            .padding(.top, 4)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Temperature")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.white.opacity(0.4))
+                    .textCase(.uppercase)
+                HStack(alignment: .bottom, spacing: 6) {
+                    let samples = tracker.temperatureSamples.isEmpty
+                        ? [tracker.batteryTemperature]
+                        : tracker.temperatureSamples
+                    let maxTemp = max(samples.max() ?? 1, 1)
+                    ForEach(Array(samples.enumerated()), id: \.offset) { _, temp in
+                        VStack(spacing: 2) {
+                            RoundedRectangle(cornerRadius: 3)
+                                .fill(temp > 45 ? Color.red.opacity(0.8) : Color.cyan.opacity(0.7))
+                                .frame(width: 14, height: max(CGFloat(temp / maxTemp) * 40, 4))
+                            Text(String(format: "%.0f°", temp))
+                                .font(.system(size: 8))
+                                .foregroundColor(.white.opacity(0.4))
+                        }
+                    }
+                }
+                .frame(height: 56, alignment: .bottom)
+            }
+
+            HStack(spacing: 8) {
+                statChip(label: "Health", value: "\(tracker.batteryHealth)%", highlight: tracker.batteryHealth < 80)
+                statChip(label: "Cycles", value: "\(tracker.batteryCycles)", highlight: false)
+            }
         }
         .padding(.trailing, 10)
     }
 
-    private func statDay(label: String, value: String, isHighlighted: Bool) -> some View {
-        VStack(spacing: 4) {
+    private func statChip(label: String, value: String, highlight: Bool) -> some View {
+        VStack(spacing: 2) {
             Text(label)
                 .font(.system(size: 9, weight: .bold))
-                .foregroundColor(isHighlighted ? .red : .white.opacity(0.4))
+                .foregroundColor(highlight ? .red : .white.opacity(0.4))
             Text(value)
                 .font(.system(size: 13, weight: .bold))
-                .foregroundColor(isHighlighted ? .red : (label == "HLT" ? .blue : .white))
+                .foregroundColor(highlight ? .red : .white)
         }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(Color.white.opacity(0.08))
+        .cornerRadius(8)
     }
 
     // MARK: - Charging Content
@@ -306,10 +314,10 @@ struct DynamicIslandPanelView: View {
                     .foregroundColor(.blue)
             }
             VStack(alignment: .leading, spacing: 4) {
-                Text("Şarj Bağlandı")
+                Text("Charging Connected")
                     .font(.system(size: 20, weight: .bold))
                     .foregroundColor(.white)
-                Text("\(tracker.currentBatteryLevel)% • \(tracker.powerAdapterWatts.map { "\($0)W" } ?? "Güç Kaynağı")")
+                Text("\(tracker.currentBatteryLevel)% • \(tracker.powerAdapterWatts.map { "\($0)W" } ?? "Power Source")")
                     .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.6))
             }
@@ -354,8 +362,38 @@ class DynamicIslandManager {
     private weak var tracker: BatteryTracker?
     private(set) var isEnabled = true
     private var cancellables = Set<AnyCancellable>()
-    private var globalMonitor: Any?
-    private var localMonitor: Any?
+    private var expandWorkItem: DispatchWorkItem?
+    private var collapseWorkItem: DispatchWorkItem?
+
+    func hoverDidEnter() {
+        collapseWorkItem?.cancel()
+        collapseWorkItem = nil
+        guard DynamicIslandStateManager.shared.state == .compact else { return }
+        let work = DispatchWorkItem { [weak self] in
+            guard self != nil else { return }
+            Task { @MainActor in
+                guard DynamicIslandStateManager.shared.state == .compact else { return }
+                DynamicIslandStateManager.shared.show(.expanded)
+            }
+        }
+        expandWorkItem = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15, execute: work)
+    }
+
+    func hoverDidExit() {
+        expandWorkItem?.cancel()
+        expandWorkItem = nil
+        guard DynamicIslandStateManager.shared.state == .expanded else { return }
+        let work = DispatchWorkItem { [weak self] in
+            guard self != nil else { return }
+            Task { @MainActor in
+                guard DynamicIslandStateManager.shared.state == .expanded else { return }
+                DynamicIslandStateManager.shared.show(.compact)
+            }
+        }
+        collapseWorkItem = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.30, execute: work)
+    }
 
     func setup(with tracker: BatteryTracker) {
         self.tracker = tracker
@@ -367,7 +405,6 @@ class DynamicIslandManager {
     private func buildWindow(for tracker: BatteryTracker) {
         guard islandWindow == nil else { return }
 
-        // We use a single window for the island, floating at high level
         islandWindow = NSPanel(
             contentRect: .zero,
             styleMask: [.borderless, .nonactivatingPanel],
@@ -378,11 +415,10 @@ class DynamicIslandManager {
         islandWindow?.isOpaque = false
         islandWindow?.hasShadow = false
         islandWindow?.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .ignoresCycle]
-        islandWindow?.level = .popUpMenu // Very high level
+        islandWindow?.level = .popUpMenu
 
-        islandWindow?.contentView = NSHostingView(rootView: DynamicIslandPanelView(tracker: tracker))
+        islandWindow?.contentView = TrackingHostingView(rootView: DynamicIslandPanelView(tracker: tracker))
 
-        // Position it right at the notch
         positionWindow()
         islandWindow?.orderFrontRegardless()
 
@@ -394,33 +430,19 @@ class DynamicIslandManager {
         NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { [weak self] _ in
             Task { @MainActor in self?.positionWindow() }
         }
-        
-        setupClickMonitor()
+
+        setupHoverTracking()
     }
 
-    func setupClickMonitor() {
-        if globalMonitor == nil {
-            globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
-                Task { @MainActor in self?.handleOutsideClick() }
-            }
-        }
-        if localMonitor == nil {
-            localMonitor = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
-                Task { @MainActor in self?.handleOutsideClick() }
-                return event
-            }
-        }
-    }
-
-    private func handleOutsideClick() {
-        guard isEnabled, let window = islandWindow else { return }
-        let mouse = NSEvent.mouseLocation
-        let over = window.frame.contains(mouse)
-        let state = DynamicIslandStateManager.shared.state
-
-        if !over && state == .expanded {
-            DynamicIslandStateManager.shared.show(.compact)
-        }
+    private func setupHoverTracking() {
+        guard let contentView = islandWindow?.contentView else { return }
+        let area = NSTrackingArea(
+            rect: contentView.bounds,
+            options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
+            owner: contentView,
+            userInfo: nil
+        )
+        contentView.addTrackingArea(area)
     }
 
     private func positionWindow() {
@@ -430,23 +452,30 @@ class DynamicIslandManager {
     private func updateWindowFrame(for state: DynamicIslandState) {
         guard let screen = NSScreen.main else { return }
         let sf = screen.frame
-        let notchH: CGFloat = 37.5 // Max physical notch height on 14"/16"
 
         let w: CGFloat
         let h: CGFloat
         switch state {
         case .compact: (w, h) = (200, 36)
         case .charging, .alert: (w, h) = (580, 120)
-        case .expanded: (w, h) = (580, 180)
+        case .expanded: (w, h) = (580, 220)
         }
 
-        // Notch is at the top center of the screen
         let x = sf.minX + (sf.width - w) / 2
-        // Touch the absolute top of the screen to integrate seamlessly with the physical notch
         let y = sf.maxY - h
 
         if let win = islandWindow {
             win.setFrame(NSRect(x: x, y: y, width: w, height: h), display: true, animate: true)
+            if let cv = win.contentView {
+                cv.trackingAreas.forEach { cv.removeTrackingArea($0) }
+                let area = NSTrackingArea(
+                    rect: cv.bounds,
+                    options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
+                    owner: cv,
+                    userInfo: nil
+                )
+                cv.addTrackingArea(area)
+            }
         }
     }
 
