@@ -235,85 +235,79 @@ struct DynamicIslandPanelView: View {
         }
     }
 
-    // MARK: - Left Widget (Power)
+    // MARK: - Left Widget (Power) — battery ring gauge
     private var leftWidget: some View {
-        HStack(spacing: 16) {
-            ZStack(alignment: .bottomTrailing) {
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(LinearGradient(
-                        colors: [batteryColor.opacity(0.25), batteryColor.opacity(0.1)],
-                        startPoint: .topLeading, endPoint: .bottomTrailing))
-                    .frame(width: 80, height: 80)
-                    .overlay(
-                        Image(systemName: tracker.isPluggedIn ? "bolt.batteryblock.fill" : "battery.100")
-                            .font(.system(size: 32))
-                            .foregroundStyle(LinearGradient(
-                                colors: [batteryColor.opacity(0.9), batteryColor],
-                                startPoint: .top, endPoint: .bottom))
-                    )
+        HStack(spacing: 14) {
+            ZStack {
                 Circle()
-                    .fill(batteryColor)
-                    .frame(width: 24, height: 24)
-                    .overlay(
-                        Image(systemName: tracker.isPluggedIn ? "bolt.fill" : "leaf.fill")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundColor(.black)
-                    )
-                    .offset(x: 6, y: 6)
+                    .stroke(Color.white.opacity(0.12), lineWidth: 6)
+                Circle()
+                    .trim(from: 0, to: CGFloat(tracker.currentBatteryLevel) / 100)
+                    .stroke(batteryColor, style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                Image(systemName: tracker.isPluggedIn ? "bolt.fill" : "battery.100")
+                    .font(.system(size: 17, weight: .bold))
+                    .foregroundColor(batteryColor)
             }
+            .frame(width: 56, height: 56)
 
-            VStack(alignment: .leading, spacing: 6) {
-                Text(tracker.isPluggedIn ? "Charging" : "On Battery")
-                    .font(.system(size: 16, weight: .bold))
+            VStack(alignment: .leading, spacing: 3) {
+                Text("\(tracker.currentBatteryLevel)%")
+                    .font(.system(size: 26, weight: .bold))
                     .foregroundColor(.white)
-                Text("\(tracker.currentBatteryLevel)% Capacity")
-                    .font(.system(size: 13, weight: .medium))
+                Text(tracker.isPluggedIn ? "Charging" : "On Battery")
+                    .font(.system(size: 12, weight: .medium))
                     .foregroundColor(.white.opacity(0.6))
 
-                if let dyn = tracker.dynamicWatts {
-                    Text(String(format: "%.1fW", dyn))
-                        .font(.system(size: 13, weight: .semibold).monospacedDigit())
-                        .foregroundColor(.cyan)
-                } else if let w = tracker.powerAdapterWatts {
-                    Text("\(w)W Adapter")
-                        .font(.system(size: 13))
-                        .foregroundColor(.white.opacity(0.55))
-                } else if let name = tracker.powerAdapterName {
-                    Text(name)
-                        .font(.system(size: 12))
-                        .foregroundColor(.white.opacity(0.45))
-                        .lineLimit(1)
-                }
-
-                if !tracker.isPluggedIn {
+                if tracker.isPluggedIn, let dyn = tracker.dynamicWatts {
+                    wattBadge(String(format: "%.1f W", dyn))
+                } else if tracker.isPluggedIn, let w = tracker.powerAdapterWatts {
+                    wattBadge("\(w) W")
+                } else if !tracker.isPluggedIn {
                     let secs = Int(tracker.currentScreenOnSeconds)
-                    let h = secs / 3600
-                    let m = (secs % 3600) / 60
-                    Text(h > 0 ? "\(h)h \(m)m screen on" : "\(m)m screen on")
+                    let h = secs / 3600, m = (secs % 3600) / 60
+                    Text(h > 0 ? "\(h)h \(m)m on screen" : "\(m)m on screen")
                         .font(.system(size: 11))
-                        .foregroundColor(.white.opacity(0.4))
+                        .foregroundColor(.white.opacity(0.45))
                 }
             }
         }
     }
 
-    // MARK: - Right Widget (Thermals) — compact
+    private func wattBadge(_ text: String) -> some View {
+        Text(text)
+            .font(.system(size: 12, weight: .bold).monospacedDigit())
+            .foregroundColor(.cyan)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3)
+            .background(Color.cyan.opacity(0.15))
+            .cornerRadius(7)
+    }
+
+    // MARK: - Right Widget (Thermals) — clear temp readout + gauge
     private var rightWidget: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .bottom, spacing: 12) {
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("Fan")
+        let temp = tracker.batteryTemperature
+        let frac = min(max(temp / 50.0, 0), 1)   // 0–50°C range
+        let tempColor: Color = temp > 45 ? .red : (temp > 35 ? .orange : .cyan)
+        let status = temp > 45 ? "Hot" : (temp > 35 ? "Warm" : "Normal")
+
+        return VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .top, spacing: 10) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("BATTERY TEMP")
                         .font(.system(size: 9, weight: .bold))
                         .foregroundColor(.white.opacity(0.4))
-                        .textCase(.uppercase)
-                    if tracker.hasFans, let rpm = tracker.currentFanSpeed {
-                        Text("\(Int(rpm)) RPM")
-                            .font(.system(size: 18, weight: .bold).monospacedDigit())
+                    HStack(alignment: .firstTextBaseline, spacing: 2) {
+                        Text(String(format: "%.0f", temp))
+                            .font(.system(size: 28, weight: .bold).monospacedDigit())
                             .foregroundColor(.white)
-                    } else {
-                        Text("Fanless")
-                            .font(.system(size: 16, weight: .semibold))
+                        Text("°C")
+                            .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.white.opacity(0.55))
+                        Text(status)
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundColor(tempColor)
+                            .padding(.leading, 4)
                     }
                 }
                 Spacer(minLength: 0)
@@ -321,29 +315,23 @@ struct DynamicIslandPanelView: View {
                 statChip(label: "Cycles", value: "\(tracker.batteryCycles)", highlight: false)
             }
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Temperature")
-                    .font(.system(size: 9, weight: .bold))
-                    .foregroundColor(.white.opacity(0.4))
-                    .textCase(.uppercase)
-                HStack(alignment: .bottom, spacing: 6) {
-                    let samples = tracker.temperatureSamples.isEmpty
-                        ? [tracker.batteryTemperature]
-                        : tracker.temperatureSamples
-                    let maxTemp = max(samples.max() ?? 1, 1)
-                    ForEach(Array(samples.enumerated()), id: \.offset) { _, temp in
-                        VStack(spacing: 2) {
-                            RoundedRectangle(cornerRadius: 3)
-                                .fill(temp > 45 ? Color.red.opacity(0.8) : Color.cyan.opacity(0.7))
-                                .frame(width: 14, height: max(CGFloat(temp / maxTemp) * 24, 4))
-                            Text(String(format: "%.0f°", temp))
-                                .font(.system(size: 8))
-                                .foregroundColor(.white.opacity(0.4))
-                        }
-                    }
+            // Horizontal temperature gauge (0–50°C)
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(Color.white.opacity(0.12))
+                    Capsule().fill(tempColor)
+                        .frame(width: max(geo.size.width * frac, 6))
                 }
-                .frame(height: 38, alignment: .bottom)
             }
+            .frame(height: 6)
+
+            HStack(spacing: 5) {
+                Image(systemName: tracker.hasFans ? "fanblades.fill" : "fanblades")
+                    .font(.system(size: 10))
+                Text(tracker.hasFans ? (tracker.currentFanSpeed.map { "\(Int($0)) RPM" } ?? "Fan active") : "Fanless")
+                    .font(.system(size: 11, weight: .medium))
+            }
+            .foregroundColor(.white.opacity(0.5))
         }
     }
 
