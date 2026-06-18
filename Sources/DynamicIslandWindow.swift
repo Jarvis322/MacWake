@@ -17,11 +17,11 @@ class DynamicIslandStateManager: ObservableObject {
     @Published private(set) var state: DynamicIslandState = .compact
 
     func show(_ newState: DynamicIslandState, autoDismissAfter seconds: TimeInterval? = nil) {
-        withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) { state = newState }
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) { state = newState }
         guard let seconds else { return }
         DispatchQueue.main.asyncAfter(deadline: .now() + seconds) { [weak self] in
             guard let self, self.state == newState else { return }
-            withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) { self.state = .compact }
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) { self.state = .compact }
         }
     }
 
@@ -48,11 +48,17 @@ final class TrackingHostingView<Content: View>: NSHostingView<Content> {
 struct DynamicIslandPanelView: View {
     @ObservedObject var tracker: BatteryTracker
     @ObservedObject private var sm = DynamicIslandStateManager.shared
-    @State private var isPressed = false
+
+    private var isExpanded: Bool {
+        switch sm.state {
+        case .compact: return false
+        default: return true
+        }
+    }
 
     var body: some View {
         ZStack(alignment: .top) {
-            if sm.state == .expanded || sm.state == .charging || sm.state == .alert(title: "", message: "", isWarning: false) {
+            if isExpanded {
                 RoundedRectangle(cornerRadius: 32, style: .continuous)
                     .fill(Color.black.opacity(0.85))
                     .background(
@@ -99,12 +105,7 @@ struct DynamicIslandPanelView: View {
             .frame(width: panelWidth)
         }
         .monospacedDigit()
-        .scaleEffect(isPressed ? 0.97 : 1.0)
-        .animation(.spring(response: 0.4, dampingFraction: 0.75), value: sm.state)
-        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isPressed)
-        .onLongPressGesture(minimumDuration: .infinity, maximumDistance: .infinity, pressing: { pressing in
-            self.isPressed = pressing
-        }, perform: {})
+        .animation(.spring(response: 0.35, dampingFraction: 0.8), value: sm.state)
     }
 
     private var panelWidth: CGFloat {
@@ -430,19 +431,6 @@ class DynamicIslandManager {
         NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { [weak self] _ in
             Task { @MainActor in self?.positionWindow() }
         }
-
-        setupHoverTracking()
-    }
-
-    private func setupHoverTracking() {
-        guard let contentView = islandWindow?.contentView else { return }
-        let area = NSTrackingArea(
-            rect: contentView.bounds,
-            options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
-            owner: contentView,
-            userInfo: nil
-        )
-        contentView.addTrackingArea(area)
     }
 
     private func positionWindow() {

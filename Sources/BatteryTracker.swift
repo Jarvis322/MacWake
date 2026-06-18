@@ -601,9 +601,11 @@ class BatteryTracker: ObservableObject {
                 let temp = Double(tempRaw) / 100.0
                 batteryTemperature = temp
                 // append sample
-                temperatureSamples.append(temp)
-                if temperatureSamples.count > 5 {
-                    temperatureSamples.removeFirst()
+                DispatchQueue.main.async {
+                    self.temperatureSamples.append(temp)
+                    if self.temperatureSamples.count > 5 {
+                        self.temperatureSamples.removeFirst()
+                    }
                 }
             }
             
