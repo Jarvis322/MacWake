@@ -456,8 +456,10 @@ class DynamicIslandManager {
             win.setFrame(NSRect(x: x, y: y, width: w, height: h), display: true, animate: true)
             if let cv = win.contentView {
                 cv.trackingAreas.forEach { cv.removeTrackingArea($0) }
+                // Use explicit size instead of cv.bounds — bounds may still be .zero
+                // when setFrame(animate:true) hasn't settled yet.
                 let area = NSTrackingArea(
-                    rect: cv.bounds,
+                    rect: CGRect(origin: .zero, size: CGSize(width: w, height: h)),
                     options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
                     owner: cv,
                     userInfo: nil
