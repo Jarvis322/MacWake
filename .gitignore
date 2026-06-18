@@ -6,3 +6,11 @@ AppIcon.iconset/
 .tempmediaStorage/
 *~
 *.swp
+
+# Dev / debug scratch files
+*.log
+*.txt
+test_*.swift
+dump_*.swift
+scan_*.swift
+list_smc.swift

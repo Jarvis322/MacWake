@@ -6,8 +6,39 @@
 
 ---
 
+## 🖥️ Dynamic Island & Menu Bar
+
+A NotchNook / NotchDrop-style **Dynamic Island** lives in the notch: it stays
+collapsed and blends with the hardware, expands on hover or click with a bouncy
+spring, and gives haptic feedback. It surfaces live power, battery health, and
+system temperatures (CPU / SSD, plus GPU where the chip exposes it), alongside
+quick toggles for the widget, session reset, animations, and notifications.
+
+<p align="center">
+  <img src="Screenshots/dynamic-island.png" alt="MacWake Dynamic Island" width="760">
+</p>
+
+The **menu bar** shows real-time power draw and CPU temperature at a glance, and
+clicking it opens the full panel — Session, History, Hardware (with system
+temperatures), and Settings.
+
+<p align="center">
+  <img src="Screenshots/menubar-item.png" alt="MacWake menu bar item" height="26">
+  &nbsp;&nbsp;&nbsp;
+  <img src="Screenshots/menubar-popover.png" alt="MacWake menu bar panel" width="360">
+</p>
+
+---
+
 ## ✨ Features
 
+*   **🏝️ Dynamic Island (Notch UI):**
+    *   NotchNook / NotchDrop-style panel that hugs the physical notch and blends with the hardware when collapsed.
+    *   Hover or click to expand with a bouncy spring animation and haptic feedback.
+    *   At-a-glance power, battery health, and system temperatures, plus quick toggles (widget, reset, animations, notifications).
+*   **🌡️ System Temperatures (Apple Silicon):**
+    *   Reads SoC/CPU and SSD (NAND) temperatures — and GPU where the chip exposes a discrete sensor — via the IOHIDEventSystemClient thermal interface.
+    *   Surfaced in the menu bar (CPU °), the Dynamic Island temperature grid, and the Hardware tab. Unavailable sensors are hidden automatically.
 *   **📊 Detailed Session Tracking (Current Session):** 
     *   Tracks screen-on time and sleep duration.
     *   Seamless data integrity with restart/shutdown detection.
