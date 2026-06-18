@@ -670,6 +670,11 @@ class BatteryTracker: ObservableObject {
         checkSlowCharging()
     }
 
+    /// Re-reads battery health/cycles on demand and logs a new decay entry if it changed.
+    func recheckBatteryHealth() {
+        updatePowerAdapterDetails()
+    }
+
     private func checkAndRecordHealthHistory() {
         let currentHealth = self.batteryHealth
         let currentCycles = self.batteryCycles

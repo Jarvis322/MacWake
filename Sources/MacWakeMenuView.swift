@@ -880,11 +880,26 @@ struct MacWakeMenuView: View {
 
     private var batteryHealthDecaySection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("BATTERY HEALTH DECAY LOG")
-                .font(.caption2)
-                .fontWeight(.bold)
-                .foregroundColor(.secondary)
-            
+            HStack {
+                Text("BATTERY HEALTH DECAY LOG")
+                    .font(.caption2)
+                    .fontWeight(.bold)
+                    .foregroundColor(.secondary)
+
+                Spacer()
+
+                Button(action: { tracker.recheckBatteryHealth() }) {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundColor(.secondary)
+                        .padding(5)
+                        .background(Color.secondary.opacity(0.12))
+                        .clipShape(Circle())
+                }
+                .buttonStyle(.plain)
+                .help("Recheck battery health now")
+            }
+
             if tracker.healthHistory.isEmpty {
                 Text("No health changes recorded yet.")
                     .font(.caption2)
