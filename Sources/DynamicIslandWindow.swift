@@ -60,7 +60,7 @@ struct DynamicIslandPanelView: View {
     @ObservedObject var tracker: BatteryTracker
     @ObservedObject private var sm = DynamicIslandStateManager.shared
 
-    private let openedSize = CGSize(width: 580, height: 270)
+    private let openedSize = CGSize(width: 840, height: 188)
     private let flareSpacing: CGFloat = 16   // size of the concave top-corner flare
 
     private var isOpened: Bool { sm.state != .compact }
@@ -157,87 +157,81 @@ struct DynamicIslandPanelView: View {
     private var openedContent: some View {
         Group {
             if sm.state == .expanded {
-                VStack(spacing: 14) {
-                    expandedContent
-                    controlsRow
-                }
+                expandedContent
             } else if sm.state == .charging {
                 chargingContent
             } else if case let .alert(t, m, w) = sm.state {
                 alertContent(title: t, message: m, isWarning: w)
             }
         }
-        .padding(.horizontal, 24)
+        .padding(.horizontal, 26)
         .padding(.top, sm.notchHeight + 8)   // clear the camera/notch headline
-        .padding(.bottom, 18)
+        .padding(.bottom, 16)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
-    // MARK: - Functional controls (real MacWake actions)
-    private var controlsRow: some View {
-        HStack(spacing: 10) {
-            controlButton(
-                icon: "rectangle.on.rectangle",
-                label: "Widget",
-                active: tracker.showWidget
-            ) { tracker.showWidget.toggle() }
-
-            controlButton(
-                icon: "arrow.counterclockwise",
-                label: "Reset",
-                active: false
-            ) { tracker.resetCurrentSession() }
-
-            controlButton(
-                icon: "sparkles",
-                label: "Animate",
-                active: tracker.enableAnimations
-            ) { tracker.enableAnimations.toggle() }
-
-            controlButton(
-                icon: "bell.fill",
-                label: "Notify",
-                active: tracker.notificationStatus == .authorized
-            ) {
-                if tracker.notificationStatus == .authorized {
-                    tracker.openNotificationSettings()
-                } else {
-                    tracker.requestNotificationAuthorization()
+    // MARK: - Functional controls (real MacWake actions) — 2×2 grid
+    private var controlsGrid: some View {
+        VStack(spacing: 8) {
+            HStack(spacing: 8) {
+                controlButton(icon: "rectangle.on.rectangle", label: "Widget",
+                              active: tracker.showWidget) { tracker.showWidget.toggle() }
+                controlButton(icon: "arrow.counterclockwise", label: "Reset",
+                              active: false) { tracker.resetCurrentSession() }
+            }
+            HStack(spacing: 8) {
+                controlButton(icon: "sparkles", label: "Animate",
+                              active: tracker.enableAnimations) { tracker.enableAnimations.toggle() }
+                controlButton(icon: "bell.fill", label: "Notify",
+                              active: tracker.notificationStatus == .authorized) {
+                    if tracker.notificationStatus == .authorized {
+                        tracker.openNotificationSettings()
+                    } else {
+                        tracker.requestNotificationAuthorization()
+                    }
                 }
             }
         }
+        .frame(width: 168)
     }
 
     private func controlButton(icon: String, label: String, active: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            VStack(spacing: 4) {
+            VStack(spacing: 3) {
                 Image(systemName: icon)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.system(size: 14, weight: .semibold))
                 Text(label)
-                    .font(.system(size: 10, weight: .medium))
+                    .font(.system(size: 9, weight: .medium))
             }
             .foregroundColor(active ? .black : .white)
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 9)
+            .padding(.vertical, 8)
             .background(active ? Color.white.opacity(0.92) : Color.white.opacity(0.12))
-            .cornerRadius(12)
+            .cornerRadius(11)
         }
         .buttonStyle(.plain)
     }
 
-    // MARK: - Expanded Content (two-column)
+    // MARK: - Expanded Content (three columns: Power | Thermals | Controls)
     private var expandedContent: some View {
-        HStack(spacing: 20) {
+        HStack(spacing: 18) {
             leftWidget
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             Rectangle()
                 .fill(Color.white.opacity(0.1))
                 .frame(width: 1)
-                .padding(.vertical, 10)
+                .padding(.vertical, 8)
 
             rightWidget
                 .frame(maxWidth: .infinity, alignment: .leading)
+
+            Rectangle()
+                .fill(Color.white.opacity(0.1))
+                .frame(width: 1)
+                .padding(.vertical, 8)
+
+            controlsGrid
         }
     }
 
@@ -303,28 +297,33 @@ struct DynamicIslandPanelView: View {
         }
     }
 
-    // MARK: - Right Widget (Thermals)
+    // MARK: - Right Widget (Thermals) — compact
     private var rightWidget: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Fan")
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(.white.opacity(0.4))
-                    .textCase(.uppercase)
-                if tracker.hasFans, let rpm = tracker.currentFanSpeed {
-                    Text("\(Int(rpm)) RPM")
-                        .font(.system(size: 22, weight: .bold).monospacedDigit())
-                        .foregroundColor(.white)
-                } else {
-                    Text("Fanless")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.5))
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .bottom, spacing: 12) {
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Fan")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundColor(.white.opacity(0.4))
+                        .textCase(.uppercase)
+                    if tracker.hasFans, let rpm = tracker.currentFanSpeed {
+                        Text("\(Int(rpm)) RPM")
+                            .font(.system(size: 18, weight: .bold).monospacedDigit())
+                            .foregroundColor(.white)
+                    } else {
+                        Text("Fanless")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.55))
+                    }
                 }
+                Spacer(minLength: 0)
+                statChip(label: "Health", value: "\(tracker.batteryHealth)%", highlight: tracker.batteryHealth < 80)
+                statChip(label: "Cycles", value: "\(tracker.batteryCycles)", highlight: false)
             }
 
             VStack(alignment: .leading, spacing: 4) {
                 Text("Temperature")
-                    .font(.system(size: 10, weight: .bold))
+                    .font(.system(size: 9, weight: .bold))
                     .foregroundColor(.white.opacity(0.4))
                     .textCase(.uppercase)
                 HStack(alignment: .bottom, spacing: 6) {
@@ -336,22 +335,16 @@ struct DynamicIslandPanelView: View {
                         VStack(spacing: 2) {
                             RoundedRectangle(cornerRadius: 3)
                                 .fill(temp > 45 ? Color.red.opacity(0.8) : Color.cyan.opacity(0.7))
-                                .frame(width: 14, height: max(CGFloat(temp / maxTemp) * 40, 4))
+                                .frame(width: 14, height: max(CGFloat(temp / maxTemp) * 24, 4))
                             Text(String(format: "%.0f°", temp))
                                 .font(.system(size: 8))
                                 .foregroundColor(.white.opacity(0.4))
                         }
                     }
                 }
-                .frame(height: 56, alignment: .bottom)
-            }
-
-            HStack(spacing: 8) {
-                statChip(label: "Health", value: "\(tracker.batteryHealth)%", highlight: tracker.batteryHealth < 80)
-                statChip(label: "Cycles", value: "\(tracker.batteryCycles)", highlight: false)
+                .frame(height: 38, alignment: .bottom)
             }
         }
-        .padding(.trailing, 10)
     }
 
     private func statChip(label: String, value: String, highlight: Bool) -> some View {
@@ -428,7 +421,7 @@ class DynamicIslandManager {
     // The window is a fixed full-width strip across the top; the SwiftUI content
     // morphs the notch shape. Height comfortably fits the opened panel.
     private let stripHeight: CGFloat = 300
-    private let openedSize = CGSize(width: 580, height: 270)
+    private let openedSize = CGSize(width: 840, height: 188)
     private let hoverInset: CGFloat = -4   // expands the notch hover target a touch
 
     private var islandWindow: NSPanel?
