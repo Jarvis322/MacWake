@@ -45,3 +45,5 @@ targets:
         NSHumanReadableCopyright: "Copyright © 2026 YIGIT CAN POLAT. All rights reserved."
         NSUserNotificationAlertStyle: alert
         ITSAppUsesNonExemptEncryption: false
+        SUPublicEDKey: "/2MkiFjUE9FNAkLrnaVSgGmy/kRMG4z5Ax7PaBW3gnM="
+        SUFeedURL: "https://raw.githubusercontent.com/Jarvis322/MacWake/main/appcast.xml"

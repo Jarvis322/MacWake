@@ -71,6 +71,10 @@ cat <<EOF > "${CONTENTS_DIR}/Info.plist"
     <string>alert</string>
     <key>ITSAppUsesNonExemptEncryption</key>
     <false/>
+    <key>SUPublicEDKey</key>
+    <string>/2MkiFjUE9FNAkLrnaVSgGmy/kRMG4z5Ax7PaBW3gnM=</string>
+    <key>SUFeedURL</key>
+    <string>https://raw.githubusercontent.com/Jarvis322/MacWake/main/appcast.xml</string>
 </dict>
 </plist>
 EOF
@@ -81,9 +85,29 @@ DEVELOPER_DIR="${DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Developer}" swi
 echo "=== Copying Binary to App Bundle ==="
 cp .build/release/MacWake "${MACOS_DIR}/MacWake"
 
+echo "=== Embedding Sparkle.framework ==="
+FRAMEWORKS_DIR="${CONTENTS_DIR}/Frameworks"
+mkdir -p "${FRAMEWORKS_DIR}"
+SPARKLE_SRC=".build/artifacts/sparkle/Sparkle/Sparkle.xcframework/macos-arm64_x86_64/Sparkle.framework"
+cp -R "${SPARKLE_SRC}" "${FRAMEWORKS_DIR}/Sparkle.framework"
+# Copy Sparkle XPC helpers
+for helper in Autoupdate Downloader; do
+    SRC="${SPARKLE_SRC}/Versions/B/XPCServices/${helper}.xpc"
+    if [ -d "${SRC}" ]; then
+        mkdir -p "${CONTENTS_DIR}/XPCServices"
+        cp -R "${SRC}" "${CONTENTS_DIR}/XPCServices/"
+    fi
+done
+
 # Local build: ad-hoc sign for testing. For distribution, sign with a Developer ID
 # identity and notarize with: xcrun notarytool submit MacWake.zip --keychain-profile ...
+echo "=== Adding rpath for embedded frameworks ==="
+install_name_tool -add_rpath "@executable_path/../Frameworks" "${MACOS_DIR}/MacWake" 2>/dev/null || true
+
 echo "=== Signing App Bundle (ad-hoc) ==="
+codesign --force --sign - "${FRAMEWORKS_DIR}/Sparkle.framework/Versions/B/XPCServices/Autoupdate.xpc/Contents/MacOS/Autoupdate" 2>/dev/null || true
+codesign --force --sign - "${FRAMEWORKS_DIR}/Sparkle.framework/Versions/B/XPCServices/org.sparkle-project.Downloader.xpc/Contents/MacOS/org.sparkle-project.Downloader" 2>/dev/null || true
+codesign --force --sign - "${FRAMEWORKS_DIR}/Sparkle.framework"
 codesign --force --sign - "${MACOS_DIR}/MacWake"
 codesign --force --sign - "${APP_DIR}"
 

@@ -1,5 +1,6 @@
 import SwiftUI
 import Combine
+import Sparkle
 
 struct MacWakeMenuView: View {
     @ObservedObject var tracker: BatteryTracker
@@ -7,6 +8,7 @@ struct MacWakeMenuView: View {
     @State private var isLaunchAtLoginEnabled: Bool = LaunchAgentManager.isEnabled
     @State private var selectedTab: Int = 0
     private let timer = Timer.publish(every: 1.0, on: .main, in: .common).autoconnect()
+    @State private var timerActive = true
     
     private var greenColor: Color { .dynamicGreen(for: colorScheme) }
     private var orangeColor: Color { .dynamicOrange(for: colorScheme) }
@@ -27,15 +29,15 @@ struct MacWakeMenuView: View {
                 
                 if tracker.highTempAlert {
                     smartProtectionWarningCard(
-                        title: "Yüksek Pil Sıcaklığı",
-                        message: String(format: "Pil sıcaklığı %.1f°C seviyesine ulaştı. Aşırı ısınma pil ömrünü kısaltabilir. Prizden çekmeniz önerilir.", tracker.batteryTemperature),
+                        title: "High Battery Temperature",
+                        message: String(format: "Battery reached %.1f°C. Overheating can shorten battery life. Consider unplugging.", tracker.batteryTemperature),
                         icon: "thermometer.high",
                         color: .red
                     )
                 } else if tracker.continuousACAlert {
                     smartProtectionWarningCard(
-                        title: "Sürekli Prizde Kullanım",
-                        message: "Mac'iniz 24 saattir kesintisiz prizde şarj edildi. Sağlığı korumak için pilde deşarj etmeniz önerilir.",
+                        title: "Plugged In All Day",
+                        message: "Your Mac has been on AC power for 24 hours. Discharge the battery occasionally to protect battery health.",
                         icon: "powerplug",
                         color: .orange
                     )
@@ -74,8 +76,14 @@ struct MacWakeMenuView: View {
         .ignoresSafeArea()
         .onAppear {
             tracker.updateDynamicWatts()
+            isLaunchAtLoginEnabled = LaunchAgentManager.isEnabled
+            timerActive = true
+        }
+        .onDisappear {
+            timerActive = false
         }
         .onReceive(timer) { _ in
+            guard timerActive else { return }
             tracker.updateDynamicWatts()
         }
     }
@@ -198,7 +206,18 @@ struct MacWakeMenuView: View {
                     .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.bordered)
-                
+
+                Button(action: {
+                    (NSApp.delegate as? AppDelegate)?.updaterController.checkForUpdates(nil)
+                }) {
+                    HStack {
+                        Image(systemName: "arrow.down.circle")
+                        Text("Check for Updates")
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+
                 Button(action: {
                     NSApplication.shared.terminate(nil)
                 }) {

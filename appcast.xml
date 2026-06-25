@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
+    <channel>
+        <title>Wake Updates</title>
+        <link>https://raw.githubusercontent.com/Jarvis322/MacWake/main/appcast.xml</link>
+        <description>Wake — Battery Health update feed</description>
+        <language>en</language>
+        <item>
+            <title>Version 1.0</title>
+            <pubDate>Thu, 26 Jun 2026 00:00:00 +0000</pubDate>
+            <sparkle:version>1</sparkle:version>
+            <sparkle:shortVersionString>1.0</sparkle:shortVersionString>
+            <sparkle:releaseNotesLink>https://github.com/Jarvis322/MacWake/releases/tag/v1.0</sparkle:releaseNotesLink>
+            <enclosure
+                url="https://github.com/Jarvis322/MacWake/releases/download/v1.0/Wake-1.0.zip"
+                sparkle:version="1"
+                sparkle:shortVersionString="1.0"
+                length="0"
+                type="application/octet-stream"
+                sparkle:edSignature="PLACEHOLDER_SIGNATURE"
+            />
+        </item>
+    </channel>
+</rss>
