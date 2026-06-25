@@ -1,0 +1,47 @@
+name: MacWake
+options:
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+settings:
+  base:
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    DEVELOPMENT_TEAM: MN42QBM28Y
+    CODE_SIGN_STYLE: Automatic
+    SWIFT_VERSION: "5.9"
+
+targets:
+  MacWake:
+    type: application
+    platform: macOS
+    deploymentTarget: "14.0"
+    sources:
+      - path: Sources
+      - path: Assets.xcassets
+    entitlements:
+      path: MacWake.entitlements
+    settings:
+      base:
+        PRODUCT_NAME: MacWake
+        PRODUCT_BUNDLE_IDENTIFIER: com.jarvisit.macwake
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        # Developer ID distribution: Hardened Runtime required for notarization.
+        # No sandbox — allows IOServiceOpen(AppleSMC) for fan speed and full
+        # thermal sensor access via IOHIDEventSystemClient.
+        ENABLE_HARDENED_RUNTIME: YES
+        COMBINE_HIDPI_IMAGES: YES
+    info:
+      path: Generated/Info.plist
+      properties:
+        CFBundleDisplayName: Wake
+        CFBundleName: Wake
+        LSUIElement: true
+        LSApplicationCategoryType: public.app-category.utilities
+        LSMinimumSystemVersion: "14.0"
+        NSHighResolutionCapable: true
+        NSHumanReadableCopyright: "Copyright © 2026 YIGIT CAN POLAT. All rights reserved."
+        NSUserNotificationAlertStyle: alert
+        ITSAppUsesNonExemptEncryption: false

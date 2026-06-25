@@ -44,11 +44,11 @@ cat <<EOF > "${CONTENTS_DIR}/Info.plist"
     <key>CFBundleExecutable</key>
     <string>MacWake</string>
     <key>CFBundleIdentifier</key>
-    <string>com.macwake</string>
+    <string>com.jarvisit.macwake</string>
     <key>CFBundleName</key>
-    <string>MacWake</string>
+    <string>Wake</string>
     <key>CFBundleDisplayName</key>
-    <string>MacWake</string>
+    <string>Wake</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
@@ -69,22 +69,23 @@ cat <<EOF > "${CONTENTS_DIR}/Info.plist"
     <string>Copyright © 2026 MacWake. All rights reserved.</string>
     <key>NSUserNotificationAlertStyle</key>
     <string>alert</string>
+    <key>ITSAppUsesNonExemptEncryption</key>
+    <false/>
 </dict>
 </plist>
 EOF
 
 echo "=== Compiling using Swift Package Manager ==="
-DEVELOPER_DIR="/Applications/Xcode-beta.app/Contents/Developer" swift build -c release
+DEVELOPER_DIR="${DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Developer}" swift build -c release
 
 echo "=== Copying Binary to App Bundle ==="
 cp .build/release/MacWake "${MACOS_DIR}/MacWake"
 
-echo "=== Signing App Bundle ==="
-if [ "${APP_STORE_BUILD:-0}" = "1" ]; then
-    codesign --force --deep --sign - --entitlements MacWake.entitlements "${APP_DIR}"
-else
-    codesign --force --deep --sign - "${APP_DIR}"
-fi
+# Local build: ad-hoc sign for testing. For distribution, sign with a Developer ID
+# identity and notarize with: xcrun notarytool submit MacWake.zip --keychain-profile ...
+echo "=== Signing App Bundle (ad-hoc) ==="
+codesign --force --sign - "${MACOS_DIR}/MacWake"
+codesign --force --sign - "${APP_DIR}"
 
 echo "=== Copying to /Applications ==="
 cp -R "${APP_DIR}" /Applications/
