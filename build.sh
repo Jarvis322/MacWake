@@ -99,20 +99,61 @@ for helper in Autoupdate Downloader; do
     fi
 done
 
-# Local build: ad-hoc sign for testing. For distribution, sign with a Developer ID
-# identity and notarize with: xcrun notarytool submit MacWake.zip --keychain-profile ...
+SIGN_IDENTITY="Developer ID Application: YIGIT CAN POLAT (6NK6D7LL79)"
+ENTITLEMENTS="$(pwd)/MacWake.entitlements"
+SPARKLE_FW="${FRAMEWORKS_DIR}/Sparkle.framework"
+
 echo "=== Adding rpath for embedded frameworks ==="
 install_name_tool -add_rpath "@executable_path/../Frameworks" "${MACOS_DIR}/MacWake" 2>/dev/null || true
 
-echo "=== Signing App Bundle (ad-hoc) ==="
-codesign --force --sign - "${FRAMEWORKS_DIR}/Sparkle.framework/Versions/B/XPCServices/Autoupdate.xpc/Contents/MacOS/Autoupdate" 2>/dev/null || true
-codesign --force --sign - "${FRAMEWORKS_DIR}/Sparkle.framework/Versions/B/XPCServices/org.sparkle-project.Downloader.xpc/Contents/MacOS/org.sparkle-project.Downloader" 2>/dev/null || true
-codesign --force --sign - "${FRAMEWORKS_DIR}/Sparkle.framework"
-codesign --force --sign - "${MACOS_DIR}/MacWake"
-codesign --force --sign - "${APP_DIR}"
+echo "=== Signing Sparkle internals (inside-out, with timestamp) ==="
+# Step 1: sign all .xpc bundles inside Sparkle (deepest first)
+while IFS= read -r xpc; do
+    codesign --force --options runtime --timestamp --sign "${SIGN_IDENTITY}" "$xpc"
+done < <(find "${SPARKLE_FW}" -name "*.xpc" | sort -r)
+
+# Step 2: sign all .app bundles inside Sparkle
+while IFS= read -r app; do
+    codesign --force --options runtime --timestamp --sign "${SIGN_IDENTITY}" "$app"
+done < <(find "${SPARKLE_FW}" -name "*.app" | sort -r)
+
+# Step 3: sign loose Mach-O executables inside Sparkle/Versions/B (Autoupdate etc.)
+while IFS= read -r f; do
+    if file "$f" | grep -q "Mach-O"; then
+        codesign --force --options runtime --timestamp --sign "${SIGN_IDENTITY}" "$f"
+    fi
+done < <(find "${SPARKLE_FW}/Versions/B" -maxdepth 1 -type f)
+
+# Step 4: sign the framework itself
+codesign --force --options runtime --timestamp --sign "${SIGN_IDENTITY}" "${SPARKLE_FW}"
+
+# Step 5: sign XPC services copied to Contents/XPCServices
+if [ -d "${CONTENTS_DIR}/XPCServices" ]; then
+    while IFS= read -r xpc; do
+        codesign --force --options runtime --timestamp --sign "${SIGN_IDENTITY}" "$xpc"
+    done < <(find "${CONTENTS_DIR}/XPCServices" -name "*.xpc")
+fi
+
+echo "=== Signing main binary and app bundle ==="
+codesign --force --options runtime --timestamp --entitlements "${ENTITLEMENTS}" \
+    --sign "${SIGN_IDENTITY}" "${MACOS_DIR}/MacWake"
+codesign --force --options runtime --timestamp --entitlements "${ENTITLEMENTS}" \
+    --sign "${SIGN_IDENTITY}" "${APP_DIR}"
+
+echo "=== Verifying signature ==="
+codesign --verify --deep --strict "${APP_DIR}" && echo "Signature OK" || echo "Signature FAILED"
+spctl --assess --type exec "${APP_DIR}" 2>&1 || true
 
 echo "=== Copying to /Applications ==="
 cp -R "${APP_DIR}" /Applications/
-rm -rf "${APP_DIR}"
 
-echo "=== Successfully built and installed MacWake to /Applications/MacWake.app ==="
+echo "=== Successfully built MacWake ==="
+echo ""
+echo "Local copy: $(pwd)/${APP_DIR}"
+echo "/Applications copy: /Applications/${APP_NAME}.app"
+echo ""
+echo "To notarize and distribute:"
+echo "  1. ditto -c -k --keepParent ${APP_DIR} Wake-1.0.zip"
+echo "  2. xcrun notarytool submit Wake-1.0.zip --keychain-profile wake-notary --wait"
+echo "  3. xcrun stapler staple ${APP_DIR} && xcrun stapler staple Wake-1.0.zip"
+echo "  4. .build/artifacts/sparkle/Sparkle/bin/sign_update Wake-1.0.zip  # get EdDSA sig for appcast.xml"

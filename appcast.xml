@@ -15,9 +15,9 @@
                 url="https://github.com/Jarvis322/MacWake/releases/download/v1.0/Wake-1.0.zip"
                 sparkle:version="1"
                 sparkle:shortVersionString="1.0"
-                length="0"
+                length="3781382"
                 type="application/octet-stream"
-                sparkle:edSignature="PLACEHOLDER_SIGNATURE"
+                sparkle:edSignature="uv4bJu1YdsBTpJqm481q6Pkc2pnF+5EH35+zXCqbx88t3hsTqHo16jLfwEL/sOlKafwsdD4OaWvZnx2QLiE3Aw=="
             />
         </item>
     </channel>
