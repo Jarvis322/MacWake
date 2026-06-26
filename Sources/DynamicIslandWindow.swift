@@ -107,6 +107,11 @@ struct DynamicIslandPanelView: View {
                 width: notchSize.width + cornerRadius * 2,
                 height: notchSize.height
             )
+            // Rasterize the masked shape offscreen via Metal so the concave-corner
+            // `blendMode(.destinationOut)` flares composite deterministically. Without
+            // this, some Macs (e.g. M2 Air) intermittently leave a white/transparent
+            // gap on a top corner until the island is toggled.
+            .drawingGroup()
             .shadow(color: .black.opacity(isOpened ? 0.9 : 0), radius: 16)
     }
 
