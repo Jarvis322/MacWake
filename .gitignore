@@ -1,0 +1,23 @@
+.DS_Store
+.build/
+*.dSYM/
+MacWake.app/
+AppIcon.iconset/
+.tempmediaStorage/
+*~
+*.swp
+
+# Xcode / xcodegen — project is generated from project.yml via `xcodegen generate`
+MacWake.xcodeproj/
+Generated/
+.xcbuild/
+DerivedData/
+*.xcuserstate
+
+# Dev / debug scratch files
+*.log
+*.txt
+test_*.swift
+dump_*.swift
+scan_*.swift
+list_smc.swift
