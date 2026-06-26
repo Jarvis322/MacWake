@@ -22,13 +22,59 @@ private struct SMCParamStruct {
         (0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0)
 }
 
-/// Root-only SMC access for charge control. Writing the adapter key (CHIE)
-/// requires the privileged helper; the same write fails for the sandboxed/user app.
+/// Root-only SMC charge control, covering the full M-series. The clean charge-inhibit
+/// keys (CHTE/CH0C) hold the battery on AC without discharging on M1/M2/M3; M4 lacks
+/// them, so we fall back to disabling the power adapter (CHIE/CH0J) — a discharge-to-hold
+/// approach. The chip-appropriate method is detected once at startup.
 enum HelperSMC {
-    /// Adapter enable/inhibit key on Apple Silicon (M-series). 0 = adapter on, 8 = adapter off.
-    private static let keyAdapter = "CHIE"
-    private static let adapterOff: UInt8 = 8
-    private static let adapterOn: UInt8 = 0
+    /// How this Mac's SMC stops charging.
+    private enum Method {
+        /// Clean charge inhibit: 0 = allow charging, 1 = inhibit (stays on AC). CHTE/CH0C.
+        case inhibit(key: String)
+        /// Adapter disable: 0 = adapter on, `off` = adapter off (forces discharge). CHIE/CH0J.
+        case adapter(key: String, off: UInt8)
+    }
+
+    /// Detected once; SMC key schema is fixed per machine.
+    private static let method: Method? = detectMethod()
+
+    private static func detectMethod() -> Method? {
+        guard let conn = open() else { return nil }
+        defer { IOServiceClose(conn) }
+        // Prefer clean charge-inhibit keys (M1/M2/M3), then adapter keys (M4).
+        if available(conn, "CHTE") { return .inhibit(key: "CHTE") }
+        if available(conn, "CH0C") { return .inhibit(key: "CH0C") }
+        if available(conn, "CHIE") { return .adapter(key: "CHIE", off: 0x08) }
+        if available(conn, "CH0J") { return .adapter(key: "CH0J", off: 0x20) }
+        return nil
+    }
+
+    // MARK: - Public API (charging allowed = true means the battery may charge)
+
+    static func setAdapterEnabled(_ allowed: Bool) -> Bool {
+        guard let method = method, let conn = open() else { return false }
+        defer { IOServiceClose(conn) }
+        switch method {
+        case .inhibit(let key):
+            return write(conn, key, allowed ? 0x00 : 0x01)
+        case .adapter(let key, let off):
+            return write(conn, key, allowed ? 0x00 : off)
+        }
+    }
+
+    static func getAdapterEnabled() -> Bool {
+        guard let method = method, let conn = open() else { return true }
+        defer { IOServiceClose(conn) }
+        let key: String
+        switch method {
+        case .inhibit(let k): key = k
+        case .adapter(let k, _): key = k
+        }
+        // For both methods, 0 means "charging allowed / adapter on".
+        return read(conn, key) == 0
+    }
+
+    // MARK: - SMC primitives
 
     private static func fourCC(_ s: String) -> UInt32 {
         var r: UInt32 = 0
@@ -53,37 +99,35 @@ enum HelperSMC {
         return out.keyInfo
     }
 
-    /// Writes CHIE. Returns true on success.
-    static func setAdapterEnabled(_ enabled: Bool) -> Bool {
-        guard let conn = open() else { return false }
-        defer { IOServiceClose(conn) }
-        guard let info = keyInfo(conn, keyAdapter) else { return false }
-
-        var inp = SMCParamStruct()
-        inp.key = fourCC(keyAdapter)
-        inp.keyInfo.dataSize = info.dataSize
-        inp.keyInfo.dataType = info.dataType
-        inp.data8 = 6 // kSMCWriteKey
-        inp.bytes.0 = enabled ? adapterOn : adapterOff
-
-        var out = SMCParamStruct(); var sz = MemoryLayout<SMCParamStruct>.stride
-        let r = IOConnectCallStructMethod(conn, 2, &inp, MemoryLayout<SMCParamStruct>.stride, &out, &sz)
-        return r == kIOReturnSuccess && out.result == 0
+    /// A key counts as available only if it exists with a non-zero size.
+    private static func available(_ conn: io_connect_t, _ key: String) -> Bool {
+        guard let info = keyInfo(conn, key) else { return false }
+        return info.dataSize > 0
     }
 
-    /// Reads CHIE. Returns true if the adapter is currently enabled (charging allowed).
-    static func getAdapterEnabled() -> Bool {
-        guard let conn = open() else { return true }
-        defer { IOServiceClose(conn) }
-        guard let info = keyInfo(conn, keyAdapter) else { return true }
-
+    private static func read(_ conn: io_connect_t, _ key: String) -> UInt8 {
+        guard let info = keyInfo(conn, key) else { return 0 }
         var inp = SMCParamStruct()
-        inp.key = fourCC(keyAdapter)
+        inp.key = fourCC(key)
         inp.keyInfo.dataSize = info.dataSize
         inp.data8 = 5 // kSMCReadKey
         var out = SMCParamStruct(); var sz = MemoryLayout<SMCParamStruct>.stride
         let r = IOConnectCallStructMethod(conn, 2, &inp, MemoryLayout<SMCParamStruct>.stride, &out, &sz)
-        guard r == kIOReturnSuccess && out.result == 0 else { return true }
-        return out.bytes.0 == adapterOn
+        guard r == kIOReturnSuccess && out.result == 0 else { return 0 }
+        return out.bytes.0
+    }
+
+    /// Writes the low byte (rest zero) — valid for the ui8/ui32 charge keys we use.
+    private static func write(_ conn: io_connect_t, _ key: String, _ value: UInt8) -> Bool {
+        guard let info = keyInfo(conn, key) else { return false }
+        var inp = SMCParamStruct()
+        inp.key = fourCC(key)
+        inp.keyInfo.dataSize = info.dataSize
+        inp.keyInfo.dataType = info.dataType
+        inp.data8 = 6 // kSMCWriteKey
+        inp.bytes.0 = value
+        var out = SMCParamStruct(); var sz = MemoryLayout<SMCParamStruct>.stride
+        let r = IOConnectCallStructMethod(conn, 2, &inp, MemoryLayout<SMCParamStruct>.stride, &out, &sz)
+        return r == kIOReturnSuccess && out.result == 0
     }
 }
