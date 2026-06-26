@@ -12,15 +12,17 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #0a0a0f;
-      --bg2: #111118;
-      --card: #16161f;
+      --bg: #08080e;
+      --bg2: #0f0f18;
+      --card: #13131c;
+      --card2: #181824;
       --border: rgba(255,255,255,0.07);
+      --border2: rgba(255,255,255,0.12);
       --accent: #30d158;
-      --accent2: #0a84ff;
       --text: #f5f5f7;
-      --muted: #86868b;
-      --radius: 18px;
+      --muted: #6e6e73;
+      --muted2: #98989f;
+      --radius: 20px;
     }
 
     html { scroll-behavior: smooth; }
@@ -29,159 +31,240 @@
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
       background: var(--bg);
       color: var(--text);
-      line-height: 1.6;
       -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
     }
 
-    /* NAV */
+    /* ── NAV ── */
     nav {
       position: fixed; top: 0; left: 0; right: 0; z-index: 100;
       display: flex; align-items: center; justify-content: space-between;
-      padding: 16px 40px;
-      background: rgba(10,10,15,0.8);
-      backdrop-filter: blur(20px);
+      padding: 0 40px; height: 56px;
+      background: rgba(8,8,14,0.75);
+      backdrop-filter: blur(24px) saturate(180%);
       border-bottom: 1px solid var(--border);
     }
-    .nav-brand { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 17px; }
-    .nav-brand img { width: 28px; height: 28px; border-radius: 7px; }
-    .nav-cta {
+    .nav-brand { display: flex; align-items: center; gap: 9px; font-weight: 600; font-size: 16px; letter-spacing: -.01em; }
+    .nav-brand img { width: 26px; height: 26px; border-radius: 7px; }
+    .nav-right { display: flex; align-items: center; gap: 8px; }
+    .nav-gh {
+      display: flex; align-items: center; gap: 6px;
+      color: var(--muted2); text-decoration: none; font-size: 13px;
+      padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border);
+      transition: color .15s, border-color .15s;
+    }
+    .nav-gh:hover { color: var(--text); border-color: var(--border2); }
+    .nav-dl {
       background: var(--accent); color: #000;
       border: none; border-radius: 980px;
-      padding: 8px 20px; font-size: 14px; font-weight: 600;
+      padding: 7px 18px; font-size: 13px; font-weight: 600;
       cursor: pointer; text-decoration: none;
-      transition: opacity .15s;
+      transition: opacity .15s, transform .15s;
     }
-    .nav-cta:hover { opacity: .85; }
+    .nav-dl:hover { opacity: .85; transform: scale(1.03); }
 
-    /* HERO */
+    /* ── HERO ── */
     .hero {
       min-height: 100vh;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
-      padding: 120px 24px 80px;
+      padding: 100px 24px 80px;
       text-align: center;
-      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(48,209,88,.12) 0%, transparent 70%);
+      position: relative;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 50% -10%, rgba(48,209,88,.18) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 30% at 80% 80%, rgba(10,132,255,.08) 0%, transparent 60%);
+      pointer-events: none;
     }
     .hero-badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      background: rgba(48,209,88,.12); border: 1px solid rgba(48,209,88,.25);
+      display: inline-flex; align-items: center; gap: 7px;
+      background: rgba(48,209,88,.1); border: 1px solid rgba(48,209,88,.2);
       color: var(--accent); border-radius: 980px;
-      padding: 5px 14px; font-size: 13px; font-weight: 500;
-      margin-bottom: 24px;
+      padding: 5px 14px; font-size: 12px; font-weight: 600; letter-spacing: .02em;
+      margin-bottom: 28px; position: relative;
     }
-    .hero-badge span { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); display: inline-block; }
-    .hero h1 {
-      font-size: clamp(42px, 7vw, 80px);
-      font-weight: 700; letter-spacing: -0.03em; line-height: 1.08;
-      margin-bottom: 20px;
+    .hero-badge-dot {
+      width: 6px; height: 6px; border-radius: 50%; background: var(--accent);
+      box-shadow: 0 0 6px var(--accent);
+      animation: pulse 2s ease-in-out infinite;
     }
-    .hero h1 em { font-style: normal; color: var(--accent); }
-    .hero p {
-      font-size: clamp(17px, 2vw, 20px); color: var(--muted);
-      max-width: 560px; margin: 0 auto 40px;
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+    h1 {
+      font-size: clamp(44px, 8vw, 88px);
+      font-weight: 700; letter-spacing: -0.04em; line-height: 1.05;
+      margin-bottom: 22px; position: relative;
     }
-    .hero-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-    .btn-primary {
-      background: var(--accent); color: #000;
-      border: none; border-radius: 980px;
-      padding: 14px 32px; font-size: 16px; font-weight: 600;
-      cursor: pointer; text-decoration: none;
-      display: inline-flex; align-items: center; gap: 8px;
-      transition: transform .15s, opacity .15s;
+    h1 em { font-style: normal; color: var(--accent); }
+    .hero-sub {
+      font-size: clamp(16px, 2vw, 19px); color: var(--muted2);
+      max-width: 500px; line-height: 1.6; margin-bottom: 48px; position: relative;
     }
-    .btn-primary:hover { transform: scale(1.03); opacity: .9; }
-    .btn-secondary {
-      background: rgba(255,255,255,0.06); color: var(--text);
-      border: 1px solid var(--border); border-radius: 980px;
-      padding: 14px 32px; font-size: 16px; font-weight: 500;
-      cursor: pointer; text-decoration: none;
+
+    /* ── INSTALL CARD ── */
+    .install-card {
+      width: 100%; max-width: 500px;
+      background: var(--card);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 0 0 1px rgba(0,0,0,.5), 0 32px 64px rgba(0,0,0,.4);
+      position: relative;
+    }
+    .install-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(48,209,88,.5), transparent);
+    }
+    .install-tabs {
+      display: flex; border-bottom: 1px solid var(--border);
+    }
+    .itab {
+      flex: 1; padding: 13px 16px;
+      background: transparent; border: none;
+      font-size: 13px; font-weight: 500; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+      transition: background .15s, color .15s;
+      position: relative; color: var(--muted);
+    }
+    .itab.active {
+      color: var(--text);
+      background: rgba(255,255,255,.04);
+    }
+    .itab.active::after {
+      content: '';
+      position: absolute; bottom: -1px; left: 16px; right: 16px; height: 1px;
+      background: var(--accent);
+    }
+    .itab:first-child { border-right: 1px solid var(--border); }
+
+    .ipanel { display: none; padding: 20px; text-align: left; }
+    .ipanel.active { display: block; }
+
+    .code-block {
+      background: rgba(0,0,0,.4);
+      border: 1px solid rgba(255,255,255,.06);
+      border-radius: 12px;
+      padding: 16px 18px;
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: 13px; line-height: 1.9;
+      color: #e5e5ea;
+      position: relative;
+      overflow: hidden;
+    }
+    .code-block .prompt { color: var(--accent); user-select: none; }
+
+    .dmg-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 4px 0;
+    }
+    .dmg-info h4 { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+    .dmg-info p { font-size: 12px; color: var(--muted); }
+    .dmg-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(255,255,255,.06); border: 1px solid var(--border2);
+      color: var(--text); text-decoration: none;
+      border-radius: 10px; padding: 8px 14px;
+      font-size: 13px; font-weight: 500;
       transition: background .15s;
     }
-    .btn-secondary:hover { background: rgba(255,255,255,0.1); }
-    .hero-meta { margin-top: 16px; font-size: 13px; color: var(--muted); }
+    .dmg-btn:hover { background: rgba(255,255,255,.1); }
 
-    /* SCREENSHOT */
-    .screenshot-wrap {
-      margin: 60px auto 0; max-width: 760px; width: 100%;
-      padding: 0 24px;
+    .install-footer {
+      padding: 12px 20px;
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      font-size: 12px; color: var(--muted);
     }
-    .screenshot-wrap img {
+    .install-footer span { color: var(--accent); }
+
+    /* ── SCREENSHOT ── */
+    .ss-wrap {
+      margin-top: 64px; max-width: 740px; width: 100%;
+      position: relative;
+    }
+    .ss-wrap::before {
+      content: '';
+      position: absolute; inset: -1px;
+      border-radius: calc(var(--radius) + 1px);
+      background: linear-gradient(135deg, rgba(48,209,88,.2), transparent 50%, rgba(10,132,255,.1));
+      z-index: -1;
+    }
+    .ss-wrap img {
       width: 100%; border-radius: var(--radius);
       border: 1px solid var(--border);
-      box-shadow: 0 40px 120px rgba(0,0,0,.6);
+      display: block;
     }
 
-    /* DYNAMIC ISLAND SECTION */
-    .section { padding: 100px 24px; max-width: 1100px; margin: 0 auto; }
-    .section-label {
-      font-size: 13px; font-weight: 600; letter-spacing: .08em;
-      text-transform: uppercase; color: var(--accent); margin-bottom: 12px;
-    }
-    .section h2 {
-      font-size: clamp(32px, 5vw, 52px); font-weight: 700;
-      letter-spacing: -0.02em; line-height: 1.1; margin-bottom: 16px;
-    }
-    .section > p { font-size: 18px; color: var(--muted); max-width: 540px; margin-bottom: 48px; }
+    /* ── SECTION COMMON ── */
+    .section { max-width: 1100px; margin: 0 auto; padding: 100px 24px; }
+    .label { font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
+    .section-h { font-size: clamp(30px, 4vw, 48px); font-weight: 700; letter-spacing: -0.025em; line-height: 1.1; }
+    .section-p { font-size: 17px; color: var(--muted2); margin-top: 14px; max-width: 500px; line-height: 1.6; }
 
-    .di-img { width: 100%; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: 0 20px 80px rgba(0,0,0,.5); }
+    /* ── DYNAMIC ISLAND ── */
+    .di-img { width: 100%; border-radius: var(--radius); border: 1px solid var(--border); margin-top: 40px; display: block; box-shadow: 0 24px 80px rgba(0,0,0,.5); }
 
-    /* FEATURES GRID */
-    .features { padding: 80px 24px; max-width: 1100px; margin: 0 auto; }
-    .features-header { text-align: center; margin-bottom: 60px; }
-    .features-header h2 { font-size: clamp(28px, 4vw, 44px); font-weight: 700; letter-spacing: -0.02em; }
-    .features-header p { font-size: 18px; color: var(--muted); margin-top: 12px; }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 16px;
-    }
-    .card {
+    /* ── FEATURES ── */
+    .features-section { max-width: 1100px; margin: 0 auto; padding: 0 24px 100px; }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    @media(max-width:768px){ .grid { grid-template-columns: 1fr; } }
+    .feat {
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 28px;
-      transition: border-color .2s;
+      padding: 26px;
+      transition: border-color .2s, background .2s;
     }
-    .card:hover { border-color: rgba(255,255,255,0.14); }
-    .card-icon { font-size: 28px; margin-bottom: 14px; }
-    .card h3 { font-size: 17px; font-weight: 600; margin-bottom: 8px; }
-    .card p { font-size: 14px; color: var(--muted); line-height: 1.6; }
+    .feat:hover { border-color: var(--border2); background: var(--card2); }
+    .feat-icon { font-size: 26px; margin-bottom: 14px; }
+    .feat h3 { font-size: 15px; font-weight: 600; margin-bottom: 7px; }
+    .feat p { font-size: 13px; color: var(--muted2); line-height: 1.6; }
 
-    /* SECOND SCREENSHOT */
-    .popover-section {
-      padding: 80px 24px;
-      max-width: 480px;
-      margin: 0 auto;
+    /* ── CTA ── */
+    .cta {
+      padding: 120px 24px;
       text-align: center;
+      position: relative;
     }
-    .popover-section h2 { font-size: clamp(24px, 4vw, 36px); font-weight: 700; letter-spacing: -0.02em; margin-bottom: 12px; }
-    .popover-section p { font-size: 16px; color: var(--muted); margin-bottom: 32px; }
-    .popover-section img { width: 100%; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: 0 20px 60px rgba(0,0,0,.5); }
-
-    /* CTA */
-    .cta-section {
-      padding: 100px 24px;
-      text-align: center;
-      background: radial-gradient(ellipse 70% 50% at 50% 100%, rgba(48,209,88,.1) 0%, transparent 70%);
+    .cta::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 60% 60% at 50% 100%, rgba(48,209,88,.12) 0%, transparent 70%);
+      pointer-events: none;
     }
-    .cta-section h2 { font-size: clamp(28px, 5vw, 52px); font-weight: 700; letter-spacing: -0.02em; margin-bottom: 16px; }
-    .cta-section p { font-size: 18px; color: var(--muted); margin-bottom: 40px; }
-    .requirements { margin-top: 20px; font-size: 13px; color: var(--muted); }
+    .cta-icon { width: 72px; height: 72px; border-radius: 18px; margin: 0 auto 28px; display: block; box-shadow: 0 8px 40px rgba(48,209,88,.25); }
+    .cta h2 { font-size: clamp(28px, 5vw, 52px); font-weight: 700; letter-spacing: -0.025em; margin-bottom: 14px; }
+    .cta p { font-size: 17px; color: var(--muted2); margin-bottom: 44px; }
+    .cta-dl {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--accent); color: #000;
+      border-radius: 980px; padding: 15px 36px;
+      font-size: 17px; font-weight: 700; text-decoration: none;
+      transition: opacity .15s, transform .15s;
+      box-shadow: 0 0 40px rgba(48,209,88,.3);
+    }
+    .cta-dl:hover { opacity: .88; transform: scale(1.03); }
+    .cta-note { margin-top: 18px; font-size: 13px; color: var(--muted); }
 
-    /* FOOTER */
+    /* ── FOOTER ── */
     footer {
       border-top: 1px solid var(--border);
-      padding: 32px 40px;
+      padding: 28px 40px;
       display: flex; align-items: center; justify-content: space-between;
       flex-wrap: wrap; gap: 12px;
     }
     footer span { font-size: 13px; color: var(--muted); }
-    footer a { color: var(--muted); text-decoration: none; font-size: 13px; }
+    .footer-links { display: flex; gap: 20px; }
+    footer a { color: var(--muted); text-decoration: none; font-size: 13px; transition: color .15s; }
     footer a:hover { color: var(--text); }
-    .footer-links { display: flex; gap: 24px; }
 
-    @media (max-width: 600px) {
-      nav { padding: 14px 20px; }
+    @media(max-width:600px){
+      nav { padding: 0 20px; }
+      .hero { padding: 90px 20px 60px; }
       footer { padding: 24px 20px; }
     }
   </style>
@@ -194,131 +277,141 @@
     <img src="icon.png" alt="MacWake icon">
     MacWake
   </div>
-  <a class="nav-cta" href="https://github.com/Jarvis322/MacWake/releases/download/v1.0/Wake-1.0.dmg">
-    Download Free
-  </a>
+  <div class="nav-right">
+    <a class="nav-gh" href="https://github.com/Jarvis322/MacWake" target="_blank">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      GitHub
+    </a>
+    <a class="nav-dl" href="https://github.com/Jarvis322/MacWake/releases/download/v1.0/Wake-1.0.dmg">Download</a>
+  </div>
 </nav>
 
 <!-- HERO -->
 <section class="hero">
-  <div class="hero-badge"><span></span> Free for macOS 14+</div>
-  <h1>Your Mac's battery,<br><em>finally visible.</em></h1>
-  <p>MacWake lives in your menu bar and tracks battery health, temperature, fan speed, and charging habits — so you catch problems before they become expensive.</p>
-  <div class="hero-actions">
-    <a class="btn-primary" href="https://github.com/Jarvis322/MacWake/releases/download/v1.0/Wake-1.0.dmg">
-      ↓ Download for Mac
-    </a>
-    <a class="btn-secondary" href="https://github.com/Jarvis322/MacWake" target="_blank">
-      View on GitHub
-    </a>
+  <div class="hero-badge">
+    <span class="hero-badge-dot"></span>
+    Free · Open Source · macOS 14+
   </div>
-  <p class="hero-meta">Free · No subscription · macOS Sonoma 14+</p>
 
-  <div class="screenshot-wrap">
-    <img src="screenshots/menubar-popover.png" alt="MacWake menu bar panel">
+  <h1>Your Mac's battery,<br><em>finally visible.</em></h1>
+
+  <p class="hero-sub">MacWake sits in your menu bar and watches your battery so you don't have to — temperature, fan speed, health decay, charging habits.</p>
+
+  <!-- INSTALL CARD -->
+  <div class="install-card">
+    <div class="install-tabs">
+      <button class="itab active" onclick="switchTab('brew',this)">
+        🍺 &nbsp;Homebrew
+      </button>
+      <button class="itab" onclick="switchTab('dmg',this)">
+        📦 &nbsp;Direct Download
+      </button>
+    </div>
+
+    <div id="panel-brew" class="ipanel active">
+      <div class="code-block">
+        <div><span class="prompt">$</span> brew tap Jarvis322/tap</div>
+        <div><span class="prompt">$</span> brew install --cask macwake</div>
+      </div>
+    </div>
+
+    <div id="panel-dmg" class="ipanel">
+      <div class="dmg-row">
+        <div class="dmg-info">
+          <h4>Wake-1.0.dmg</h4>
+          <p>3.8 MB · Developer ID signed · Notarized</p>
+        </div>
+        <a class="dmg-btn" href="https://github.com/Jarvis322/MacWake/releases/download/v1.0/Wake-1.0.dmg">
+          ↓ Download
+        </a>
+      </div>
+      <p style="font-size:12px;color:var(--muted);margin-top:12px;">Open the DMG and drag MacWake to your Applications folder.</p>
+    </div>
+
+    <div class="install-footer">
+      <span>✓</span> Free forever &nbsp;·&nbsp; No account &nbsp;·&nbsp; No telemetry
+    </div>
+  </div>
+
+  <!-- SCREENSHOT -->
+  <div class="ss-wrap">
+    <img src="screenshots/menubar-popover.png" alt="MacWake panel">
   </div>
 </section>
 
 <!-- DYNAMIC ISLAND -->
-<div style="max-width:1100px;margin:0 auto;padding:80px 24px 40px;">
-  <div class="section-label">Dynamic Island</div>
-  <h2 style="font-size:clamp(28px,4vw,44px);font-weight:700;letter-spacing:-0.02em;margin-bottom:16px;">Lives in your notch.</h2>
-  <p style="font-size:17px;color:var(--muted);max-width:520px;margin-bottom:40px;">On notch MacBooks, MacWake blends into the hardware. Hover to expand — live power draw, battery health, and temperature at a glance.</p>
+<div class="section" style="padding-top:40px;">
+  <div class="label">Dynamic Island</div>
+  <h2 class="section-h">Lives in your notch.</h2>
+  <p class="section-p">On notch MacBooks, MacWake blends into the hardware. Hover to expand — live power, battery health, and temperature at a glance.</p>
   <img class="di-img" src="screenshots/dynamic-island.png" alt="MacWake Dynamic Island">
 </div>
 
 <!-- FEATURES -->
-<section class="features">
-  <div class="features-header">
-    <h2>Everything your battery<br>wants you to know.</h2>
-    <p>Built for people who actually care about keeping their MacBook battery healthy long-term.</p>
+<div class="features-section">
+  <div style="text-align:center;margin-bottom:56px;">
+    <div class="label" style="justify-content:center;display:flex;">Features</div>
+    <h2 class="section-h" style="max-width:500px;margin:0 auto;">Everything your battery wants you to know.</h2>
   </div>
   <div class="grid">
-    <div class="card">
-      <div class="card-icon">🌡️</div>
+    <div class="feat">
+      <div class="feat-icon">🌡️</div>
       <h3>Temperature Alerts</h3>
-      <p>Get notified when battery temperature exceeds 38°C — before heat causes permanent capacity loss.</p>
+      <p>Notified when battery temperature exceeds 38°C — before heat causes permanent capacity loss.</p>
     </div>
-    <div class="card">
-      <div class="card-icon">📈</div>
+    <div class="feat">
+      <div class="feat-icon">📈</div>
       <h3>Health Decay Log</h3>
-      <p>A timeline of your battery's maximum capacity over time. Watch the trend and know when to act.</p>
+      <p>A timeline of your battery's maximum capacity. Watch the trend and know when to act.</p>
     </div>
-    <div class="card">
-      <div class="card-icon">🌀</div>
-      <h3>Real-Time Fan Speed</h3>
-      <p>Monitor fan RPM live. Know when your Mac is working hard — and when it's running silent.</p>
+    <div class="feat">
+      <div class="feat-icon">🌀</div>
+      <h3>Fan Speed</h3>
+      <p>Real-time fan RPM. Know when your Mac is working hard — and when it's running silent.</p>
     </div>
-    <div class="card">
-      <div class="card-icon">⚡️</div>
-      <h3>Power Draw Display</h3>
-      <p>See exact watt consumption in the menu bar at all times. Plugged in or on battery, always accurate.</p>
+    <div class="feat">
+      <div class="feat-icon">⚡️</div>
+      <h3>Live Power Draw</h3>
+      <p>Exact watt consumption in the menu bar at all times. Plugged in or on battery.</p>
     </div>
-    <div class="card">
-      <div class="card-icon">🔌</div>
-      <h3>Plugged In All Day Alert</h3>
-      <p>Staying at 100% for 24+ hours degrades lithium batteries. MacWake warns you before damage accumulates.</p>
+    <div class="feat">
+      <div class="feat-icon">🔌</div>
+      <h3>Plugged In All Day</h3>
+      <p>Staying at 100% for 24+ hours degrades lithium. MacWake warns you before it accumulates.</p>
     </div>
-    <div class="card">
-      <div class="card-icon">💨</div>
+    <div class="feat">
+      <div class="feat-icon">💨</div>
       <h3>Fast Drain Detection</h3>
-      <p>Detects sudden 5%+ battery drops after wake-from-sleep and alerts you to runaway background processes.</p>
+      <p>Catches sudden 5%+ drops after wake-from-sleep and alerts you to runaway processes.</p>
     </div>
-    <div class="card">
-      <div class="card-icon">🖥️</div>
-      <h3>Desktop Widget</h3>
-      <p>A floating translucent widget you can pin anywhere on your desktop. Lock it, move it, style it.</p>
+    <div class="feat">
+      <div class="feat-icon">🏝️</div>
+      <h3>Dynamic Island</h3>
+      <p>Hugs the notch, blends with hardware. Hover to expand with a spring animation.</p>
     </div>
-    <div class="card">
-      <div class="card-icon">💫</div>
+    <div class="feat">
+      <div class="feat-icon">💫</div>
       <h3>Charging Animation</h3>
-      <p>An elegant fullscreen animation plays when you plug in — just like iPhone. Can be toggled off anytime.</p>
+      <p>An elegant fullscreen animation when you plug in — like iPhone. Toggle it anytime.</p>
     </div>
-    <div class="card">
-      <div class="card-icon">🔒</div>
+    <div class="feat">
+      <div class="feat-icon">🔒</div>
       <h3>100% Private</h3>
       <p>No cloud, no analytics, no account. All data stays on your Mac. Always.</p>
     </div>
   </div>
-</section>
-
-<!-- INSTALL -->
-<section style="padding:80px 24px;max-width:700px;margin:0 auto;text-align:center;">
-  <div class="section-label">Installation</div>
-  <h2 style="font-size:clamp(28px,4vw,44px);font-weight:700;letter-spacing:-0.02em;margin-bottom:12px;">Two ways to install.</h2>
-  <p style="font-size:17px;color:var(--muted);margin-bottom:48px;">Pick whichever fits your workflow.</p>
-
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;text-align:left;">
-    <div class="card" style="border-color:rgba(48,209,88,.25);">
-      <div style="font-size:22px;margin-bottom:12px;">🍺</div>
-      <h3 style="margin-bottom:8px;">Homebrew</h3>
-      <p style="color:var(--muted);font-size:13px;margin-bottom:16px;">Install and update with one command.</p>
-      <pre style="background:#0d0d14;border:1px solid var(--border);border-radius:10px;padding:14px;font-size:12px;color:#e5e5ea;overflow-x:auto;line-height:1.7;"><code>brew tap Jarvis322/tap
-brew install --cask macwake</code></pre>
-    </div>
-    <div class="card">
-      <div style="font-size:22px;margin-bottom:12px;">📦</div>
-      <h3 style="margin-bottom:8px;">Direct Download</h3>
-      <p style="color:var(--muted);font-size:13px;margin-bottom:16px;">Download the DMG and drag to Applications.</p>
-      <a href="https://github.com/Jarvis322/MacWake/releases/download/v1.0/Wake-1.0.dmg"
-         style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:10px;padding:10px 16px;color:var(--text);text-decoration:none;font-size:13px;font-weight:500;transition:background .15s;"
-         onmouseover="this.style.background='rgba(255,255,255,0.1)'"
-         onmouseout="this.style.background='rgba(255,255,255,0.06)'">
-        ↓ Wake-1.0.dmg
-      </a>
-    </div>
-  </div>
-</section>
+</div>
 
 <!-- CTA -->
-<section class="cta-section">
-  <img src="icon.png" alt="MacWake icon" style="width:80px;height:80px;border-radius:20px;margin-bottom:24px;box-shadow:0 8px 32px rgba(48,209,88,.3);">
-  <h2>Start taking care of your battery.</h2>
+<section class="cta">
+  <img class="cta-icon" src="icon.png" alt="MacWake">
+  <h2>Start protecting your battery.</h2>
   <p>Free download. No sign-up. Open it and it just works.</p>
-  <a class="btn-primary" href="https://github.com/Jarvis322/MacWake/releases/download/v1.0/Wake-1.0.dmg" style="font-size:18px;padding:16px:40px;">
-    ↓ Download MacWake — Free
+  <a class="cta-dl" href="https://github.com/Jarvis322/MacWake/releases/download/v1.0/Wake-1.0.dmg">
+    ↓ &nbsp;Download MacWake — Free
   </a>
-  <p class="requirements">Requires macOS 14.0 Sonoma or later · Apple Silicon &amp; Intel · Developer ID signed &amp; notarized</p>
+  <p class="cta-note">or &nbsp;<code style="font-size:12px;background:rgba(255,255,255,.06);padding:3px 8px;border-radius:6px;border:1px solid var(--border);">brew install --cask macwake</code></p>
+  <p class="cta-note" style="margin-top:12px;">Requires macOS 14 Sonoma · Apple Silicon &amp; Intel · Notarized</p>
 </section>
 
 <!-- FOOTER -->
@@ -327,9 +420,18 @@ brew install --cask macwake</code></pre>
   <div class="footer-links">
     <a href="https://github.com/Jarvis322/MacWake" target="_blank">GitHub</a>
     <a href="https://github.com/Jarvis322/MacWake/releases" target="_blank">Releases</a>
-    <a href="privacy-policy.html" target="_blank">Privacy Policy</a>
+    <a href="privacy-policy.html">Privacy Policy</a>
   </div>
 </footer>
+
+<script>
+  function switchTab(tab, btn) {
+    document.querySelectorAll('.itab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.ipanel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-' + tab).classList.add('active');
+  }
+</script>
 
 </body>
 </html>
