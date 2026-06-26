@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MacWake — Battery Health Monitor for Mac</title>
+  <meta name="description" content="Keep your MacBook battery healthy for the long run. Track temperature, fan speed, charge history, and get alerts before damage is done.">
+  <meta property="og:title" content="MacWake — Battery Health Monitor for Mac">
+  <meta property="og:description" content="Track battery health, temperature, fan speed, and charging habits. Free for macOS 14+.">
+  <meta property="og:image" content="https://jarvis322.github.io/MacWake/screenshots/menubar-popover.png">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --bg2: #111118;
+      --card: #16161f;
+      --border: rgba(255,255,255,0.07);
+      --accent: #30d158;
+      --accent2: #0a84ff;
+      --text: #f5f5f7;
+      --muted: #86868b;
+      --radius: 18px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 40px;
+      background: rgba(10,10,15,0.8);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-brand { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 17px; }
+    .nav-brand img { width: 28px; height: 28px; border-radius: 7px; }
+    .nav-cta {
+      background: var(--accent); color: #000;
+      border: none; border-radius: 980px;
+      padding: 8px 20px; font-size: 14px; font-weight: 600;
+      cursor: pointer; text-decoration: none;
+      transition: opacity .15s;
+    }
+    .nav-cta:hover { opacity: .85; }
+
+    /* HERO */
+    .hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 120px 24px 80px;
+      text-align: center;
+      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(48,209,88,.12) 0%, transparent 70%);
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(48,209,88,.12); border: 1px solid rgba(48,209,88,.25);
+      color: var(--accent); border-radius: 980px;
+      padding: 5px 14px; font-size: 13px; font-weight: 500;
+      margin-bottom: 24px;
+    }
+    .hero-badge span { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); display: inline-block; }
+    .hero h1 {
+      font-size: clamp(42px, 7vw, 80px);
+      font-weight: 700; letter-spacing: -0.03em; line-height: 1.08;
+      margin-bottom: 20px;
+    }
+    .hero h1 em { font-style: normal; color: var(--accent); }
+    .hero p {
+      font-size: clamp(17px, 2vw, 20px); color: var(--muted);
+      max-width: 560px; margin: 0 auto 40px;
+    }
+    .hero-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .btn-primary {
+      background: var(--accent); color: #000;
+      border: none; border-radius: 980px;
+      padding: 14px 32px; font-size: 16px; font-weight: 600;
+      cursor: pointer; text-decoration: none;
+      display: inline-flex; align-items: center; gap: 8px;
+      transition: transform .15s, opacity .15s;
+    }
+    .btn-primary:hover { transform: scale(1.03); opacity: .9; }
+    .btn-secondary {
+      background: rgba(255,255,255,0.06); color: var(--text);
+      border: 1px solid var(--border); border-radius: 980px;
+      padding: 14px 32px; font-size: 16px; font-weight: 500;
+      cursor: pointer; text-decoration: none;
+      transition: background .15s;
+    }
+    .btn-secondary:hover { background: rgba(255,255,255,0.1); }
+    .hero-meta { margin-top: 16px; font-size: 13px; color: var(--muted); }
+
+    /* SCREENSHOT */
+    .screenshot-wrap {
+      margin: 60px auto 0; max-width: 760px; width: 100%;
+      padding: 0 24px;
+    }
+    .screenshot-wrap img {
+      width: 100%; border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: 0 40px 120px rgba(0,0,0,.6);
+    }
+
+    /* DYNAMIC ISLAND SECTION */
+    .section { padding: 100px 24px; max-width: 1100px; margin: 0 auto; }
+    .section-label {
+      font-size: 13px; font-weight: 600; letter-spacing: .08em;
+      text-transform: uppercase; color: var(--accent); margin-bottom: 12px;
+    }
+    .section h2 {
+      font-size: clamp(32px, 5vw, 52px); font-weight: 700;
+      letter-spacing: -0.02em; line-height: 1.1; margin-bottom: 16px;
+    }
+    .section > p { font-size: 18px; color: var(--muted); max-width: 540px; margin-bottom: 48px; }
+
+    .di-img { width: 100%; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: 0 20px 80px rgba(0,0,0,.5); }
+
+    /* FEATURES GRID */
+    .features { padding: 80px 24px; max-width: 1100px; margin: 0 auto; }
+    .features-header { text-align: center; margin-bottom: 60px; }
+    .features-header h2 { font-size: clamp(28px, 4vw, 44px); font-weight: 700; letter-spacing: -0.02em; }
+    .features-header p { font-size: 18px; color: var(--muted); margin-top: 12px; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      transition: border-color .2s;
+    }
+    .card:hover { border-color: rgba(255,255,255,0.14); }
+    .card-icon { font-size: 28px; margin-bottom: 14px; }
+    .card h3 { font-size: 17px; font-weight: 600; margin-bottom: 8px; }
+    .card p { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+    /* SECOND SCREENSHOT */
+    .popover-section {
+      padding: 80px 24px;
+      max-width: 480px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    .popover-section h2 { font-size: clamp(24px, 4vw, 36px); font-weight: 700; letter-spacing: -0.02em; margin-bottom: 12px; }
+    .popover-section p { font-size: 16px; color: var(--muted); margin-bottom: 32px; }
+    .popover-section img { width: 100%; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+
+    /* CTA */
+    .cta-section {
+      padding: 100px 24px;
+      text-align: center;
+      background: radial-gradient(ellipse 70% 50% at 50% 100%, rgba(48,209,88,.1) 0%, transparent 70%);
+    }
+    .cta-section h2 { font-size: clamp(28px, 5vw, 52px); font-weight: 700; letter-spacing: -0.02em; margin-bottom: 16px; }
+    .cta-section p { font-size: 18px; color: var(--muted); margin-bottom: 40px; }
+    .requirements { margin-top: 20px; font-size: 13px; color: var(--muted); }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 40px;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 12px;
+    }
+    footer span { font-size: 13px; color: var(--muted); }
+    footer a { color: var(--muted); text-decoration: none; font-size: 13px; }
+    footer a:hover { color: var(--text); }
+    .footer-links { display: flex; gap: 24px; }
+
+    @media (max-width: 600px) {
+      nav { padding: 14px 20px; }
+      footer { padding: 24px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-brand">
+    <img src="icon.png" alt="MacWake icon">
+    MacWake
+  </div>
+  <a class="nav-cta" href="https://github.com/Jarvis322/MacWake/releases/download/v1.0/Wake-1.0.dmg">
+    Download Free
+  </a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge"><span></span> Free for macOS 14+</div>
+  <h1>Your Mac's battery,<br><em>finally visible.</em></h1>
+  <p>MacWake lives in your menu bar and tracks battery health, temperature, fan speed, and charging habits — so you catch problems before they become expensive.</p>
+  <div class="hero-actions">
+    <a class="btn-primary" href="https://github.com/Jarvis322/MacWake/releases/download/v1.0/Wake-1.0.dmg">
+      ↓ Download for Mac
+    </a>
+    <a class="btn-secondary" href="https://github.com/Jarvis322/MacWake" target="_blank">
+      View on GitHub
+    </a>
+  </div>
+  <p class="hero-meta">Free · No subscription · macOS Sonoma 14+</p>
+
+  <div class="screenshot-wrap">
+    <img src="screenshots/menubar-popover.png" alt="MacWake menu bar panel">
+  </div>
+</section>
+
+<!-- DYNAMIC ISLAND -->
+<div style="max-width:1100px;margin:0 auto;padding:80px 24px 40px;">
+  <div class="section-label">Dynamic Island</div>
+  <h2 style="font-size:clamp(28px,4vw,44px);font-weight:700;letter-spacing:-0.02em;margin-bottom:16px;">Lives in your notch.</h2>
+  <p style="font-size:17px;color:var(--muted);max-width:520px;margin-bottom:40px;">On notch MacBooks, MacWake blends into the hardware. Hover to expand — live power draw, battery health, and temperature at a glance.</p>
+  <img class="di-img" src="screenshots/dynamic-island.png" alt="MacWake Dynamic Island">
+</div>
+
+<!-- FEATURES -->
+<section class="features">
+  <div class="features-header">
+    <h2>Everything your battery<br>wants you to know.</h2>
+    <p>Built for people who actually care about keeping their MacBook battery healthy long-term.</p>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <div class="card-icon">🌡️</div>
+      <h3>Temperature Alerts</h3>
+      <p>Get notified when battery temperature exceeds 38°C — before heat causes permanent capacity loss.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">📈</div>
+      <h3>Health Decay Log</h3>
+      <p>A timeline of your battery's maximum capacity over time. Watch the trend and know when to act.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🌀</div>
+      <h3>Real-Time Fan Speed</h3>
+      <p>Monitor fan RPM live. Know when your Mac is working hard — and when it's running silent.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">⚡️</div>
+      <h3>Power Draw Display</h3>
+      <p>See exact watt consumption in the menu bar at all times. Plugged in or on battery, always accurate.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🔌</div>
+      <h3>Plugged In All Day Alert</h3>
+      <p>Staying at 100% for 24+ hours degrades lithium batteries. MacWake warns you before damage accumulates.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">💨</div>
+      <h3>Fast Drain Detection</h3>
+      <p>Detects sudden 5%+ battery drops after wake-from-sleep and alerts you to runaway background processes.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🖥️</div>
+      <h3>Desktop Widget</h3>
+      <p>A floating translucent widget you can pin anywhere on your desktop. Lock it, move it, style it.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">💫</div>
+      <h3>Charging Animation</h3>
+      <p>An elegant fullscreen animation plays when you plug in — just like iPhone. Can be toggled off anytime.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🔒</div>
+      <h3>100% Private</h3>
+      <p>No cloud, no analytics, no account. All data stays on your Mac. Always.</p>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <img src="icon.png" alt="MacWake icon" style="width:80px;height:80px;border-radius:20px;margin-bottom:24px;box-shadow:0 8px 32px rgba(48,209,88,.3);">
+  <h2>Start taking care of your battery.</h2>
+  <p>Free download. No sign-up. Open it and it just works.</p>
+  <a class="btn-primary" href="https://github.com/Jarvis322/MacWake/releases/download/v1.0/Wake-1.0.dmg" style="font-size:18px;padding:16px:40px;">
+    ↓ Download MacWake — Free
+  </a>
+  <p class="requirements">Requires macOS 14.0 Sonoma or later · Apple Silicon &amp; Intel · Developer ID signed &amp; notarized</p>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <span>© 2026 MacWake. All rights reserved.</span>
+  <div class="footer-links">
+    <a href="https://github.com/Jarvis322/MacWake" target="_blank">GitHub</a>
+    <a href="https://github.com/Jarvis322/MacWake/releases" target="_blank">Releases</a>
+    <a href="privacy-policy.html" target="_blank">Privacy Policy</a>
+  </div>
+</footer>
+
+</body>
+</html>
