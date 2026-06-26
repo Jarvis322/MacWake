@@ -4,6 +4,7 @@ import Sparkle
 
 struct MacWakeMenuView: View {
     @ObservedObject var tracker: BatteryTracker
+    @ObservedObject private var chargeLimit = ChargeLimitManager.shared
     @Environment(\.colorScheme) var colorScheme
     @State private var isLaunchAtLoginEnabled: Bool = LaunchAgentManager.isEnabled
     @State private var selectedTab: Int = 0
@@ -77,6 +78,7 @@ struct MacWakeMenuView: View {
         .onAppear {
             tracker.updateDynamicWatts()
             isLaunchAtLoginEnabled = LaunchAgentManager.isEnabled
+            chargeLimit.refreshStatus()
             timerActive = true
         }
         .onDisappear {
@@ -194,7 +196,9 @@ struct MacWakeMenuView: View {
                 }
             }
             .toggleStyle(SwitchToggleStyle())
-            
+
+            chargeLimitSection
+
             HStack(spacing: 12) {
                 Button(action: {
                     tracker.resetCurrentSession()
@@ -231,6 +235,94 @@ struct MacWakeMenuView: View {
                 .buttonStyle(.bordered)
             }
             .padding(.top, 4)
+        }
+    }
+
+    @ViewBuilder
+    private var chargeLimitSection: some View {
+        Divider().padding(.vertical, 2)
+
+        switch chargeLimit.helperStatus {
+        case .ready:
+            Toggle(isOn: $chargeLimit.isEnabled) {
+                HStack(spacing: 4) {
+                    Text("Limit Charging")
+                        .font(.subheadline)
+                    Image(systemName: "bolt.badge.automatic")
+                        .font(.caption)
+                        .foregroundColor(.green)
+                }
+            }
+            .toggleStyle(SwitchToggleStyle())
+
+            if chargeLimit.isEnabled {
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text("Stop at")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Spacer()
+                        Text("\(chargeLimit.limit)%")
+                            .font(.caption.bold())
+                            .foregroundColor(.green)
+                    }
+                    Slider(
+                        value: Binding(
+                            get: { Double(chargeLimit.limit) },
+                            set: { chargeLimit.limit = Int($0) }
+                        ),
+                        in: 50...95,
+                        step: 5
+                    )
+                    Text(String(format: String(localized: "CL_HOLD_FMT"), chargeLimit.limit))
+                        .font(.system(size: 10))
+                        .foregroundColor(.secondary)
+
+                    HStack(alignment: .top, spacing: 5) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.system(size: 9))
+                            .foregroundColor(.orange)
+                        Text(String(localized: "CL_OPT_WARNING"))
+                            .font(.system(size: 10))
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.top, 2)
+                }
+                .padding(.leading, 4)
+            }
+
+        case .requiresApproval:
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Approval needed")
+                    .font(.subheadline.bold())
+                Text("Enable the MacWake background item in System Settings to allow charge limiting.")
+                    .font(.system(size: 10))
+                    .foregroundColor(.secondary)
+                Button("Open System Settings") {
+                    chargeLimit.install()
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+            }
+
+        case .notInstalled:
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 4) {
+                    Text("Charge Limit")
+                        .font(.subheadline)
+                    Image(systemName: "bolt.badge.automatic")
+                        .font(.caption)
+                        .foregroundColor(.green)
+                }
+                Text("Cap charging at a set level to reduce long-term battery wear. Installs a small background helper (one-time approval).")
+                    .font(.system(size: 10))
+                    .foregroundColor(.secondary)
+                Button("Enable Charge Limiting") {
+                    chargeLimit.install()
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+            }
         }
     }
 
@@ -297,20 +389,20 @@ struct MacWakeMenuView: View {
 
     private var statusText: String {
         if tracker.isPluggedIn {
-            let limitStr = "(Limit: \(tracker.chargeLimit)%)"
+            let limitStr = String(format: String(localized: "LIMIT_FMT"), tracker.chargeLimit)
             var portStr = ""
             if let port = tracker.usbPortInfo {
-                portStr = " via \(port)"
+                portStr = String(format: String(localized: "VIA_FMT"), port)
             }
             if let dyn = tracker.dynamicWatts, let maxWatts = tracker.powerAdapterWatts {
-                return String(format: "Charging: %.1fW of %dW adapter%@ %@", dyn, maxWatts, portStr, limitStr)
+                return String(format: String(localized: "CHARGING_DYN_FMT"), dyn, maxWatts, portStr, limitStr)
             } else if let watts = tracker.powerAdapterWatts {
-                return "Charging: \(watts)W adapter\(portStr) \(limitStr)"
+                return String(format: String(localized: "CHARGING_FIXED_FMT"), watts, portStr, limitStr)
             }
-            return "Charging\(portStr) \(limitStr)"
+            return String(format: String(localized: "CHARGING_PORT_FMT"), portStr, limitStr)
         }
 
-        return "On Battery"
+        return String(localized: "On Battery")
     }
     
     // MARK: - Current Session Components
@@ -428,9 +520,9 @@ struct MacWakeMenuView: View {
 
     private var pluggedInDescription: String {
         if let watts = tracker.powerAdapterWatts {
-            return "Charging from a \(watts)W adapter. Tracking will start automatically when you unplug the power cable."
+            return String(format: String(localized: "CHARGING_DESC_FMT"), watts)
         }
-        return "Tracking will start automatically when you unplug the power cable (limit: \(tracker.chargeLimit)%)."
+        return String(format: String(localized: "UNPLUG_DESC_FMT"), tracker.chargeLimit)
     }
 
     // MARK: - Weekly Summary
@@ -636,7 +728,7 @@ struct MacWakeMenuView: View {
                                           .foregroundColor(greenColor)
                                   }
                             }
-                            Text("Last seen \(formatRelativeDate(adapter.lastSeen))")
+                            Text(String(format: String(localized: "LAST_SEEN_FMT"), formatRelativeDate(adapter.lastSeen)))
                                 .font(.caption2)
                                 .foregroundColor(.secondary)
                         }
@@ -686,11 +778,11 @@ struct MacWakeMenuView: View {
                             Spacer()
                             
                             VStack(alignment: .trailing, spacing: 2) {
-                                Text("Screen: \(formatDuration(pastSession.screenOnDuration))")
+                                Text(String(format: String(localized: "SCREEN_FMT"), formatDuration(pastSession.screenOnDuration)))
                                     .font(.caption)
                                     .fontWeight(.semibold)
                                     .foregroundColor(greenColor)
-                                Text("Total: \(formatDuration(pastSession.endTime?.timeIntervalSince(pastSession.startTime) ?? 0))")
+                                Text(String(format: String(localized: "TOTAL_FMT"), formatDuration(pastSession.endTime?.timeIntervalSince(pastSession.startTime) ?? 0)))
                                     .font(.caption2)
                                     .foregroundColor(.secondary)
                                 if let efficiency = pastSession.screenMinutesPerPercent {
@@ -742,15 +834,15 @@ struct MacWakeMenuView: View {
     private var notificationStatusText: String {
         switch tracker.notificationStatus {
         case .authorized, .provisional:
-            return "Notifications On"
+            return String(localized: "Notifications On")
         case .denied:
-            return "Notifications Off"
+            return String(localized: "Notifications Off")
         case .notDetermined:
-            return "Notifications Not Set"
+            return String(localized: "Notifications Not Set")
         case .ephemeral:
-            return "Notifications Temporary"
+            return String(localized: "Notifications Temporary")
         @unknown default:
-            return "Notifications Unknown"
+            return String(localized: "Notifications Unknown")
         }
     }
 
@@ -779,14 +871,14 @@ struct MacWakeMenuView: View {
     // MARK: - Helpers
     private func statCard(title: String, value: String, subtitle: String, color: Color) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(title)
+            Text(LocalizedStringKey(title))
                 .font(.caption2)
                 .foregroundColor(.secondary)
             Text(value)
                 .font(.title2)
                 .fontWeight(.bold)
                 .foregroundColor(color)
-            Text(subtitle)
+            Text(LocalizedStringKey(subtitle))
                 .font(.caption2)
                 .foregroundColor(.secondary)
         }
@@ -798,7 +890,7 @@ struct MacWakeMenuView: View {
 
     private func summaryStat(title: String, value: String, color: Color) -> some View {
         VStack(alignment: .leading, spacing: 3) {
-            Text(title)
+            Text(LocalizedStringKey(title))
                 .font(.caption2)
                 .foregroundColor(.secondary)
             Text(value)
@@ -816,7 +908,7 @@ struct MacWakeMenuView: View {
     
     private func detailStat(label: String, value: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(label)
+            Text(LocalizedStringKey(label))
                 .font(.caption2)
                 .foregroundColor(.secondary)
             Text(value)
@@ -859,7 +951,7 @@ struct MacWakeMenuView: View {
             Circle()
                 .fill(color)
                 .frame(width: 6, height: 6)
-            Text(label)
+            Text(LocalizedStringKey(label))
                 .font(.system(size: 9))
                 .foregroundColor(.secondary)
         }
@@ -933,10 +1025,10 @@ struct MacWakeMenuView: View {
                                 .font(.system(size: 14))
                             
                             VStack(alignment: .leading, spacing: 1) {
-                                Text("Battery Health: \(record.health)%")
+                                Text(String(format: String(localized: "BATTERY_HEALTH_FMT"), record.health))
                                     .font(.caption)
                                     .fontWeight(.medium)
-                                Text("Recorded at \(record.cycleCount) cycles")
+                                Text(String(format: String(localized: "RECORDED_AT_FMT"), record.cycleCount))
                                     .font(.caption2)
                                     .foregroundColor(.secondary)
                             }
@@ -999,7 +1091,7 @@ struct TabButton: View {
             VStack(spacing: 3) {
                 Image(systemName: icon)
                     .font(.system(size: 13))
-                Text(title)
+                Text(LocalizedStringKey(title))
                     .font(.system(size: 9, weight: .semibold))
             }
             .foregroundColor(isSelected ? activeColor : .secondary)

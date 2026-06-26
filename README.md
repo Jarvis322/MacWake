@@ -31,6 +31,12 @@ clicking it opens the full panel — Session, History, Hardware, and Settings.
 
 ## ✨ Features
 
+*   **🔋 Charge Limit (Apple Silicon):**
+    *   Cap charging at any level from 50% to 95% to reduce long-term battery wear.
+    *   Holds the battery near the target by pausing the power adapter via the SMC, using a small notarized background helper (one-time approval, no password prompts).
+    *   Automatic discharge-to-hold strategy with hysteresis to avoid rapid cycling.
+*   **🌍 Localization:**
+    *   Full English and Turkish UI, automatically following the macOS system language.
 *   **🏝️ Dynamic Island (Notch UI):**
     *   Panel that hugs the physical notch and blends with the hardware when collapsed.
     *   Hover or click to expand with a bouncy spring animation and haptic feedback.

@@ -200,7 +200,7 @@ struct DynamicIslandPanelView: View {
             VStack(spacing: 3) {
                 Image(systemName: icon)
                     .font(.system(size: 14, weight: .semibold))
-                Text(label)
+                Text(LocalizedStringKey(label))
                     .font(.system(size: 9, weight: .medium))
             }
             .foregroundColor(active ? .black : .white)
@@ -328,7 +328,7 @@ struct DynamicIslandPanelView: View {
         let available = value != nil
         let color = available ? tempColor(value!, kind: kind) : Color.white.opacity(0.25)
         return VStack(alignment: .leading, spacing: 2) {
-            Text(label)
+            Text(LocalizedStringKey(label))
                 .font(.system(size: 8, weight: .bold))
                 .foregroundColor(.white.opacity(0.4))
             HStack(alignment: .firstTextBaseline, spacing: 1) {
@@ -359,7 +359,7 @@ struct DynamicIslandPanelView: View {
             HStack(spacing: 4) {
                 Image(systemName: tracker.hasFans ? "fanblades.fill" : "fanblades")
                     .font(.system(size: 12))
-                Text(tracker.hasFans ? (tracker.currentFanSpeed.map { "\(Int($0))" } ?? "—") : "Fanless")
+                Text(tracker.hasFans ? (tracker.currentFanSpeed.map { "\(Int($0))" } ?? "—") : String(localized: "Fanless"))
                     .font(.system(size: 14, weight: .bold))
                 Spacer(minLength: 0)
             }
@@ -374,7 +374,7 @@ struct DynamicIslandPanelView: View {
 
     private func statChip(label: String, value: String, highlight: Bool) -> some View {
         VStack(spacing: 2) {
-            Text(label)
+            Text(LocalizedStringKey(label))
                 .font(.system(size: 9, weight: .bold))
                 .foregroundColor(highlight ? .red : .white.opacity(0.4))
             Text(value)

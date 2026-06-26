@@ -1,0 +1,123 @@
+/* MacWake — Turkish localization. Keys are the English source strings. */
+
+/* Tabs */
+"Session" = "Oturum";
+"History" = "Geçmiş";
+"Hardware" = "Donanım";
+"Settings" = "Ayarlar";
+
+/* Session tab */
+"CURRENT SESSION" = "MEVCUT OTURUM";
+"Session Timeline" = "Oturum Zaman Çizelgesi";
+"Screen On" = "Ekran Açık";
+"Active time" = "Aktif süre";
+"Total Time" = "Toplam Süre";
+"Estimated remaining" = "Tahmini kalan";
+"Efficiency" = "Verim";
+"ON BATTERY" = "PİLDE";
+"CHARGING" = "ŞARJ OLUYOR";
+"Plugged" = "Takılı";
+"Mac is Plugged In" = "Mac Fişe Takılı";
+"Charging Connected" = "Şarj Bağlandı";
+
+/* History tab */
+"RECENT SESSIONS (LAST 3)" = "SON OTURUMLAR (SON 3)";
+"LAST 7 DAYS" = "SON 7 GÜN";
+"1h History" = "1s Geçmiş";
+"No sessions recorded yet." = "Henüz oturum kaydedilmedi.";
+"No battery sessions in the last 7 days." = "Son 7 günde pil oturumu yok.";
+"Daily" = "Günlük";
+"Weekly" = "Haftalık";
+"Monthly" = "Aylık";
+"Screen" = "Ekran";
+
+/* Hardware tab */
+"BATTERY HEALTH & HARDWARE" = "PİL SAĞLIĞI VE DONANIM";
+"BATTERY HEALTH DECAY LOG" = "PİL SAĞLIĞI AZALMA KAYDI";
+"No health changes recorded yet." = "Henüz sağlık değişikliği kaydedilmedi.";
+"SYSTEM TEMPERATURES" = "SİSTEM SICAKLIKLARI";
+"TEMPERATURES" = "SICAKLIKLAR";
+"TEMP" = "SICAKLIK";
+"Temperature" = "Sıcaklık";
+"FAN STATUS" = "FAN DURUMU";
+"FAN" = "FAN";
+"Fan Speed" = "Fan Hızı";
+"Fanless Device" = "Fansız Cihaz";
+"Active cooling" = "Aktif soğutma";
+"This Mac operates silently without cooling fans." = "Bu Mac soğutma fanı olmadan sessizce çalışır.";
+"CYCLES" = "DÖNGÜ";
+"Cycles" = "Döngü";
+"Health" = "Sağlık";
+"Max capacity" = "Maks. kapasite";
+"Used" = "Kullanılan";
+"Total count" = "Toplam sayı";
+"ADAPTER HISTORY" = "ADAPTÖR GEÇMİŞİ";
+"Apple Original" = "Apple Orijinal";
+"Slow Charging Alert" = "Yavaş Şarj Uyarısı";
+
+/* Settings tab */
+"Show Desktop Widget" = "Masaüstü Widget'ını Göster";
+"Lock Widget Position" = "Widget Konumunu Kilitle";
+"Launch at Login" = "Girişte Başlat";
+"Enable Animations" = "Animasyonları Etkinleştir";
+"Dynamic Island Overlay" = "Dynamic Island Katmanı";
+"Reset Session" = "Oturumu Sıfırla";
+"Check for Updates" = "Güncellemeleri Denetle";
+"Quit" = "Çıkış";
+"Developed by" = "Geliştiren";
+
+/* Charge limit */
+"Charge Limit" = "Şarj Limiti";
+"Limit Charging" = "Şarjı Sınırla";
+"Stop at" = "Şu seviyede dur";
+"Enable Charge Limiting" = "Şarj Sınırlamayı Etkinleştir";
+"Approval needed" = "Onay gerekli";
+"Open System Settings" = "Sistem Ayarlarını Aç";
+"Cap charging at a set level to reduce long-term battery wear. Installs a small background helper (one-time approval)." = "Uzun vadeli pil aşınmasını azaltmak için şarjı belirli bir seviyede sınırlayın. Küçük bir arka plan yardımcısı kurar (tek seferlik onay).";
+"Enable the MacWake background item in System Settings to allow charge limiting." = "Şarj sınırlamaya izin vermek için Sistem Ayarları'nda MacWake arka plan öğesini etkinleştirin.";
+
+/* Notifications & alerts */
+"High Battery Temperature" = "Yüksek Pil Sıcaklığı";
+"Plugged In All Day" = "Tüm Gün Fişte";
+"Your Mac has been plugged in for 24 hours. Discharge the battery." = "Mac'iniz 24 saattir fişe takılı. Pili boşaltın.";
+"⚠️ Battery Temperature High" = "⚠️ Pil Sıcaklığı Yüksek";
+"🔌 Always On Power" = "🔌 Sürekli Fişte";
+"Your Mac has been on AC power for 24 hours. Discharge the battery occasionally to protect battery health." = "Mac'iniz 24 saattir prizde. Pil sağlığını korumak için arada bir pili boşaltın.";
+"Your Mac has been plugged in and fully charged for 24 hours. Discharge the battery occasionally to protect battery health." = "Mac'iniz 24 saattir fişe takılı ve tam dolu. Pil sağlığını korumak için arada bir pili boşaltın.";
+"Wake: Fast Battery Drain" = "Wake: Hızlı Pil Tükenmesi";
+"Wake: Test Notification" = "Wake: Test Bildirimi";
+"Wake: Notifications Enabled" = "Wake: Bildirimler Açık";
+"Notifications are working." = "Bildirimler çalışıyor.";
+"Fast battery drain alerts are ready." = "Hızlı pil tükenme uyarıları hazır.";
+
+/* Formatted strings (printf-style): args = (drop, minutes, level) */
+"DRAIN_BODY_FMT" = "Pil %2$d dakikada %%%1$d düştü. Mevcut seviye: %%%3$d.";
+"TEMP_REACHED_FMT" = "Pil %.1f°C'ye ulaştı.";
+"TEMP_HIGH_BODY_FMT" = "Pil %.1f°C'ye ulaştı. Pil sağlığını korumak için fişten çekmeyi düşünün.";
+"LAST_SEEN_FMT" = "Son görülme %@";
+"SCREEN_FMT" = "Ekran: %@";
+"TOTAL_FMT" = "Toplam: %@";
+"BATTERY_HEALTH_FMT" = "Pil Sağlığı: %%%lld";
+"RECORDED_AT_FMT" = "%lld döngüde kaydedildi";
+"CL_HOLD_FMT" = "Adaptörü duraklatarak pili %%%lld civarında tutar. Limitin altında kalmak için kısa süre pilden çalışır.";
+"CL_OPT_WARNING" = "En iyi sonuç için macOS \U201COptimize Pil Şarjı\U201D özelliğini kapatın (Ayarlar \U203A Pil \U203A Pil Sağlığı) — böylece ikisi çakışmaz.";
+
+/* Status & computed strings */
+"On Battery" = "Pilde";
+"Hot" = "Sıcak";
+"Warm" = "Ilık";
+"Normal" = "Normal";
+"Unavailable" = "Yok";
+"Fanless" = "Fansız";
+"Notifications On" = "Bildirimler Açık";
+"Notifications Off" = "Bildirimler Kapalı";
+"Notifications Not Set" = "Bildirimler Ayarlanmadı";
+"Notifications Temporary" = "Bildirimler Geçici";
+"Notifications Unknown" = "Bildirim Durumu Bilinmiyor";
+"LIMIT_FMT" = "(Limit: %%%d)";
+"VIA_FMT" = " %@ üzerinden";
+"CHARGING_DYN_FMT" = "Şarj: %.1fW / %dW adaptör%@ %@";
+"CHARGING_FIXED_FMT" = "Şarj: %dW adaptör%@ %@";
+"CHARGING_PORT_FMT" = "Şarj%@ %@";
+"CHARGING_DESC_FMT" = "%dW adaptörden şarj oluyor. Güç kablosunu çıkardığında takip otomatik başlar.";
+"UNPLUG_DESC_FMT" = "Güç kablosunu çıkardığında takip otomatik başlar (limit: %%%d).";

@@ -49,12 +49,19 @@ cat <<EOF > "${CONTENTS_DIR}/Info.plist"
     <string>Wake</string>
     <key>CFBundleDisplayName</key>
     <string>Wake</string>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    <key>CFBundleLocalizations</key>
+    <array>
+        <string>en</string>
+        <string>tr</string>
+    </array>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.0</string>
+    <string>1.2</string>
     <key>CFBundleVersion</key>
-    <string>1</string>
+    <string>3</string>
     <key>LSMinimumSystemVersion</key>
     <string>14.0</string>
     <key>LSApplicationCategoryType</key>
@@ -79,11 +86,43 @@ cat <<EOF > "${CONTENTS_DIR}/Info.plist"
 </plist>
 EOF
 
+echo "=== Copying localization resources ==="
+for lproj in Resources/*.lproj; do
+    [ -d "$lproj" ] || continue
+    cp -R "$lproj" "${RESOURCES_DIR}/"
+done
+
 echo "=== Compiling using Swift Package Manager ==="
 DEVELOPER_DIR="${DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Developer}" swift build -c release
 
 echo "=== Copying Binary to App Bundle ==="
 cp .build/release/MacWake "${MACOS_DIR}/MacWake"
+
+echo "=== Embedding privileged helper daemon ==="
+cp .build/release/MacWakeHelper "${MACOS_DIR}/MacWakeHelper"
+LAUNCHD_DIR="${CONTENTS_DIR}/Library/LaunchDaemons"
+mkdir -p "${LAUNCHD_DIR}"
+cat <<EOF > "${LAUNCHD_DIR}/com.jarvisit.macwake.helper.plist"
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.jarvisit.macwake.helper</string>
+    <key>BundleProgram</key>
+    <string>Contents/MacOS/MacWakeHelper</string>
+    <key>MachServices</key>
+    <dict>
+        <key>com.jarvisit.macwake.helper</key>
+        <true/>
+    </dict>
+    <key>AssociatedBundleIdentifiers</key>
+    <array>
+        <string>com.jarvisit.macwake</string>
+    </array>
+</dict>
+</plist>
+EOF
 
 echo "=== Embedding Sparkle.framework ==="
 FRAMEWORKS_DIR="${CONTENTS_DIR}/Frameworks"
@@ -118,6 +157,10 @@ done < <(find "${SPARKLE_FW}/Versions/B" -maxdepth 1 -type f)
 
 # Step 4: sign the framework itself
 codesign --force --options runtime --timestamp --sign "${SIGN_IDENTITY}" "${SPARKLE_FW}"
+
+echo "=== Signing privileged helper daemon ==="
+codesign --force --options runtime --timestamp \
+    --sign "${SIGN_IDENTITY}" "${MACOS_DIR}/MacWakeHelper"
 
 echo "=== Signing main binary and app bundle ==="
 codesign --force --options runtime --timestamp --entitlements "${ENTITLEMENTS}" \
