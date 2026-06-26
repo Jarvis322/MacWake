@@ -66,25 +66,22 @@ clicking it opens the full panel — Session, History, Hardware, and Settings.
 
 ---
 
-## 🛠️ Installation & Execution
+## 🛠️ Installation
 
-### Requirements
-*   **macOS 14.0 (Sonoma)** or any newer macOS version.
-*   **Swift Command Line Tools** or **Xcode** (for compilation).
-
-### Build and Install
-You can use the provided build script to compile the application, code-sign it locally, and move it to the `/Applications` folder:
+### Option 1 — Homebrew (Recommended)
 
 ```bash
-# Navigate to the project directory
-cd MacWake
-
-# Make the build script executable and run it
-chmod +x build.sh
-./build.sh
+brew tap Jarvis322/tap
+brew install --cask macwake
 ```
 
-Once the script completes, the app will be installed as `/Applications/MacWake.app` and will launch automatically.
+### Option 2 — Direct Download
+
+Download the latest `Wake-1.0.dmg` from [GitHub Releases](https://github.com/Jarvis322/MacWake/releases), open the DMG, and drag **MacWake.app** to your Applications folder.
+
+### Requirements
+*   **macOS 14.0 (Sonoma)** or later
+*   Apple Silicon or Intel
 
 ### Manual Terminal Commands
 If you wish to manage the app via the terminal:
