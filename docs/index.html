@@ -4,29 +4,32 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MacWake — Battery Health Monitor for Mac</title>
-  <meta name="description" content="Keep your MacBook battery healthy for the long run. Track temperature, fan speed, charge history, and get alerts before damage is done.">
+  <meta name="description" content="Keep your MacBook battery healthy for the long run. Charge limit, temperature, fan speed, and charge history — right from your menu bar.">
   <meta property="og:title" content="MacWake — Battery Health Monitor for Mac">
-  <meta property="og:description" content="Track battery health, temperature, fan speed, and charging habits. Free for macOS 14+.">
+  <meta property="og:description" content="Charge limit, temperature, fan speed, and charging habits. Free for macOS 14+.">
   <meta property="og:image" content="https://jarvis322.github.io/MacWake/screenshots/menubar-popover.png">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #08080e;
-      --bg2: #0f0f18;
-      --card: #13131c;
-      --card2: #181824;
-      --border: rgba(255,255,255,0.07);
-      --border2: rgba(255,255,255,0.12);
-      --accent: #30d158;
-      --text: #f5f5f7;
-      --muted: #6e6e73;
-      --muted2: #98989f;
+      --bg: #ffffff;
+      --bg-soft: #f5f5f7;
+      --card: #ffffff;
+      --border: #e6e6eb;
+      --border-strong: #d2d2d7;
+      --accent: #1db954;
+      --accent-deep: #15803d;
+      --accent-soft: #e9f9ef;
+      --text: #1d1d1f;
+      --text2: #6e6e73;
+      --text3: #86868b;
       --radius: 20px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+      --shadow-md: 0 10px 30px rgba(0,0,0,.08);
+      --shadow-lg: 0 30px 60px rgba(0,0,0,.10);
     }
 
     html { scroll-behavior: smooth; }
-
     body {
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
       background: var(--bg);
@@ -35,238 +38,193 @@
       overflow-x: hidden;
     }
 
-    /* ── NAV ── */
+    /* NAV */
     nav {
       position: fixed; top: 0; left: 0; right: 0; z-index: 100;
       display: flex; align-items: center; justify-content: space-between;
-      padding: 0 40px; height: 56px;
-      background: rgba(8,8,14,0.75);
-      backdrop-filter: blur(24px) saturate(180%);
+      padding: 0 40px; height: 54px;
+      background: rgba(255,255,255,0.72);
+      backdrop-filter: blur(20px) saturate(180%);
       border-bottom: 1px solid var(--border);
     }
     .nav-brand { display: flex; align-items: center; gap: 9px; font-weight: 600; font-size: 16px; letter-spacing: -.01em; }
     .nav-brand img { width: 26px; height: 26px; border-radius: 7px; }
-    .nav-right { display: flex; align-items: center; gap: 8px; }
+    .nav-right { display: flex; align-items: center; gap: 10px; }
     .nav-gh {
       display: flex; align-items: center; gap: 6px;
-      color: var(--muted2); text-decoration: none; font-size: 13px;
-      padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border);
-      transition: color .15s, border-color .15s;
+      color: var(--text2); text-decoration: none; font-size: 13px;
+      padding: 6px 12px; border-radius: 8px;
+      transition: color .15s, background .15s;
     }
-    .nav-gh:hover { color: var(--text); border-color: var(--border2); }
+    .nav-gh:hover { color: var(--text); background: var(--bg-soft); }
     .nav-dl {
-      background: var(--accent); color: #000;
-      border: none; border-radius: 980px;
-      padding: 7px 18px; font-size: 13px; font-weight: 600;
-      cursor: pointer; text-decoration: none;
-      transition: opacity .15s, transform .15s;
+      background: var(--accent); color: #fff;
+      border-radius: 980px; padding: 7px 18px;
+      font-size: 13px; font-weight: 600; text-decoration: none;
+      transition: transform .15s, box-shadow .15s;
+      box-shadow: 0 2px 8px rgba(29,185,84,.25);
     }
-    .nav-dl:hover { opacity: .85; transform: scale(1.03); }
+    .nav-dl:hover { transform: scale(1.04); }
 
-    /* ── HERO ── */
+    /* HERO */
     .hero {
-      min-height: 100vh;
+      min-height: 96vh;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
-      padding: 100px 24px 80px;
-      text-align: center;
-      position: relative;
-    }
-    .hero::before {
-      content: '';
-      position: absolute; inset: 0;
+      padding: 110px 24px 70px; text-align: center; position: relative;
       background:
-        radial-gradient(ellipse 60% 50% at 50% -10%, rgba(48,209,88,.18) 0%, transparent 70%),
-        radial-gradient(ellipse 40% 30% at 80% 80%, rgba(10,132,255,.08) 0%, transparent 60%);
-      pointer-events: none;
+        radial-gradient(ellipse 70% 50% at 50% 0%, var(--accent-soft) 0%, transparent 60%),
+        var(--bg);
     }
     .hero-badge {
       display: inline-flex; align-items: center; gap: 7px;
-      background: rgba(48,209,88,.1); border: 1px solid rgba(48,209,88,.2);
-      color: var(--accent); border-radius: 980px;
-      padding: 5px 14px; font-size: 12px; font-weight: 600; letter-spacing: .02em;
-      margin-bottom: 28px; position: relative;
+      background: var(--accent-soft); color: var(--accent-deep);
+      border-radius: 980px; padding: 6px 15px;
+      font-size: 12.5px; font-weight: 600; margin-bottom: 28px;
     }
     .hero-badge-dot {
       width: 6px; height: 6px; border-radius: 50%; background: var(--accent);
-      box-shadow: 0 0 6px var(--accent);
       animation: pulse 2s ease-in-out infinite;
     }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
 
     h1 {
-      font-size: clamp(44px, 8vw, 88px);
+      font-size: clamp(44px, 8vw, 86px);
       font-weight: 700; letter-spacing: -0.04em; line-height: 1.05;
-      margin-bottom: 22px; position: relative;
+      margin-bottom: 22px; color: #1d1d1f;
     }
     h1 em { font-style: normal; color: var(--accent); }
     .hero-sub {
-      font-size: clamp(16px, 2vw, 19px); color: var(--muted2);
-      max-width: 500px; line-height: 1.6; margin-bottom: 48px; position: relative;
+      font-size: clamp(17px, 2vw, 21px); color: var(--text2);
+      max-width: 540px; line-height: 1.55; margin-bottom: 44px;
     }
 
-    /* ── INSTALL CARD ── */
+    /* INSTALL CARD */
     .install-card {
       width: 100%; max-width: 500px;
       background: var(--card);
-      border: 1px solid var(--border2);
+      border: 1px solid var(--border);
       border-radius: var(--radius);
       overflow: hidden;
-      box-shadow: 0 0 0 1px rgba(0,0,0,.5), 0 32px 64px rgba(0,0,0,.4);
-      position: relative;
+      box-shadow: var(--shadow-md);
     }
-    .install-card::before {
-      content: '';
-      position: absolute; top: 0; left: 0; right: 0; height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(48,209,88,.5), transparent);
-    }
-    .install-tabs {
-      display: flex; border-bottom: 1px solid var(--border);
-    }
+    .install-tabs { display: flex; border-bottom: 1px solid var(--border); }
     .itab {
       flex: 1; padding: 13px 16px;
       background: transparent; border: none;
       font-size: 13px; font-weight: 500; cursor: pointer;
       display: flex; align-items: center; justify-content: center; gap: 7px;
       transition: background .15s, color .15s;
-      position: relative; color: var(--muted);
+      position: relative; color: var(--text2);
     }
-    .itab.active {
-      color: var(--text);
-      background: rgba(255,255,255,.04);
-    }
+    .itab.active { color: var(--text); background: var(--bg-soft); }
     .itab.active::after {
-      content: '';
-      position: absolute; bottom: -1px; left: 16px; right: 16px; height: 1px;
-      background: var(--accent);
+      content: ''; position: absolute; bottom: -1px; left: 16px; right: 16px;
+      height: 2px; background: var(--accent); border-radius: 2px;
     }
     .itab:first-child { border-right: 1px solid var(--border); }
-
     .ipanel { display: none; padding: 20px; text-align: left; }
     .ipanel.active { display: block; }
-
     .code-block {
-      background: rgba(0,0,0,.4);
-      border: 1px solid rgba(255,255,255,.06);
-      border-radius: 12px;
-      padding: 16px 18px;
+      background: #1d1d1f; border-radius: 12px; padding: 16px 18px;
       font-family: "SF Mono", "Fira Code", monospace;
-      font-size: 13px; line-height: 1.9;
-      color: #e5e5ea;
-      position: relative;
-      overflow: hidden;
+      font-size: 13px; line-height: 1.9; color: #f5f5f7;
     }
     .code-block .prompt { color: var(--accent); user-select: none; }
 
-    .dmg-row {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 4px 0;
-    }
+    .dmg-row { display: flex; align-items: center; justify-content: space-between; }
     .dmg-info h4 { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
-    .dmg-info p { font-size: 12px; color: var(--muted); }
+    .dmg-info p { font-size: 12px; color: var(--text3); }
     .dmg-btn {
       display: inline-flex; align-items: center; gap: 6px;
-      background: rgba(255,255,255,.06); border: 1px solid var(--border2);
-      color: var(--text); text-decoration: none;
-      border-radius: 10px; padding: 8px 14px;
-      font-size: 13px; font-weight: 500;
-      transition: background .15s;
+      background: var(--accent); color: #fff; text-decoration: none;
+      border-radius: 10px; padding: 9px 16px; font-size: 13px; font-weight: 600;
+      transition: transform .15s; box-shadow: 0 2px 8px rgba(29,185,84,.25);
     }
-    .dmg-btn:hover { background: rgba(255,255,255,.1); }
-
+    .dmg-btn:hover { transform: scale(1.04); }
     .install-footer {
-      padding: 12px 20px;
-      border-top: 1px solid var(--border);
+      padding: 12px 20px; border-top: 1px solid var(--border);
       display: flex; align-items: center; justify-content: center; gap: 6px;
-      font-size: 12px; color: var(--muted);
+      font-size: 12px; color: var(--text3);
     }
-    .install-footer span { color: var(--accent); }
+    .install-footer .ck { color: var(--accent); font-weight: 700; }
 
-    /* ── SCREENSHOT ── */
-    .ss-wrap {
-      margin-top: 64px; max-width: 740px; width: 100%;
-      position: relative;
-    }
-    .ss-wrap::before {
-      content: '';
-      position: absolute; inset: -1px;
-      border-radius: calc(var(--radius) + 1px);
-      background: linear-gradient(135deg, rgba(48,209,88,.2), transparent 50%, rgba(10,132,255,.1));
-      z-index: -1;
-    }
+    /* SCREENSHOT */
+    .ss-wrap { margin-top: 60px; max-width: 760px; width: 100%; }
     .ss-wrap img {
       width: 100%; border-radius: var(--radius);
       border: 1px solid var(--border);
-      display: block;
+      box-shadow: var(--shadow-lg);
     }
 
-    /* ── SECTION COMMON ── */
-    .section { max-width: 1100px; margin: 0 auto; padding: 100px 24px; }
-    .label { font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
-    .section-h { font-size: clamp(30px, 4vw, 48px); font-weight: 700; letter-spacing: -0.025em; line-height: 1.1; }
-    .section-p { font-size: 17px; color: var(--muted2); margin-top: 14px; max-width: 500px; line-height: 1.6; }
+    /* SECTIONS */
+    .section { max-width: 1080px; margin: 0 auto; padding: 110px 24px; }
+    .label {
+      font-size: 13px; font-weight: 600; letter-spacing: .02em;
+      color: var(--accent); margin-bottom: 14px;
+    }
+    .section-h { font-size: clamp(30px, 4vw, 46px); font-weight: 700; letter-spacing: -0.025em; line-height: 1.12; color: #1d1d1f; }
+    .section-p { font-size: 18px; color: var(--text2); margin-top: 14px; max-width: 520px; line-height: 1.6; }
 
-    /* ── DYNAMIC ISLAND ── */
-    .di-img { width: 100%; border-radius: var(--radius); border: 1px solid var(--border); margin-top: 40px; display: block; box-shadow: 0 24px 80px rgba(0,0,0,.5); }
+    .di-img {
+      width: 100%; border-radius: var(--radius); margin-top: 40px;
+      border: 1px solid var(--border); box-shadow: var(--shadow-md);
+    }
 
-    /* ── FEATURES ── */
-    .features-section { max-width: 1100px; margin: 0 auto; padding: 0 24px 100px; }
-    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-    @media(max-width:768px){ .grid { grid-template-columns: 1fr; } }
+    /* FEATURES */
+    .features { max-width: 1080px; margin: 0 auto; padding: 0 24px 100px; }
+    .features-head { text-align: center; margin-bottom: 56px; }
+    .features-head h2 { font-size: clamp(30px, 4vw, 46px); font-weight: 700; letter-spacing: -0.025em; max-width: 540px; margin: 0 auto; color: #1d1d1f; }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    @media(max-width:780px){ .grid { grid-template-columns: 1fr; } }
     .feat {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 26px;
-      transition: border-color .2s, background .2s;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 28px;
+      transition: transform .2s, box-shadow .2s, border-color .2s;
     }
-    .feat:hover { border-color: var(--border2); background: var(--card2); }
-    .feat-icon { font-size: 26px; margin-bottom: 14px; }
-    .feat h3 { font-size: 15px; font-weight: 600; margin-bottom: 7px; }
-    .feat p { font-size: 13px; color: var(--muted2); line-height: 1.6; }
+    .feat:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); border-color: var(--border-strong); }
+    .feat.hl { background: var(--accent-soft); border-color: rgba(29,185,84,.25); }
+    .feat-ic {
+      width: 44px; height: 44px; border-radius: 12px;
+      background: var(--bg-soft); display: flex; align-items: center; justify-content: center;
+      font-size: 22px; margin-bottom: 16px;
+    }
+    .feat.hl .feat-ic { background: #fff; }
+    .feat h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+    .feat p { font-size: 14px; color: var(--text2); line-height: 1.6; }
 
-    /* ── CTA ── */
+    /* CTA */
     .cta {
-      padding: 120px 24px;
-      text-align: center;
-      position: relative;
+      padding: 120px 24px; text-align: center;
+      background: radial-gradient(ellipse 60% 60% at 50% 100%, var(--accent-soft) 0%, transparent 65%), var(--bg);
     }
-    .cta::before {
-      content: '';
-      position: absolute; inset: 0;
-      background: radial-gradient(ellipse 60% 60% at 50% 100%, rgba(48,209,88,.12) 0%, transparent 70%);
-      pointer-events: none;
-    }
-    .cta-icon { width: 72px; height: 72px; border-radius: 18px; margin: 0 auto 28px; display: block; box-shadow: 0 8px 40px rgba(48,209,88,.25); }
-    .cta h2 { font-size: clamp(28px, 5vw, 52px); font-weight: 700; letter-spacing: -0.025em; margin-bottom: 14px; }
-    .cta p { font-size: 17px; color: var(--muted2); margin-bottom: 44px; }
+    .cta-icon { width: 76px; height: 76px; border-radius: 18px; margin: 0 auto 28px; box-shadow: var(--shadow-md); }
+    .cta h2 { font-size: clamp(30px, 5vw, 50px); font-weight: 700; letter-spacing: -0.025em; margin-bottom: 14px; color: #1d1d1f; }
+    .cta p { font-size: 18px; color: var(--text2); margin-bottom: 40px; }
     .cta-dl {
       display: inline-flex; align-items: center; gap: 8px;
-      background: var(--accent); color: #000;
-      border-radius: 980px; padding: 15px 36px;
-      font-size: 17px; font-weight: 700; text-decoration: none;
-      transition: opacity .15s, transform .15s;
-      box-shadow: 0 0 40px rgba(48,209,88,.3);
+      background: var(--accent); color: #fff; border-radius: 980px;
+      padding: 16px 38px; font-size: 17px; font-weight: 600; text-decoration: none;
+      transition: transform .15s; box-shadow: 0 6px 20px rgba(29,185,84,.3);
     }
-    .cta-dl:hover { opacity: .88; transform: scale(1.03); }
-    .cta-note { margin-top: 18px; font-size: 13px; color: var(--muted); }
+    .cta-dl:hover { transform: scale(1.04); }
+    .cta-code {
+      margin-top: 20px; font-size: 13px; color: var(--text3);
+    }
+    .cta-code code { background: var(--bg-soft); border: 1px solid var(--border); padding: 4px 10px; border-radius: 6px; font-family: "SF Mono", monospace; }
+    .cta-note { margin-top: 16px; font-size: 13px; color: var(--text3); }
 
-    /* ── FOOTER ── */
+    /* FOOTER */
     footer {
-      border-top: 1px solid var(--border);
-      padding: 28px 40px;
+      border-top: 1px solid var(--border); padding: 30px 40px;
       display: flex; align-items: center; justify-content: space-between;
-      flex-wrap: wrap; gap: 12px;
+      flex-wrap: wrap; gap: 12px; background: var(--bg-soft);
     }
-    footer span { font-size: 13px; color: var(--muted); }
-    .footer-links { display: flex; gap: 20px; }
-    footer a { color: var(--muted); text-decoration: none; font-size: 13px; transition: color .15s; }
+    footer span { font-size: 13px; color: var(--text3); }
+    .footer-links { display: flex; gap: 22px; }
+    footer a { color: var(--text2); text-decoration: none; font-size: 13px; transition: color .15s; }
     footer a:hover { color: var(--text); }
 
-    @media(max-width:600px){
-      nav { padding: 0 20px; }
-      .hero { padding: 90px 20px 60px; }
-      footer { padding: 24px 20px; }
-    }
+    @media(max-width:600px){ nav { padding: 0 20px; } .hero { padding: 96px 20px 56px; } footer { padding: 24px 20px; } }
   </style>
 </head>
 <body>
@@ -292,48 +250,33 @@
     <span class="hero-badge-dot"></span>
     Free · Open Source · macOS 14+
   </div>
-
   <h1>Your Mac's battery,<br><em>finally visible.</em></h1>
+  <p class="hero-sub">MacWake lives in your menu bar and looks after your battery — charge limit, temperature, fan speed, and charge history, all in one quiet place.</p>
 
-  <p class="hero-sub">MacWake sits in your menu bar and watches your battery so you don't have to — temperature, fan speed, health decay, charging habits.</p>
-
-  <!-- INSTALL CARD -->
   <div class="install-card">
     <div class="install-tabs">
-      <button class="itab active" onclick="switchTab('brew',this)">
-        🍺 &nbsp;Homebrew
-      </button>
-      <button class="itab" onclick="switchTab('dmg',this)">
-        📦 &nbsp;Direct Download
-      </button>
+      <button class="itab active" onclick="switchTab('brew',this)">🍺 &nbsp;Homebrew</button>
+      <button class="itab" onclick="switchTab('dmg',this)">📦 &nbsp;Direct Download</button>
     </div>
-
     <div id="panel-brew" class="ipanel active">
       <div class="code-block">
         <div><span class="prompt">$</span> brew tap Jarvis322/tap</div>
         <div><span class="prompt">$</span> brew install --cask macwake</div>
       </div>
     </div>
-
     <div id="panel-dmg" class="ipanel">
       <div class="dmg-row">
         <div class="dmg-info">
           <h4>Wake-1.3.dmg</h4>
-          <p>3.8 MB · Developer ID signed · Notarized</p>
+          <p>4.0 MB · Developer ID signed · Notarized</p>
         </div>
-        <a class="dmg-btn" href="https://github.com/Jarvis322/MacWake/releases/download/v1.3/Wake-1.3.dmg">
-          ↓ Download
-        </a>
+        <a class="dmg-btn" href="https://github.com/Jarvis322/MacWake/releases/download/v1.3/Wake-1.3.dmg">↓ Download</a>
       </div>
-      <p style="font-size:12px;color:var(--muted);margin-top:12px;">Open the DMG and drag MacWake to your Applications folder.</p>
+      <p style="font-size:12px;color:var(--text3);margin-top:12px;">Open the DMG and drag MacWake to your Applications folder.</p>
     </div>
-
-    <div class="install-footer">
-      <span>✓</span> Free forever &nbsp;·&nbsp; No account &nbsp;·&nbsp; No telemetry
-    </div>
+    <div class="install-footer"><span class="ck">✓</span> Free forever &nbsp;·&nbsp; No account &nbsp;·&nbsp; No telemetry</div>
   </div>
 
-  <!-- SCREENSHOT -->
   <div class="ss-wrap">
     <img src="screenshots/menubar-popover.png" alt="MacWake panel">
   </div>
@@ -348,61 +291,56 @@
 </div>
 
 <!-- FEATURES -->
-<div class="features-section">
-  <div style="text-align:center;margin-bottom:56px;">
-    <div class="label" style="justify-content:center;display:flex;">Features</div>
-    <h2 class="section-h" style="max-width:500px;margin:0 auto;">Everything your battery wants you to know.</h2>
+<div class="features">
+  <div class="features-head">
+    <div class="label" style="text-align:center;">Features</div>
+    <h2>Everything your battery wants you to know.</h2>
   </div>
   <div class="grid">
-    <div class="feat" style="border-color:rgba(48,209,88,.25);">
-      <div class="feat-icon">🔋</div>
+    <div class="feat hl">
+      <div class="feat-ic">🔋</div>
       <h3>Charge Limit</h3>
-      <p>Cap charging at 50–95% to cut long-term battery wear. MacWake holds your Mac near the target automatically.</p>
+      <p>Cap charging at 50–95% to cut long-term wear. Works across the full Apple Silicon M-series and holds your Mac near the target automatically.</p>
     </div>
     <div class="feat">
-      <div class="feat-icon">🌡️</div>
+      <div class="feat-ic">🌡️</div>
       <h3>Temperature Alerts</h3>
       <p>Notified when battery temperature exceeds 38°C — before heat causes permanent capacity loss.</p>
     </div>
     <div class="feat">
-      <div class="feat-icon">📈</div>
+      <div class="feat-ic">📈</div>
       <h3>Health Decay Log</h3>
       <p>A timeline of your battery's maximum capacity. Watch the trend and know when to act.</p>
     </div>
     <div class="feat">
-      <div class="feat-icon">🌀</div>
+      <div class="feat-ic">🌀</div>
       <h3>Fan Speed</h3>
       <p>Real-time fan RPM. Know when your Mac is working hard — and when it's running silent.</p>
     </div>
     <div class="feat">
-      <div class="feat-icon">⚡️</div>
+      <div class="feat-ic">⚡️</div>
       <h3>Live Power Draw</h3>
       <p>Exact watt consumption in the menu bar at all times. Plugged in or on battery.</p>
     </div>
     <div class="feat">
-      <div class="feat-icon">🔌</div>
+      <div class="feat-ic">🔌</div>
       <h3>Plugged In All Day</h3>
-      <p>Staying at 100% for 24+ hours degrades lithium. MacWake warns you before it accumulates.</p>
+      <p>Staying at 100% for 24+ hours degrades lithium. MacWake warns you before it adds up.</p>
     </div>
     <div class="feat">
-      <div class="feat-icon">💨</div>
+      <div class="feat-ic">💨</div>
       <h3>Fast Drain Detection</h3>
       <p>Catches sudden 5%+ drops after wake-from-sleep and alerts you to runaway processes.</p>
     </div>
     <div class="feat">
-      <div class="feat-icon">🏝️</div>
-      <h3>Dynamic Island</h3>
-      <p>Hugs the notch, blends with hardware. Hover to expand with a spring animation.</p>
+      <div class="feat-ic">🌍</div>
+      <h3>English &amp; Turkish</h3>
+      <p>Full localization that automatically follows your macOS system language.</p>
     </div>
     <div class="feat">
-      <div class="feat-icon">💫</div>
-      <h3>Charging Animation</h3>
-      <p>An elegant fullscreen animation when you plug in — like iPhone. Toggle it anytime.</p>
-    </div>
-    <div class="feat">
-      <div class="feat-icon">🔒</div>
+      <div class="feat-ic">🔒</div>
       <h3>100% Private</h3>
-      <p>No cloud, no analytics, no account. All data stays on your Mac. Always.</p>
+      <p>No cloud, no account. Your battery data never leaves your Mac.</p>
     </div>
   </div>
 </div>
@@ -412,11 +350,9 @@
   <img class="cta-icon" src="icon.png" alt="MacWake">
   <h2>Start protecting your battery.</h2>
   <p>Free download. No sign-up. Open it and it just works.</p>
-  <a class="cta-dl" href="https://github.com/Jarvis322/MacWake/releases/download/v1.3/Wake-1.3.dmg">
-    ↓ &nbsp;Download MacWake — Free
-  </a>
-  <p class="cta-note">or &nbsp;<code style="font-size:12px;background:rgba(255,255,255,.06);padding:3px 8px;border-radius:6px;border:1px solid var(--border);">brew install --cask macwake</code></p>
-  <p class="cta-note" style="margin-top:12px;">Requires macOS 14 Sonoma · Apple Silicon &amp; Intel · Notarized</p>
+  <a class="cta-dl" href="https://github.com/Jarvis322/MacWake/releases/download/v1.3/Wake-1.3.dmg">↓ &nbsp;Download MacWake — Free</a>
+  <p class="cta-code">or &nbsp;<code>brew install --cask macwake</code></p>
+  <p class="cta-note">Requires macOS 14 Sonoma · Apple Silicon &amp; Intel · Notarized</p>
 </section>
 
 <!-- FOOTER -->
