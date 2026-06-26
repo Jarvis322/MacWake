@@ -2,6 +2,7 @@ import SwiftUI
 import AppKit
 import UserNotifications
 import Sparkle
+import TelemetryDeck
 
 class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDelegate {
     let updaterController = SPUStandardUpdaterController(
@@ -12,10 +13,20 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         UNUserNotificationCenter.current().delegate = self
+
+        let config = TelemetryDeck.Config(appID: "47BC5AD6-3456-4A13-97F3-10C169BFDAD6")
+        TelemetryDeck.initialize(config: config)
+        TelemetryDeck.signal("app.launched")
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         return false
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        // Never leave the adapter disabled (CHIE=8) after we quit, or the Mac would
+        // keep discharging on AC until reboot. Best-effort synchronous restore.
+        ChargeLimitManager.shared.restoreChargingOnQuit()
     }
 
     func userNotificationCenter(

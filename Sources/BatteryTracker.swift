@@ -3,6 +3,7 @@ import Cocoa
 import IOKit.ps
 import IOKit
 import UserNotifications
+import TelemetryDeck
 
 extension Notification.Name {
     static let powerSourceChanged = Notification.Name("powerSourceChanged")
@@ -523,6 +524,7 @@ class BatteryTracker: ObservableObject {
         self.isPluggedIn = plugged
         updatePowerAdapterDetails()
         recordBatterySample(level: level, timestamp: Date())
+        ChargeLimitManager.shared.evaluate(batteryLevel: level, isPluggedIn: plugged)
         
         if plugged {
             if acPowerStartTime == nil {
@@ -534,17 +536,23 @@ class BatteryTracker: ObservableObject {
         }
         
         if oldPlugged != plugged {
+            // Suppress UI effects when the charge limiter itself flipped the adapter
+            // (CHIE toggle looks like a plug/unplug but the user didn't touch the cable).
+            let inducedByLimiter = ChargeLimitManager.shared.didInducePowerChange(within: 4)
+
             handlePowerSourceChange(toPlugged: plugged, batteryLevel: level)
-            
-            // Handle animations on power state change
-            if plugged {
-                DynamicIslandManager.shared.trigger(.charging)
-                if enableAnimations {
-                    ChargingAnimationManager.shared.show(batteryLevel: level)
-                    startMenuBarAnimation()
+
+            if !inducedByLimiter {
+                // Handle animations on power state change
+                if plugged {
+                    DynamicIslandManager.shared.trigger(.charging)
+                    if enableAnimations {
+                        ChargingAnimationManager.shared.show(batteryLevel: level)
+                        startMenuBarAnimation()
+                    }
+                } else {
+                    stopMenuBarAnimation()
                 }
-            } else {
-                stopMenuBarAnimation()
             }
         }
     }
@@ -700,9 +708,10 @@ class BatteryTracker: ObservableObject {
         if temp > 38.0 && (isPluggedIn || isACPowerConnected()) {
             if !highTempAlert {
                 highTempAlert = true
+                TelemetryDeck.signal("alert.highTemperature", parameters: ["temperature": String(format: "%.1f", temp)])
                 DynamicIslandManager.shared.trigger(.alert(
-                    title: "High Battery Temperature",
-                    message: String(format: "Battery reached %.1f°C.", temp),
+                    title: String(localized: "High Battery Temperature"),
+                    message: String(format: String(localized: "TEMP_REACHED_FMT"), temp),
                     isWarning: false
                 ))
             }
@@ -710,8 +719,8 @@ class BatteryTracker: ObservableObject {
             if lastTemperatureAlertSent == nil || now.timeIntervalSince(lastTemperatureAlertSent!) > 7200 {
                 lastTemperatureAlertSent = now
                 sendNotification(
-                    title: "⚠️ Battery Temperature High",
-                    body: String(format: "Battery reached %.1f°C. Consider unplugging to protect battery health.", temp)
+                    title: String(localized: "⚠️ Battery Temperature High"),
+                    body: String(format: String(localized: "TEMP_HIGH_BODY_FMT"), temp)
                 )
             }
         } else {
@@ -729,9 +738,10 @@ class BatteryTracker: ObservableObject {
         if duration >= 86400.0 && currentBatteryLevel >= 99 {
             if !continuousACAlert {
                 continuousACAlert = true
+                TelemetryDeck.signal("alert.pluggedInAllDay")
                 DynamicIslandManager.shared.trigger(.alert(
-                    title: "Plugged In All Day",
-                    message: "Your Mac has been plugged in for 24 hours. Discharge the battery.",
+                    title: String(localized: "Plugged In All Day"),
+                    message: String(localized: "Your Mac has been plugged in for 24 hours. Discharge the battery."),
                     isWarning: true
                 ))
             }
@@ -739,8 +749,8 @@ class BatteryTracker: ObservableObject {
             if lastContinuousACAlertSent == nil || now.timeIntervalSince(lastContinuousACAlertSent!) > 86400 {
                 lastContinuousACAlertSent = now
                 sendNotification(
-                    title: "🔌 Always On Power",
-                    body: "Your Mac has been plugged in and fully charged for 24 hours. Discharge the battery occasionally to protect battery health."
+                    title: String(localized: "🔌 Always On Power"),
+                    body: String(localized: "Your Mac has been plugged in and fully charged for 24 hours. Discharge the battery occasionally to protect battery health.")
                 )
             }
         } else {
@@ -826,8 +836,16 @@ class BatteryTracker: ObservableObject {
 
     // Handle plugging/unplugging
     private func handlePowerSourceChange(toPlugged plugged: Bool, batteryLevel: Int) {
+        // Ignore self-induced adapter flips from the charge limiter. CHIE toggling
+        // looks like unplug/plug, but the cable never moved — so it must not start or
+        // close tracking sessions, or history fills with junk while holding the limit.
+        if ChargeLimitManager.shared.didInducePowerChange(within: 4) {
+            if plugged { updatePowerAdapterDetails() }
+            return
+        }
+
         let now = Date()
-        
+
         // 1. Accumulate duration in current state
         transitionState(to: plugged ? "charging" : "active", timestamp: now)
         
@@ -1027,6 +1045,7 @@ class BatteryTracker: ObservableObject {
         }
         recordBatterySample(level: level, timestamp: now)
         checkForRapidDrain(now: now)
+        ChargeLimitManager.shared.evaluate(batteryLevel: level, isPluggedIn: plugged)
 
         let delta = now.timeIntervalSince(lastStateChange)
         
@@ -1180,9 +1199,10 @@ class BatteryTracker: ObservableObject {
         guard drop >= 5, alertCooldownPassed else { return }
 
         lastRapidDrainAlert = now
+        TelemetryDeck.signal("alert.fastDrain", parameters: ["drop": "\(drop)", "minutes": "\(minutes)"])
         sendNotification(
-            title: "Wake: Fast Battery Drain",
-            body: "Battery dropped \(drop)% in \(minutes) minutes. Current level: \(currentBatteryLevel)%."
+            title: String(localized: "Wake: Fast Battery Drain"),
+            body: String(format: String(localized: "DRAIN_BODY_FMT"), drop, minutes, currentBatteryLevel)
         )
     }
 
@@ -1218,7 +1238,7 @@ class BatteryTracker: ObservableObject {
 
     func sendTestNotification() {
         refreshNotificationStatus()
-        sendNotification(title: "Wake: Test Notification", body: "Notifications are working.")
+        sendNotification(title: String(localized: "Wake: Test Notification"), body: String(localized: "Notifications are working."))
     }
 
     private func askForNotificationPermission() {
@@ -1239,7 +1259,7 @@ class BatteryTracker: ObservableObject {
                 NSApplication.shared.setActivationPolicy(previousPolicy)
 
                 if granted {
-                    self.sendNotification(title: "Wake: Notifications Enabled", body: "Fast battery drain alerts are ready.")
+                    self.sendNotification(title: String(localized: "Wake: Notifications Enabled"), body: String(localized: "Fast battery drain alerts are ready."))
                 }
             }
         }

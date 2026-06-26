@@ -1,0 +1,22 @@
+/* MacWake — English (base) localization. Keys are the English source strings,
+   so most resolve to themselves. Only custom format keys need an entry here. */
+
+"DRAIN_BODY_FMT" = "Battery dropped %2$d%% in %1$d minutes. Current level: %3$d%%.";
+"TEMP_REACHED_FMT" = "Battery reached %.1f°C.";
+"TEMP_HIGH_BODY_FMT" = "Battery reached %.1f°C. Consider unplugging to protect battery health.";
+"LAST_SEEN_FMT" = "Last seen %@";
+"SCREEN_FMT" = "Screen: %@";
+"TOTAL_FMT" = "Total: %@";
+"BATTERY_HEALTH_FMT" = "Battery Health: %lld%%";
+"RECORDED_AT_FMT" = "Recorded at %lld cycles";
+"CL_HOLD_FMT" = "Holds the battery near %lld%% by pausing the adapter. Briefly runs on battery to stay below the limit.";
+"CL_OPT_WARNING" = "For best results, turn off macOS \U201COptimized Battery Charging\U201D (Settings \U203A Battery \U203A Battery Health) so the two don\U2019t conflict.";
+
+/* Custom format keys (must exist for English too) */
+"LIMIT_FMT" = "(Limit: %d%%)";
+"VIA_FMT" = " via %@";
+"CHARGING_DYN_FMT" = "Charging: %.1fW of %dW adapter%@ %@";
+"CHARGING_FIXED_FMT" = "Charging: %dW adapter%@ %@";
+"CHARGING_PORT_FMT" = "Charging%@ %@";
+"CHARGING_DESC_FMT" = "Charging from a %dW adapter. Tracking will start automatically when you unplug the power cable.";
+"UNPLUG_DESC_FMT" = "Tracking will start automatically when you unplug the power cable (limit: %d%%).";
