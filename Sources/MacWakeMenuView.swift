@@ -280,9 +280,21 @@ struct MacWakeMenuView: View {
         }
     }
 
+    // Robust slider bounds: use the helper's reported min/max when valid, otherwise
+    // fall back to a sensible range (some Macs don't expose F0Mn/F0Mx).
+    private var fanSliderMin: Double { Double(max(0, chargeLimit.fanMinRPM)) }
+    private var fanSliderMax: Double {
+        let reported = chargeLimit.fanMaxRPM
+        if reported > chargeLimit.fanMinRPM + 200 { return Double(reported) }
+        let observed = Int(tracker.currentFanSpeed ?? 0)
+        return Double(max(6500, observed + 1500))
+    }
+
     @ViewBuilder
     private var fanControlSection: some View {
-        if chargeLimit.helperStatus == .ready && chargeLimit.fanCount > 0 {
+        // Show whenever the Mac actually has fans (app-side detection, like the Hardware
+        // tab) and the privileged helper is available to apply the change.
+        if chargeLimit.helperStatus == .ready && tracker.hasFans {
             Divider().padding(.vertical, 2)
 
             Toggle(isOn: $chargeLimit.fanControlEnabled) {
@@ -315,10 +327,10 @@ struct MacWakeMenuView: View {
                     }
                     Slider(
                         value: Binding(
-                            get: { Double(chargeLimit.fanTargetRPM) },
+                            get: { Double(min(max(chargeLimit.fanTargetRPM, Int(fanSliderMin)), Int(fanSliderMax))) },
                             set: { chargeLimit.fanTargetRPM = Int($0) }
                         ),
-                        in: Double(max(0, chargeLimit.fanMinRPM))...Double(max(chargeLimit.fanMinRPM + 100, chargeLimit.fanMaxRPM)),
+                        in: fanSliderMin...fanSliderMax,
                         step: 100
                     )
                     Text(String(localized: "FAN_SAFETY_NOTE"))

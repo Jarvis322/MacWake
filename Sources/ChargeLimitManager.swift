@@ -404,8 +404,9 @@ final class ChargeLimitManager: ObservableObject {
                 self.fanCount = count
                 self.fanMinRPM = minRPM
                 self.fanMaxRPM = maxRPM
-                if self.fanTargetRPM == 0, maxRPM > 0 {
-                    self.fanTargetRPM = max(minRPM, Int(Double(maxRPM) * 0.4))
+                if self.fanTargetRPM == 0 {
+                    // Safe default ~40% of max, never 0 (0 RPM would stop the fan).
+                    self.fanTargetRPM = maxRPM > 0 ? max(minRPM, Int(Double(maxRPM) * 0.4)) : 2500
                 }
                 if self.fanControlEnabled, count > 0 { await self.applyFan() }
             }
