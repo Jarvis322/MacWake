@@ -240,8 +240,23 @@ struct DynamicIslandPanelView: View {
         }
     }
 
-    // MARK: - Left Widget (Power) — battery ring gauge
+    // MARK: - Left Widget (Power) — battery ring gauge + liquid mascot
     private var leftWidget: some View {
+        HStack(spacing: 10) {
+            batteryInfoColumn
+                .fixedSize(horizontal: true, vertical: false)
+            Spacer(minLength: 4)
+            ArcReactorView(
+                level: tracker.currentBatteryLevel,
+                isCharging: tracker.isPluggedIn,
+                temperature: tracker.batteryTemperature,
+                watts: tracker.dynamicWatts ?? Double(tracker.powerAdapterWatts ?? 0)
+            )
+            .padding(.trailing, 2)
+        }
+    }
+
+    private var batteryInfoColumn: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 14) {
                 ZStack {
