@@ -4,19 +4,65 @@ import UserNotifications
 import Sparkle
 import TelemetryDeck
 
-class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDelegate {
-    let updaterController = SPUStandardUpdaterController(
+class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDelegate, SPUStandardUserDriverDelegate {
+    /// SwiftUI's `@NSApplicationDelegateAdaptor` installs its own `SwiftUI.AppDelegate`
+    /// as `NSApp.delegate` and forwards lifecycle to ours, so `NSApp.delegate as? AppDelegate`
+    /// is nil. Expose our instance directly for the menu's "Check for Updates" action.
+    static private(set) weak var shared: AppDelegate?
+
+    lazy var updaterController = SPUStandardUpdaterController(
         startingUpdater: true,
         updaterDelegate: nil,
-        userDriverDelegate: nil
+        userDriverDelegate: self
     )
+
+    /// True while we've temporarily promoted to a regular (Dock) app so Sparkle's
+    /// update dialogs come to the front. Menu-bar (LSUIElement/accessory) apps don't
+    /// show modal alerts otherwise — the "You're up to date" panel never appears.
+    private var didElevateForUpdate = false
+
+    override init() {
+        super.init()
+        AppDelegate.shared = self
+    }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         UNUserNotificationCenter.current().delegate = self
+        _ = updaterController   // force-start the updater at launch
 
         let config = TelemetryDeck.Config(appID: "47BC5AD6-3456-4A13-97F3-10C169BFDAD6")
         TelemetryDeck.initialize(config: config)
         TelemetryDeck.signal("app.launched")
+    }
+
+    /// Called from the menu's "Check for Updates" button.
+    @objc func checkForUpdates() {
+        elevateForUpdateUI()
+        updaterController.checkForUpdates(nil)
+    }
+
+    private func elevateForUpdateUI() {
+        if NSApp.activationPolicy() != .regular {
+            NSApp.setActivationPolicy(.regular)
+            didElevateForUpdate = true
+        }
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
+    // SPUStandardUserDriverDelegate — bring the app forward before any Sparkle alert.
+    var supportsGentleScheduledUpdateReminders: Bool { true }
+
+    func standardUserDriverWillShowModalAlert() {
+        elevateForUpdateUI()
+    }
+
+    func applicationDidResignActive(_ notification: Notification) {
+        // Once the user dismisses the update dialog and clicks away, drop back to a
+        // pure menu-bar app (no Dock icon).
+        if didElevateForUpdate {
+            didElevateForUpdate = false
+            NSApp.setActivationPolicy(.accessory)
+        }
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {

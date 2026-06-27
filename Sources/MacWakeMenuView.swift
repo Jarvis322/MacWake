@@ -212,7 +212,7 @@ struct MacWakeMenuView: View {
                 .buttonStyle(.bordered)
 
                 Button(action: {
-                    (NSApp.delegate as? AppDelegate)?.updaterController.checkForUpdates(nil)
+                    AppDelegate.shared?.checkForUpdates()
                 }) {
                     HStack {
                         Image(systemName: "arrow.down.circle")
