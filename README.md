@@ -31,16 +31,24 @@ clicking it opens the full panel — Session, History, Hardware, and Settings.
 
 ## ✨ Features
 
-*   **🔋 Charge Limit (Apple Silicon):**
+*   **🔋 Charge Limit (full Apple Silicon M-series):**
     *   Cap charging at any level from 50% to 95% to reduce long-term battery wear.
-    *   Holds the battery near the target by pausing the power adapter via the SMC, using a small notarized background helper (one-time approval, no password prompts).
-    *   Automatic discharge-to-hold strategy with hysteresis to avoid rapid cycling.
-*   **🌍 Localization:**
-    *   Full English and Turkish UI, automatically following the macOS system language.
+    *   Picks the best method per chip: clean charge-inhibit (CHTE/CH0C) on M1/M2/M3, adapter control (CHIE) on M4 — via a small notarized background helper (one-time approval, no password prompts).
+    *   **⛵ Sailing Mode:** let the battery drift down to a lower bound before topping back up, instead of micro-charging at the ceiling — fewer cycles, less heat.
+    *   **🧪 Battery Calibration:** periodically charge to 100% to recalibrate the fuel gauge, with a "Calibrate Now" button.
+*   **⚡️ Energy Mode:**
+    *   Switch the macOS Energy Mode (Automatic / Low Power / High Power) right from the menu — High Power shown only on Macs that support it.
+*   **🌀 Manual Fan Speed (experimental):**
+    *   On Macs with fans, set a manual target RPM — automatically reverts to system control above 92°C as a safety failsafe.
+*   **🎛️ Customizable Menu Bar:**
+    *   Choose exactly what the menu-bar item shows — icon, battery %, power/time, estimated time remaining, and temperature — with a live preview.
 *   **🏝️ Dynamic Island (Notch UI):**
     *   Panel that hugs the physical notch and blends with the hardware when collapsed.
     *   Hover or click to expand with a bouncy spring animation and haptic feedback.
-    *   At-a-glance power, battery health, and battery temperature, plus quick toggles (widget, reset, animations, notifications).
+    *   A **JARVIS-style arc-reactor HUD** with rotating tick rings and a glowing core that pulses with charging power.
+    *   At-a-glance power, battery health, and temperature, plus quick toggles (widget, reset, animations, notifications).
+*   **🌍 Localization:**
+    *   Full English and Turkish UI, automatically following the macOS system language.
 *   **📊 Detailed Session Tracking (Current Session):** 
     *   Tracks screen-on time and sleep duration.
     *   Seamless data integrity with restart/shutdown detection.
