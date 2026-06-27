@@ -291,6 +291,10 @@ class BatteryTracker: ObservableObject {
         self.cpuTemperature = sensors.cpuTemperature
         self.gpuTemperature = sensors.gpuTemperature
         self.ssdTemperature = sensors.ssdTemperature
+
+        // Fan-control safety failsafe: hand fans back to the system if it runs hot.
+        let maxTemp = max(cpuTemperature ?? 0, gpuTemperature ?? 0, batteryTemperature)
+        ChargeLimitManager.shared.fanTemperatureCheck(maxTempC: maxTemp)
     }
 
     private func initializePowerStatus() {

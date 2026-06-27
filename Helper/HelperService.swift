@@ -15,6 +15,19 @@ final class HelperService: NSObject, MacWakeHelperProtocol {
         reply(HelperSMC.getAdapterEnabled())
     }
 
+    func setForceDischarge(_ discharging: Bool, reply: @escaping (Bool) -> Void) {
+        reply(HelperSMC.setForceDischarge(discharging))
+    }
+
+    func getFanInfo(reply: @escaping (Int, Int, Int) -> Void) {
+        let info = HelperSMC.getFanInfo()
+        reply(info.count, info.min, info.max)
+    }
+
+    func setFanManual(_ manual: Bool, rpm: Int, reply: @escaping (Bool) -> Void) {
+        reply(HelperSMC.setFanManual(manual, rpm: rpm))
+    }
+
     func uninstall(reply: @escaping (Bool) -> Void) {
         // Always restore charging before the app tears the helper down,
         // so we never leave the machine discharging on AC.
