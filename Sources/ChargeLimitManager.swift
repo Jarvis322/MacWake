@@ -93,6 +93,13 @@ final class ChargeLimitManager: ObservableObject {
     /// manual speed can never cause overheating.
     private let fanFailsafeTempC: Double = 92
 
+    // MARK: - Energy Mode (macOS pmset)
+
+    /// 0 = Automatic, 1 = Low Power, 2 = High Power.
+    @Published private(set) var energyMode: Int = 0
+    /// True on Macs that expose High Power Mode (some MacBook Pros).
+    @Published private(set) var highPowerSupported = false
+
     /// Hysteresis: resume charging only after dropping this far below the limit,
     /// to avoid rapid on/off oscillation around the threshold (non-sailing mode).
     private let hysteresis = 5
@@ -145,6 +152,7 @@ final class ChargeLimitManager: ObservableObject {
             helperStatus = .ready
             if lastAdapterEnabled == nil { syncAdapterState() }
             if fanCount == 0 { loadFanInfo() }
+            readEnergyMode()
             if !didReconcile { didReconcile = true; reloadHelperIfOutdated() }
         case .requiresApproval:
             helperStatus = .requiresApproval
@@ -427,6 +435,51 @@ final class ChargeLimitManager: ObservableObject {
 
     /// Failsafe: called with the hottest sensor reading. If fan control is forcing a
     /// manual speed while the Mac runs hot, revert to automatic so it can cool.
+    // MARK: - Energy Mode
+
+    /// Reads the current macOS Energy Mode from `pmset -g custom` (no root needed).
+    func readEnergyMode() {
+        let p = Process()
+        p.executableURL = URL(fileURLWithPath: "/usr/bin/pmset")
+        p.arguments = ["-g", "custom"]
+        let pipe = Pipe()
+        p.standardOutput = pipe
+        do {
+            try p.run()
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            p.waitUntilExit()
+            let out = String(data: data, encoding: .utf8) ?? ""
+            // Use the AC ("AC Power") block if present, else whatever is reported.
+            let low = lastValue(of: "lowpowermode", in: out)
+            let high = lastValue(of: "highpowermode", in: out)
+            highPowerSupported = out.contains("highpowermode")
+            if high == 1 { energyMode = 2 }
+            else if low == 1 { energyMode = 1 }
+            else { energyMode = 0 }
+        } catch {
+            // pmset unavailable — leave defaults.
+        }
+    }
+
+    private func lastValue(of key: String, in text: String) -> Int {
+        var result = 0
+        for line in text.split(separator: "\n") where line.contains(key) {
+            let parts = line.split(whereSeparator: { $0 == " " || $0 == "\t" })
+            if let v = parts.last, let n = Int(v) { result = n }
+        }
+        return result
+    }
+
+    /// Applies an Energy Mode via the helper (needs root). 0=Auto, 1=Low, 2=High.
+    func setEnergyMode(_ mode: Int) {
+        guard helperStatus == .ready, let proxy = remoteProxy() else { return }
+        let target = (mode == 2 && !highPowerSupported) ? 0 : mode
+        energyMode = target
+        proxy.setEnergyMode(target) { [weak self] _ in
+            Task { @MainActor in self?.readEnergyMode() }
+        }
+    }
+
     func fanTemperatureCheck(maxTempC: Double) {
         guard fanControlEnabled, fanCount > 0, maxTempC >= fanFailsafeTempC else { return }
         fanControlEnabled = false   // didSet restores auto

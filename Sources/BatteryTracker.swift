@@ -72,6 +72,20 @@ class BatteryTracker: ObservableObject {
     }
     @Published var animatedMenuBarIcon: String = "battery.100.bolt"
     @Published var usbPortInfo: String?
+
+    // Menu-bar appearance (what the menu-bar item shows). Defaults match prior behaviour.
+    @Published var showMenuBarIcon: Bool = UserDefaults.standard.object(forKey: "showMenuBarIcon") as? Bool ?? true {
+        didSet { UserDefaults.standard.set(showMenuBarIcon, forKey: "showMenuBarIcon") }
+    }
+    @Published var showMenuBarPercent: Bool = UserDefaults.standard.object(forKey: "showMenuBarPercent") as? Bool ?? false {
+        didSet { UserDefaults.standard.set(showMenuBarPercent, forKey: "showMenuBarPercent") }
+    }
+    @Published var showMenuBarPower: Bool = UserDefaults.standard.object(forKey: "showMenuBarPower") as? Bool ?? true {
+        didSet { UserDefaults.standard.set(showMenuBarPower, forKey: "showMenuBarPower") }
+    }
+    @Published var showMenuBarTemp: Bool = UserDefaults.standard.object(forKey: "showMenuBarTemp") as? Bool ?? true {
+        didSet { UserDefaults.standard.set(showMenuBarTemp, forKey: "showMenuBarTemp") }
+    }
     
     private var lastStateChange: Date = Date()
     private var heartbeatTimer: Timer?
@@ -1323,28 +1337,33 @@ extension BatteryTracker {
     }
 
     var menuBarText: String {
-        var base = ""
-        if isPluggedIn {
-            if let dyn = dynamicWatts {
-                base = String(format: "%.1fW", dyn)
-            } else if let watts = powerAdapterWatts {
-                base = "\(watts)W"
-            }
-        } else {
-            if let session = currentSession {
+        var parts: [String] = []
+
+        if showMenuBarPercent {
+            parts.append("\(currentBatteryLevel)%")
+        }
+
+        if showMenuBarPower {
+            if isPluggedIn {
+                if let dyn = dynamicWatts {
+                    parts.append(String(format: "%.1fW", dyn))
+                } else if let watts = powerAdapterWatts {
+                    parts.append("\(watts)W")
+                }
+            } else if let session = currentSession {
                 let delta = appState == "active" ? Date().timeIntervalSince(lastStateChange) : 0
                 let total = session.screenOnDuration + delta
                 let hours = Int(total) / 3600
                 let minutes = (Int(total) % 3600) / 60
-                base = hours > 0 ? "\(hours)h \(minutes)m" : "\(minutes)m"
+                parts.append(hours > 0 ? "\(hours)h \(minutes)m" : "\(minutes)m")
             }
         }
-        // Append CPU temperature when available (Apple Silicon).
-        if let cpu = cpuTemperature {
-            let tempStr = String(format: "%.0f°", cpu)
-            return base.isEmpty ? tempStr : "\(base)  \(tempStr)"
+
+        if showMenuBarTemp, let cpu = cpuTemperature {
+            parts.append(String(format: "%.0f°", cpu))
         }
-        return base
+
+        return parts.joined(separator: "  ")
     }
     
     var currentScreenOnSeconds: TimeInterval {

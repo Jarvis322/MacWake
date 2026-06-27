@@ -28,6 +28,10 @@ final class HelperService: NSObject, MacWakeHelperProtocol {
         reply(HelperSMC.setFanManual(manual, rpm: rpm))
     }
 
+    func setEnergyMode(_ mode: Int, reply: @escaping (Bool) -> Void) {
+        reply(HelperPower.setEnergyMode(mode))
+    }
+
     func uninstall(reply: @escaping (Bool) -> Void) {
         // Always restore charging before the app tears the helper down,
         // so we never leave the machine discharging on AC.
