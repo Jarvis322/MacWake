@@ -199,7 +199,7 @@ struct MacWakeMenuView: View {
 
             chargeLimitSection
 
-            HStack(spacing: 12) {
+            VStack(spacing: 8) {
                 Button(action: {
                     tracker.resetCurrentSession()
                 }) {
