@@ -59,9 +59,9 @@ cat <<EOF > "${CONTENTS_DIR}/Info.plist"
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.15</string>
+    <string>1.16</string>
     <key>CFBundleVersion</key>
-    <string>16</string>
+    <string>17</string>
     <key>LSMinimumSystemVersion</key>
     <string>14.0</string>
     <key>LSApplicationCategoryType</key>
@@ -93,10 +93,16 @@ for lproj in Resources/*.lproj; do
 done
 
 echo "=== Compiling using Swift Package Manager ==="
-DEVELOPER_DIR="${DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Developer}" swift build -c release
+XCODE_DIR="$(ls -d /Applications/Xcode*.app 2>/dev/null | head -1)/Contents/Developer"
+DEVELOPER_DIR="${DEVELOPER_DIR:-$XCODE_DIR}" swift build -c release
 
 echo "=== Copying Binary to App Bundle ==="
 cp .build/release/MacWake "${MACOS_DIR}/MacWake"
+
+echo "=== Embedding command-line tool ==="
+HELPERS_DIR="${CONTENTS_DIR}/Helpers"
+mkdir -p "${HELPERS_DIR}"
+cp .build/release/MacWakeCLI "${HELPERS_DIR}/macwake"
 
 echo "=== Embedding privileged helper daemon ==="
 cp .build/release/MacWakeHelper "${MACOS_DIR}/MacWakeHelper"
@@ -157,6 +163,10 @@ done < <(find "${SPARKLE_FW}/Versions/B" -maxdepth 1 -type f)
 
 # Step 4: sign the framework itself
 codesign --force --options runtime --timestamp --sign "${SIGN_IDENTITY}" "${SPARKLE_FW}"
+
+echo "=== Signing command-line tool ==="
+codesign --force --options runtime --timestamp \
+    --sign "${SIGN_IDENTITY}" "${HELPERS_DIR}/macwake"
 
 echo "=== Signing privileged helper daemon ==="
 codesign --force --options runtime --timestamp \

@@ -30,6 +30,13 @@ let package = Package(
                 "MacWakeShared"
             ],
             path: "Helper"
+        ),
+        .executableTarget(
+            name: "MacWakeCLI",
+            dependencies: [
+                "MacWakeShared"
+            ],
+            path: "CLI"
         )
     ]
 )

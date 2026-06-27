@@ -65,7 +65,12 @@ final class ChargeLimitManager: ObservableObject {
         }
     }
 
+    enum CalibrationPhase { case discharge, charge, hold }
     @Published private(set) var calibrationActive = false
+    @Published private(set) var calibrationPhase: CalibrationPhase = .discharge
+    private var calibrationHoldStart: Date?
+    private let calibrationDischargeFloor = 15
+    private let calibrationHoldSeconds: TimeInterval = 3600   // hold at 100% for 1 hour
     private(set) var lastCalibration: Date?
 
     // MARK: - Fan control (experimental; only meaningful on Macs with fans)
@@ -331,13 +336,31 @@ final class ChargeLimitManager: ObservableObject {
             return
         }
 
-        // Calibration takes priority: charge fully to 100%, then resume limiting.
+        // Deep calibration takes priority: drain to ~15%, charge to 100%, hold 1 hour.
         if calibrationActive {
-            if batteryLevel >= 100 {
-                finishCalibration()
-            } else {
-                if lastAdapterEnabled != true { Task { await applyChargingAllowed(true) } }
+            switch calibrationPhase {
+            case .discharge:
+                if batteryLevel <= calibrationDischargeFloor {
+                    calibrationPhase = .charge
+                } else if lastAdapterEnabled != false {
+                    Task { await forceDischarge(true) }   // actively drain on AC
+                }
                 return
+            case .charge:
+                if batteryLevel >= 100 {
+                    calibrationPhase = .hold
+                    calibrationHoldStart = Date()
+                } else if lastAdapterEnabled != true {
+                    Task { await applyChargingAllowed(true) }
+                }
+                return
+            case .hold:
+                if let s = calibrationHoldStart, Date().timeIntervalSince(s) >= calibrationHoldSeconds {
+                    finishCalibration()   // fall through to normal limiting
+                } else {
+                    if lastAdapterEnabled != true { Task { await applyChargingAllowed(true) } }
+                    return
+                }
             }
         } else if calibrationEnabled, isCalibrationDue() {
             startCalibration()
@@ -379,19 +402,40 @@ final class ChargeLimitManager: ObservableObject {
         startCalibration()
     }
 
+    /// Force a force-discharge state via the adapter (CHIE), independent of sailing mode.
+    private func forceDischarge(_ on: Bool) async {
+        guard let proxy = remoteProxy() else { return }
+        let ok = await xpcBool { reply in proxy.setForceDischarge(on, reply: reply) }
+        if ok {
+            lastAdapterEnabled = !on
+            lastToggleAt = Date()
+        }
+    }
+
     private func startCalibration() {
         guard !calibrationActive else { return }
         calibrationActive = true
-        Task { await applyChargingAllowed(true) }
+        calibrationPhase = .discharge
+        calibrationHoldStart = nil
+        Task { await forceDischarge(true) }   // begin by draining
         DynamicIslandManager.shared.trigger(.alert(
             title: String(localized: "Battery Calibration"),
-            message: String(localized: "Charging to 100% to recalibrate the battery."),
+            message: String(localized: "Discharging, then a full charge to recalibrate the battery."),
             isWarning: false
         ))
     }
 
+    /// Cancel an in-progress calibration and resume normal charging/limiting.
+    func cancelCalibration() {
+        guard calibrationActive else { return }
+        calibrationActive = false
+        calibrationHoldStart = nil
+        Task { await restoreCharging() }
+    }
+
     private func finishCalibration() {
         calibrationActive = false
+        calibrationHoldStart = nil
         lastCalibration = Date()
         UserDefaults.standard.set(lastCalibration!.timeIntervalSince1970, forKey: "lastCalibration")
         DynamicIslandManager.shared.trigger(.alert(

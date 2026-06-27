@@ -9,6 +9,7 @@ struct MacWakeMenuView: View {
     @State private var isLaunchAtLoginEnabled: Bool = LaunchAgentManager.isEnabled
     @State private var selectedTab: Int = 0
     @State private var isScrolledToBottom = false
+    @State private var isCLIInstalled = CLIInstaller.isInstalled
     private let timer = Timer.publish(every: 1.0, on: .main, in: .common).autoconnect()
     @State private var timerActive = true
     
@@ -119,6 +120,7 @@ struct MacWakeMenuView: View {
             tracker.updateDynamicWatts()
             isLaunchAtLoginEnabled = LaunchAgentManager.isEnabled
             chargeLimit.refreshStatus()
+            isCLIInstalled = CLIInstaller.isInstalled
             timerActive = true
         }
         .onDisappear {
@@ -245,6 +247,8 @@ struct MacWakeMenuView: View {
 
             energyModeSection
 
+            cliSection
+
             VStack(spacing: 8) {
                 Button(action: {
                     tracker.resetCurrentSession()
@@ -334,6 +338,61 @@ struct MacWakeMenuView: View {
                 .font(.subheadline)
         }
         .toggleStyle(SwitchToggleStyle())
+    }
+
+    @ViewBuilder
+    private var cliSection: some View {
+        Divider().padding(.vertical, 2)
+
+        HStack(spacing: 4) {
+            Text("Command Line Tool")
+                .font(.subheadline)
+            Image(systemName: "terminal")
+                .font(.caption2)
+                .foregroundColor(.secondary)
+            Spacer()
+            if isCLIInstalled {
+                Text("Installed")
+                    .font(.caption2.bold())
+                    .foregroundColor(.green)
+            }
+        }
+
+        if isCLIInstalled {
+            Text("macwake status · charging on|off · adapter on|off · energy · fan")
+                .font(.system(size: 10, design: .monospaced))
+                .foregroundColor(.secondary)
+            Button(action: {
+                if CLIInstaller.uninstall() { isCLIInstalled = CLIInstaller.isInstalled }
+            }) {
+                Text("Remove").frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+        } else {
+            Text("Control charging from Terminal: installs the \u{2018}macwake\u{2019} command.")
+                .font(.system(size: 10))
+                .foregroundColor(.secondary)
+            Button(action: {
+                if CLIInstaller.install() { isCLIInstalled = CLIInstaller.isInstalled }
+            }) {
+                HStack {
+                    Image(systemName: "terminal")
+                    Text("Install Command Line Tool")
+                }
+                .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+        }
+    }
+
+    private var calibrationPhaseText: String {
+        switch chargeLimit.calibrationPhase {
+        case .discharge: return String(localized: "Calibrating — discharging to 15%…")
+        case .charge:    return String(localized: "Calibrating — charging to 100%…")
+        case .hold:      return String(localized: "Calibrating — holding at 100%…")
+        }
     }
 
     @ViewBuilder
@@ -542,11 +601,19 @@ struct MacWakeMenuView: View {
                     }
 
                     if chargeLimit.calibrationActive {
-                        HStack(spacing: 5) {
-                            ProgressView().controlSize(.mini)
-                            Text("Calibrating — charging to 100%…")
-                                .font(.system(size: 10))
-                                .foregroundColor(.purple)
+                        VStack(spacing: 4) {
+                            HStack(spacing: 5) {
+                                ProgressView().controlSize(.mini)
+                                Text(calibrationPhaseText)
+                                    .font(.system(size: 10))
+                                    .foregroundColor(.purple)
+                                Spacer()
+                            }
+                            Button(action: { chargeLimit.cancelCalibration() }) {
+                                Text("Cancel").frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
                         }
                         .padding(.top, 2)
                     } else {
