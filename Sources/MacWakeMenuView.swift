@@ -775,8 +775,8 @@ struct MacWakeMenuView: View {
                 statCard(
                     title: "Temperature",
                     value: String(format: "%.1f°C", tracker.batteryTemperature),
-                    subtitle: tracker.batteryTemperature > 38 ? "Hot" : "Normal",
-                    color: tracker.batteryTemperature > 38 ? .red : orangeColor
+                    subtitle: tracker.batteryTemperature > 42 ? "Hot" : "Normal",
+                    color: tracker.batteryTemperature > 42 ? .red : orangeColor
                 )
             }
         }
