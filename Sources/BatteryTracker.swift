@@ -86,6 +86,9 @@ class BatteryTracker: ObservableObject {
     @Published var showMenuBarTemp: Bool = UserDefaults.standard.object(forKey: "showMenuBarTemp") as? Bool ?? true {
         didSet { UserDefaults.standard.set(showMenuBarTemp, forKey: "showMenuBarTemp") }
     }
+    @Published var showMenuBarTimeRemaining: Bool = UserDefaults.standard.object(forKey: "showMenuBarTimeRemaining") as? Bool ?? false {
+        didSet { UserDefaults.standard.set(showMenuBarTimeRemaining, forKey: "showMenuBarTimeRemaining") }
+    }
     
     private var lastStateChange: Date = Date()
     private var heartbeatTimer: Timer?
@@ -1357,6 +1360,12 @@ extension BatteryTracker {
                 let minutes = (Int(total) % 3600) / 60
                 parts.append(hours > 0 ? "\(hours)h \(minutes)m" : "\(minutes)m")
             }
+        }
+
+        if showMenuBarTimeRemaining, let remaining = remainingBatteryEstimate {
+            let mins = Int(remaining) / 60
+            let h = mins / 60, m = mins % 60
+            parts.append(h > 0 ? "~\(h)h \(m)m" : "~\(m)m")
         }
 
         if showMenuBarTemp, let cpu = cpuTemperature {
