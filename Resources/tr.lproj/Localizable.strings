@@ -121,3 +121,17 @@
 "CHARGING_PORT_FMT" = "Şarj%@ %@";
 "CHARGING_DESC_FMT" = "%dW adaptörden şarj oluyor. Güç kablosunu çıkardığında takip otomatik başlar.";
 "UNPLUG_DESC_FMT" = "Güç kablosunu çıkardığında takip otomatik başlar (limit: %%%d).";
+
+/* Dynamic Island controls + chips */
+"Widget" = "Widget";
+"Reset" = "Sıfırla";
+"Animate" = "Animasyon";
+"Notify" = "Bildirim";
+"BATTERY" = "PİL";
+
+/* Session detail labels */
+"Sleep Time" = "Uyku Süresi";
+"Shutdown" = "Kapatma";
+"Restarts" = "Yeniden Başlatma";
+"Start Charge" = "Başlangıç Şarjı";
+"Sleep" = "Uyku";
