@@ -168,3 +168,17 @@
 "Low Power" = "Düşük Güç";
 "High Power" = "Yüksek Güç";
 "Time Remaining" = "Tahmini Kalan";
+
+/* Deep calibration */
+"Cancel" = "İptal";
+"Discharging, then a full charge to recalibrate the battery." = "Pili yeniden kalibre etmek için önce boşaltıp sonra tam şarj ediyor.";
+"Calibrating — discharging to 15%…" = "Kalibre ediliyor — %15'e boşaltılıyor…";
+"Calibrating — charging to 100%…" = "Kalibre ediliyor — %100'e şarj ediliyor…";
+"Calibrating — holding at 100%…" = "Kalibre ediliyor — %100'de tutuluyor…";
+
+/* Command line tool */
+"Command Line Tool" = "Komut Satırı Aracı";
+"Installed" = "Kurulu";
+"Remove" = "Kaldır";
+"Control charging from Terminal: installs the \U2018macwake\U2019 command." = "Terminal'den şarj kontrolü: \U2018macwake\U2019 komutunu kurar.";
+"Install Command Line Tool" = "Komut Satırı Aracını Kur";
