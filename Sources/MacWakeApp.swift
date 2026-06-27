@@ -105,7 +105,11 @@ struct MacWakeApp: App {
             MacWakeMenuView(tracker: tracker)
         } label: {
             HStack(spacing: 4) {
-                Image(systemName: tracker.effectiveMenuBarIcon)
+                // Always keep the icon if the user turned off every text part, so the
+                // menu-bar item never becomes invisible.
+                if tracker.showMenuBarIcon || tracker.menuBarText.isEmpty {
+                    Image(systemName: tracker.effectiveMenuBarIcon)
+                }
                 if !tracker.menuBarText.isEmpty {
                     Text(tracker.menuBarText)
                 }

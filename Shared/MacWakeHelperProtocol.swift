@@ -34,10 +34,14 @@ public let kMacWakeCodeSigningRequirement =
     /// `manual == false` restores auto (SMC F0Md = 0). `reply` true on success.
     func setFanManual(_ manual: Bool, rpm: Int, reply: @escaping (Bool) -> Void)
 
+    /// Sets the macOS Energy Mode via pmset. 0 = Automatic, 1 = Low Power, 2 = High Power.
+    /// (High Power only applies on Macs that support it; the call is otherwise a no-op.)
+    func setEnergyMode(_ mode: Int, reply: @escaping (Bool) -> Void)
+
     /// Unregisters and removes the helper (best-effort) before the app uninstalls it.
     func uninstall(reply: @escaping (Bool) -> Void)
 }
 
 /// Bumped whenever the helper's XPC surface or SMC logic changes, so the app can
 /// re-register a newer daemon.
-public let kMacWakeHelperVersion = "3"
+public let kMacWakeHelperVersion = "4"

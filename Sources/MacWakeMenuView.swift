@@ -237,9 +237,13 @@ struct MacWakeMenuView: View {
             }
             .toggleStyle(SwitchToggleStyle())
 
+            menuBarSection
+
             chargeLimitSection
 
             fanControlSection
+
+            energyModeSection
 
             VStack(spacing: 8) {
                 Button(action: {
@@ -288,6 +292,78 @@ struct MacWakeMenuView: View {
         if reported > chargeLimit.fanMinRPM + 200 { return Double(reported) }
         let observed = Int(tracker.currentFanSpeed ?? 0)
         return Double(max(6500, observed + 1500))
+    }
+
+    @ViewBuilder
+    private var menuBarSection: some View {
+        Divider().padding(.vertical, 2)
+
+        HStack(spacing: 4) {
+            Text("Menu Bar")
+                .font(.subheadline)
+            Image(systemName: "menubar.rectangle")
+                .font(.caption2)
+                .foregroundColor(.blue)
+            Spacer()
+            // Live preview of what the menu-bar item will show.
+            HStack(spacing: 3) {
+                if tracker.showMenuBarIcon || tracker.menuBarText.isEmpty {
+                    Image(systemName: tracker.effectiveMenuBarIcon)
+                }
+                if !tracker.menuBarText.isEmpty {
+                    Text(tracker.menuBarText)
+                }
+            }
+            .font(.caption.monospacedDigit())
+            .foregroundColor(.secondary)
+        }
+
+        VStack(spacing: 6) {
+            menuBarToggle("Icon", isOn: $tracker.showMenuBarIcon)
+            menuBarToggle("Battery %", isOn: $tracker.showMenuBarPercent)
+            menuBarToggle("Power / Time", isOn: $tracker.showMenuBarPower)
+            menuBarToggle("Temperature", isOn: $tracker.showMenuBarTemp)
+        }
+        .padding(.leading, 4)
+    }
+
+    private func menuBarToggle(_ label: String, isOn: Binding<Bool>) -> some View {
+        Toggle(isOn: isOn) {
+            Text(LocalizedStringKey(label))
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+        .toggleStyle(SwitchToggleStyle())
+        .controlSize(.mini)
+    }
+
+    @ViewBuilder
+    private var energyModeSection: some View {
+        if chargeLimit.helperStatus == .ready {
+            Divider().padding(.vertical, 2)
+
+            HStack(spacing: 4) {
+                Text("Energy Mode")
+                    .font(.subheadline)
+                Image(systemName: "leaf.fill")
+                    .font(.caption2)
+                    .foregroundColor(.green)
+                Spacer()
+            }
+
+            Picker("", selection: Binding(
+                get: { chargeLimit.energyMode },
+                set: { chargeLimit.setEnergyMode($0) }
+            )) {
+                Text("Automatic").tag(0)
+                Text("Low Power").tag(1)
+                if chargeLimit.highPowerSupported {
+                    Text("High Power").tag(2)
+                }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+        }
     }
 
     @ViewBuilder
