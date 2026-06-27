@@ -474,6 +474,13 @@ class DynamicIslandManager {
     private var deviceNotchRect: CGRect = .zero
     private var openedRect: CGRect = .zero
 
+    /// The region that keeps the panel expanded. Inset outward so the boundary is
+    /// forgiving — crucially it extends ABOVE the screen's top edge, because
+    /// `CGRect.contains` excludes the max-Y edge and the notch sits exactly there.
+    /// Without this, hovering the very top pixel reads as "inside expand, outside stay"
+    /// and the panel oscillates open/closed (seen on 16" M4 Pro / macOS 15.7).
+    private var stayExpandedRect: CGRect { openedRect.insetBy(dx: -24, dy: -24) }
+
     func hoverDidEnter() {
         collapseWorkItem?.cancel()
         collapseWorkItem = nil
@@ -592,7 +599,7 @@ class DynamicIslandManager {
             }
         case .expanded:
             // Click outside the panel closes it; clicks inside fall through to the controls.
-            if !openedRect.contains(mouse) {
+            if !stayExpandedRect.contains(mouse) {
                 closePanel()
             }
         default:
@@ -613,7 +620,7 @@ class DynamicIslandManager {
                 expandWorkItem = nil
             }
         } else if state == .expanded {
-            if openedRect.contains(mouse) {
+            if stayExpandedRect.contains(mouse) {
                 collapseWorkItem?.cancel()
                 collapseWorkItem = nil
             } else {
