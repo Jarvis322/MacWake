@@ -318,24 +318,22 @@ struct MacWakeMenuView: View {
             .foregroundColor(.secondary)
         }
 
-        VStack(spacing: 6) {
+        VStack(spacing: 10) {
             menuBarToggle("Icon", isOn: $tracker.showMenuBarIcon)
             menuBarToggle("Battery %", isOn: $tracker.showMenuBarPercent)
             menuBarToggle("Power / Time", isOn: $tracker.showMenuBarPower)
             menuBarToggle("Time Remaining", isOn: $tracker.showMenuBarTimeRemaining)
             menuBarToggle("Temperature", isOn: $tracker.showMenuBarTemp)
         }
-        .padding(.leading, 4)
+        .padding(.top, 2)
     }
 
     private func menuBarToggle(_ label: String, isOn: Binding<Bool>) -> some View {
         Toggle(isOn: isOn) {
             Text(LocalizedStringKey(label))
-                .font(.caption)
-                .foregroundColor(.secondary)
+                .font(.subheadline)
         }
         .toggleStyle(SwitchToggleStyle())
-        .controlSize(.mini)
     }
 
     @ViewBuilder
