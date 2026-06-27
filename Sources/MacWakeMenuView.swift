@@ -8,6 +8,7 @@ struct MacWakeMenuView: View {
     @Environment(\.colorScheme) var colorScheme
     @State private var isLaunchAtLoginEnabled: Bool = LaunchAgentManager.isEnabled
     @State private var selectedTab: Int = 0
+    @State private var isScrolledToBottom = false
     private let timer = Timer.publish(every: 1.0, on: .main, in: .common).autoconnect()
     @State private var timerActive = true
     
@@ -50,18 +51,57 @@ struct MacWakeMenuView: View {
                 Divider()
                 
                 // Conditional Tab Content
-                ScrollView(.vertical, showsIndicators: false) {
-                    switch selectedTab {
-                    case 0:
-                        dashboardTabContent
-                    case 1:
-                        historyTabContent
-                    case 2:
-                        hardwareTabContent
-                    case 3:
-                        settingsTabContent
-                    default:
-                        EmptyView()
+                GeometryReader { outer in
+                    ZStack(alignment: .bottom) {
+                        ScrollView(.vertical, showsIndicators: true) {
+                            Group {
+                                switch selectedTab {
+                                case 0:
+                                    dashboardTabContent
+                                case 1:
+                                    historyTabContent
+                                case 2:
+                                    hardwareTabContent
+                                case 3:
+                                    settingsTabContent
+                                default:
+                                    EmptyView()
+                                }
+                            }
+                            .padding(.bottom, 18)   // breathing room above the fade hint
+                            .background(GeometryReader { inner in
+                                Color.clear.preference(
+                                    key: ScrollBottomKey.self,
+                                    value: inner.frame(in: .named("tabScroll")).maxY
+                                )
+                            })
+                        }
+                        .coordinateSpace(name: "tabScroll")
+
+                        // Bottom fade + chevron: only while there's more to scroll.
+                        if !isScrolledToBottom {
+                            VStack(spacing: 0) {
+                                LinearGradient(
+                                    colors: [Color(nsColor: .windowBackgroundColor).opacity(0), Color(nsColor: .windowBackgroundColor).opacity(0.55)],
+                                    startPoint: .top, endPoint: .bottom
+                                )
+                                .frame(height: 26)
+                                Image(systemName: "chevron.compact.down")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundColor(.secondary.opacity(0.5))
+                                    .frame(maxWidth: .infinity)
+                                    .background(Color(nsColor: .windowBackgroundColor).opacity(0.55))
+                            }
+                            .allowsHitTesting(false)
+                            .transition(.opacity)
+                        }
+                    }
+                    .onPreferenceChange(ScrollBottomKey.self) { contentMaxY in
+                        // contentMaxY = content's bottom edge in the viewport's coords.
+                        // At/short of the bottom when it fits within the viewport height.
+                        withAnimation(.easeInOut(duration: 0.15)) {
+                            isScrolledToBottom = contentMaxY <= outer.size.height + 6
+                        }
                     }
                 }
                 .frame(maxHeight: .infinity, alignment: .top)
@@ -199,6 +239,8 @@ struct MacWakeMenuView: View {
 
             chargeLimitSection
 
+            fanControlSection
+
             VStack(spacing: 8) {
                 Button(action: {
                     tracker.resetCurrentSession()
@@ -235,6 +277,56 @@ struct MacWakeMenuView: View {
                 .buttonStyle(.bordered)
             }
             .padding(.top, 4)
+        }
+    }
+
+    @ViewBuilder
+    private var fanControlSection: some View {
+        if chargeLimit.helperStatus == .ready && chargeLimit.fanCount > 0 {
+            Divider().padding(.vertical, 2)
+
+            Toggle(isOn: $chargeLimit.fanControlEnabled) {
+                HStack(spacing: 4) {
+                    Text("Manual Fan Speed")
+                        .font(.subheadline)
+                    Image(systemName: "fanblades.fill")
+                        .font(.caption2)
+                        .foregroundColor(.cyan)
+                    Text("BETA")
+                        .font(.system(size: 8, weight: .bold))
+                        .padding(.horizontal, 4).padding(.vertical, 1)
+                        .background(Color.orange.opacity(0.2))
+                        .foregroundColor(.orange)
+                        .cornerRadius(3)
+                }
+            }
+            .toggleStyle(SwitchToggleStyle())
+
+            if chargeLimit.fanControlEnabled {
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text("Target")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Spacer()
+                        Text(String(format: String(localized: "RPM_FMT"), chargeLimit.fanTargetRPM))
+                            .font(.caption.bold())
+                            .foregroundColor(.cyan)
+                    }
+                    Slider(
+                        value: Binding(
+                            get: { Double(chargeLimit.fanTargetRPM) },
+                            set: { chargeLimit.fanTargetRPM = Int($0) }
+                        ),
+                        in: Double(max(0, chargeLimit.fanMinRPM))...Double(max(chargeLimit.fanMinRPM + 100, chargeLimit.fanMaxRPM)),
+                        step: 100
+                    )
+                    Text(String(localized: "FAN_SAFETY_NOTE"))
+                        .font(.system(size: 10))
+                        .foregroundColor(.secondary)
+                }
+                .padding(.leading, 4)
+            }
         }
     }
 
@@ -287,6 +379,101 @@ struct MacWakeMenuView: View {
                             .foregroundColor(.secondary)
                     }
                     .padding(.top, 2)
+
+                    Divider().padding(.vertical, 4)
+
+                    // Sailing Mode
+                    Toggle(isOn: $chargeLimit.sailingEnabled) {
+                        HStack(spacing: 4) {
+                            Text("Sailing Mode")
+                                .font(.subheadline)
+                            Image(systemName: "sailboat.fill")
+                                .font(.caption2)
+                                .foregroundColor(.blue)
+                        }
+                    }
+                    .toggleStyle(SwitchToggleStyle())
+
+                    if chargeLimit.sailingEnabled {
+                        HStack {
+                            Text("Recharge at")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Spacer()
+                            Text("\(chargeLimit.sailingLower)%")
+                                .font(.caption.bold())
+                                .foregroundColor(.blue)
+                        }
+                        Slider(
+                            value: Binding(
+                                get: { Double(chargeLimit.sailingLower) },
+                                set: { chargeLimit.sailingLower = Int($0) }
+                            ),
+                            in: 40...Double(max(45, chargeLimit.limit - 5)),
+                            step: 5
+                        )
+                        Text(String(format: String(localized: "SAILING_DESC_FMT"), chargeLimit.sailingLower, chargeLimit.limit))
+                            .font(.system(size: 10))
+                            .foregroundColor(.secondary)
+                    }
+
+                    Divider().padding(.vertical, 4)
+
+                    // Monthly Calibration
+                    Toggle(isOn: $chargeLimit.calibrationEnabled) {
+                        HStack(spacing: 4) {
+                            Text("Battery Calibration")
+                                .font(.subheadline)
+                            Image(systemName: "gauge.with.needle")
+                                .font(.caption2)
+                                .foregroundColor(.purple)
+                        }
+                    }
+                    .toggleStyle(SwitchToggleStyle())
+
+                    if chargeLimit.calibrationEnabled {
+                        HStack {
+                            Text("Every")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Spacer()
+                            Text(String(format: String(localized: "DAYS_FMT"), chargeLimit.calibrationIntervalDays))
+                                .font(.caption.bold())
+                                .foregroundColor(.purple)
+                        }
+                        Slider(
+                            value: Binding(
+                                get: { Double(chargeLimit.calibrationIntervalDays) },
+                                set: { chargeLimit.calibrationIntervalDays = Int($0) }
+                            ),
+                            in: 7...90,
+                            step: 1
+                        )
+                        Text(String(localized: "CALIBRATION_DESC"))
+                            .font(.system(size: 10))
+                            .foregroundColor(.secondary)
+                    }
+
+                    if chargeLimit.calibrationActive {
+                        HStack(spacing: 5) {
+                            ProgressView().controlSize(.mini)
+                            Text("Calibrating — charging to 100%…")
+                                .font(.system(size: 10))
+                                .foregroundColor(.purple)
+                        }
+                        .padding(.top, 2)
+                    } else {
+                        Button(action: { chargeLimit.calibrateNow() }) {
+                            HStack {
+                                Image(systemName: "gauge.with.needle")
+                                Text("Calibrate Now")
+                            }
+                            .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                        .padding(.top, 2)
+                    }
                 }
                 .padding(.leading, 4)
             }
@@ -1079,6 +1266,15 @@ struct MacWakeMenuView: View {
 }
 
 // MARK: - Tab Button Component
+/// Reports the scrolled content's bottom-edge Y in the scroll viewport's coordinate
+/// space, so the "scroll for more" hint can hide once you reach the bottom.
+private struct ScrollBottomKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
+    }
+}
+
 struct TabButton: View {
     let title: String
     let icon: String

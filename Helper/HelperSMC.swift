@@ -38,6 +38,18 @@ enum HelperSMC {
     /// Detected once; SMC key schema is fixed per machine.
     private static let method: Method? = detectMethod()
 
+    /// The adapter (CHIE/CH0J) key + its "off" value, regardless of whether a cleaner
+    /// charge-inhibit key exists. Used by force-discharge (Sailing Mode).
+    private static let adapter: (key: String, off: UInt8)? = detectAdapter()
+
+    private static func detectAdapter() -> (key: String, off: UInt8)? {
+        guard let conn = open() else { return nil }
+        defer { IOServiceClose(conn) }
+        if available(conn, "CHIE") { return ("CHIE", 0x08) }
+        if available(conn, "CH0J") { return ("CH0J", 0x20) }
+        return nil
+    }
+
     private static func detectMethod() -> Method? {
         guard let conn = open() else { return nil }
         defer { IOServiceClose(conn) }
@@ -72,6 +84,67 @@ enum HelperSMC {
         }
         // For both methods, 0 means "charging allowed / adapter on".
         return read(conn, key) == 0
+    }
+
+    /// Always uses the adapter key (CHIE/CH0J) so the battery actively discharges,
+    /// independent of the chip's preferred charge-stop method.
+    static func setForceDischarge(_ discharging: Bool) -> Bool {
+        guard let adapter = adapter, let conn = open() else { return false }
+        defer { IOServiceClose(conn) }
+        return write(conn, adapter.key, discharging ? adapter.off : 0x00)
+    }
+
+    // MARK: - Fan control (fan 0)
+
+    /// (fanCount, minRPM, maxRPM). Returns (0,0,0) on fanless Macs.
+    static func getFanInfo() -> (count: Int, min: Int, max: Int) {
+        guard let conn = open() else { return (0, 0, 0) }
+        defer { IOServiceClose(conn) }
+        let count = Int(read(conn, "FNum"))
+        guard count > 0 else { return (0, 0, 0) }
+        let minRPM = Int(readFPE2(conn, "F0Mn"))
+        let maxRPM = Int(readFPE2(conn, "F0Mx"))
+        return (count, minRPM, maxRPM)
+    }
+
+    /// Force fan 0 to `rpm` (manual) or restore automatic control.
+    static func setFanManual(_ manual: Bool, rpm: Int) -> Bool {
+        guard let conn = open() else { return false }
+        defer { IOServiceClose(conn) }
+        if manual {
+            let okTarget = writeFPE2(conn, "F0Tg", rpm)
+            let okMode = write(conn, "F0Md", 1)   // forced
+            return okTarget && okMode
+        } else {
+            return write(conn, "F0Md", 0)          // auto
+        }
+    }
+
+    /// fpe2: unsigned fixed-point, value = raw / 4, big-endian 2 bytes.
+    private static func readFPE2(_ conn: io_connect_t, _ key: String) -> Int {
+        guard let info = keyInfo(conn, key) else { return 0 }
+        var inp = SMCParamStruct()
+        inp.key = fourCC(key); inp.keyInfo.dataSize = info.dataSize; inp.data8 = 5
+        var out = SMCParamStruct(); var sz = MemoryLayout<SMCParamStruct>.stride
+        let r = IOConnectCallStructMethod(conn, 2, &inp, MemoryLayout<SMCParamStruct>.stride, &out, &sz)
+        guard r == kIOReturnSuccess && out.result == 0 else { return 0 }
+        let raw = (UInt32(out.bytes.0) << 8) | UInt32(out.bytes.1)
+        return Int(raw / 4)
+    }
+
+    private static func writeFPE2(_ conn: io_connect_t, _ key: String, _ rpm: Int) -> Bool {
+        guard let info = keyInfo(conn, key) else { return false }
+        let raw = UInt32(max(0, rpm) * 4)
+        var inp = SMCParamStruct()
+        inp.key = fourCC(key)
+        inp.keyInfo.dataSize = info.dataSize
+        inp.keyInfo.dataType = info.dataType
+        inp.data8 = 6
+        inp.bytes.0 = UInt8((raw >> 8) & 0xFF)
+        inp.bytes.1 = UInt8(raw & 0xFF)
+        var out = SMCParamStruct(); var sz = MemoryLayout<SMCParamStruct>.stride
+        let r = IOConnectCallStructMethod(conn, 2, &inp, MemoryLayout<SMCParamStruct>.stride, &out, &sz)
+        return r == kIOReturnSuccess && out.result == 0
     }
 
     // MARK: - SMC primitives

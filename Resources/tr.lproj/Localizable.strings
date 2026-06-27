@@ -135,3 +135,25 @@
 "Restarts" = "Yeniden Başlatma";
 "Start Charge" = "Başlangıç Şarjı";
 "Sleep" = "Uyku";
+
+/* Sailing Mode + Calibration */
+"Sailing Mode" = "Süzülme Modu";
+"Recharge at" = "Şu seviyede şarj et";
+"SAILING_DESC_FMT" = "Pilin %%%1$d düzeyine inmesine izin verir, sonra %%%2$d düzeyine şarj eder — daha az döngü, daha az ısı.";
+"Battery Calibration" = "Pil Kalibrasyonu";
+"Every" = "Her";
+"DAYS_FMT" = "%d gün";
+"CALIBRATION_DESC" = "Belirlenen aralıkta bir kez pili %%100'e kadar şarj ederek pil göstergesini kalibre eder.";
+"Calibrate Now" = "Şimdi Kalibre Et";
+"Calibrating — charging to 100%…" = "Kalibre ediliyor — %100'e şarj ediliyor…";
+"Charging to 100% to recalibrate the battery." = "Pili yeniden kalibre etmek için %100'e şarj ediliyor.";
+"Calibration Complete" = "Kalibrasyon Tamamlandı";
+"Battery recalibrated. Charge limit resumed." = "Pil yeniden kalibre edildi. Şarj limiti devam ediyor.";
+
+/* Fan control */
+"Manual Fan Speed" = "Manuel Fan Hızı";
+"Target" = "Hedef";
+"RPM_FMT" = "%d RPM";
+"FAN_SAFETY_NOTE" = "92°C üzerinde aşırı ısınmayı önlemek için otomatiğe döner. Deneysel — her Mac'te çalışmayabilir.";
+"Fan Control Paused" = "Fan Kontrolü Duraklatıldı";
+"High temperature — fans returned to automatic." = "Yüksek sıcaklık — fanlar otomatiğe döndü.";

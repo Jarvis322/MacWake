@@ -20,3 +20,12 @@
 "CHARGING_PORT_FMT" = "Charging%@ %@";
 "CHARGING_DESC_FMT" = "Charging from a %dW adapter. Tracking will start automatically when you unplug the power cable.";
 "UNPLUG_DESC_FMT" = "Tracking will start automatically when you unplug the power cable (limit: %d%%).";
+
+/* Sailing Mode + Calibration custom keys */
+"SAILING_DESC_FMT" = "Lets the battery drift to %1$d%% before charging back to %2$d%% — fewer cycles, less heat.";
+"DAYS_FMT" = "%d days";
+"CALIBRATION_DESC" = "Once per interval, charges fully to 100%% to recalibrate the battery gauge.";
+
+/* Fan control custom keys */
+"RPM_FMT" = "%d RPM";
+"FAN_SAFETY_NOTE" = "Reverts to automatic above 92°C to prevent overheating. Experimental — may not work on every Mac.";

@@ -33,11 +33,68 @@ final class ChargeLimitManager: ObservableObject {
             let clamped = min(95, max(50, limit))
             if clamped != limit { limit = clamped; return }
             UserDefaults.standard.set(limit, forKey: "chargeLimitValue")
+            if sailingLower > limit - 5 { sailingLower = limit - 5 }
         }
     }
 
+    /// Sailing Mode: let the battery drift down to `sailingLower` before topping back
+    /// up to `limit`, instead of micro-charging at the ceiling. Fewer cycles, less heat.
+    @Published var sailingEnabled: Bool {
+        didSet { UserDefaults.standard.set(sailingEnabled, forKey: "sailingEnabled") }
+    }
+
+    @Published var sailingLower: Int {
+        didSet {
+            let clamped = min(limit - 5, max(40, sailingLower))
+            if clamped != sailingLower { sailingLower = clamped; return }
+            UserDefaults.standard.set(sailingLower, forKey: "sailingLower")
+        }
+    }
+
+    /// Monthly Calibration: periodically let the battery charge fully to 100% to
+    /// recalibrate its fuel gauge, then resume limiting.
+    @Published var calibrationEnabled: Bool {
+        didSet { UserDefaults.standard.set(calibrationEnabled, forKey: "calibrationEnabled") }
+    }
+
+    @Published var calibrationIntervalDays: Int {
+        didSet {
+            let clamped = min(90, max(7, calibrationIntervalDays))
+            if clamped != calibrationIntervalDays { calibrationIntervalDays = clamped; return }
+            UserDefaults.standard.set(calibrationIntervalDays, forKey: "calibrationIntervalDays")
+        }
+    }
+
+    @Published private(set) var calibrationActive = false
+    private(set) var lastCalibration: Date?
+
+    // MARK: - Fan control (experimental; only meaningful on Macs with fans)
+
+    /// Number of fans (0 = fanless — the UI hides fan control entirely).
+    @Published private(set) var fanCount = 0
+    @Published private(set) var fanMinRPM = 0
+    @Published private(set) var fanMaxRPM = 0
+
+    @Published var fanControlEnabled: Bool {
+        didSet {
+            UserDefaults.standard.set(fanControlEnabled, forKey: "fanControlEnabled")
+            Task { await applyFan() }
+        }
+    }
+
+    @Published var fanTargetRPM: Int {
+        didSet {
+            UserDefaults.standard.set(fanTargetRPM, forKey: "fanTargetRPM")
+            if fanControlEnabled { Task { await applyFan() } }
+        }
+    }
+
+    /// Safety: above this temperature we drop fan control back to automatic so a low
+    /// manual speed can never cause overheating.
+    private let fanFailsafeTempC: Double = 92
+
     /// Hysteresis: resume charging only after dropping this far below the limit,
-    /// to avoid rapid on/off oscillation around the threshold.
+    /// to avoid rapid on/off oscillation around the threshold (non-sailing mode).
     private let hysteresis = 5
 
     /// Minimum time between adapter toggles, a hard backstop against oscillation.
@@ -56,9 +113,21 @@ final class ChargeLimitManager: ObservableObject {
     }
 
     private init() {
-        self.isEnabled = UserDefaults.standard.bool(forKey: "chargeLimitEnabled")
-        let savedLimit = UserDefaults.standard.integer(forKey: "chargeLimitValue")
-        self.limit = savedLimit == 0 ? 80 : min(95, max(50, savedLimit))
+        let d = UserDefaults.standard
+        self.isEnabled = d.bool(forKey: "chargeLimitEnabled")
+        let savedLimit = d.integer(forKey: "chargeLimitValue")
+        let lim = savedLimit == 0 ? 80 : min(95, max(50, savedLimit))
+        self.limit = lim
+        self.sailingEnabled = d.bool(forKey: "sailingEnabled")
+        let savedLower = d.integer(forKey: "sailingLower")
+        self.sailingLower = savedLower == 0 ? max(40, lim - 10) : min(lim - 5, max(40, savedLower))
+        self.calibrationEnabled = d.bool(forKey: "calibrationEnabled")
+        let savedInterval = d.integer(forKey: "calibrationIntervalDays")
+        self.calibrationIntervalDays = savedInterval == 0 ? 30 : min(90, max(7, savedInterval))
+        let savedCal = d.double(forKey: "lastCalibration")
+        self.lastCalibration = savedCal == 0 ? nil : Date(timeIntervalSince1970: savedCal)
+        self.fanControlEnabled = d.bool(forKey: "fanControlEnabled")
+        self.fanTargetRPM = d.integer(forKey: "fanTargetRPM")
         refreshStatus()
     }
 
@@ -68,15 +137,36 @@ final class ChargeLimitManager: ObservableObject {
         SMAppService.daemon(plistName: plistName)
     }
 
+    private var didReconcile = false
+
     func refreshStatus() {
         switch service.status {
         case .enabled:
             helperStatus = .ready
             if lastAdapterEnabled == nil { syncAdapterState() }
+            if fanCount == 0 { loadFanInfo() }
+            if !didReconcile { didReconcile = true; reloadHelperIfOutdated() }
         case .requiresApproval:
             helperStatus = .requiresApproval
         default:
             helperStatus = .notInstalled
+        }
+    }
+
+    /// After an app update the on-disk helper is new but the running daemon may still
+    /// be the old binary (missing new XPC methods). Compare versions and re-register to
+    /// load the current helper. Approval persists, so this is silent.
+    private func reloadHelperIfOutdated() {
+        guard let proxy = remoteProxy() else { return }
+        proxy.getVersion { [weak self] version in
+            guard version != kMacWakeHelperVersion else { return }
+            Task { @MainActor in
+                guard let self else { return }
+                try? await self.service.unregister()
+                try? self.service.register()
+                self.connection?.invalidate()
+                self.connection = nil
+            }
         }
     }
 
@@ -142,27 +232,68 @@ final class ChargeLimitManager: ObservableObject {
         } as? MacWakeHelperProtocol
     }
 
-    private func setAdapter(enabled: Bool) async {
+    /// Runs an XPC Bool-reply call but never hangs — resolves to false after `timeout`
+    /// (e.g. if a stale daemon lacks a newly added method).
+    private func xpcBool(timeout: TimeInterval = 3,
+                         _ call: @escaping (@escaping (Bool) -> Void) -> Void) async -> Bool {
+        await withCheckedContinuation { (cont: CheckedContinuation<Bool, Never>) in
+            let lock = NSLock()
+            var done = false
+            func finish(_ v: Bool) {
+                lock.lock(); defer { lock.unlock() }
+                if done { return }; done = true
+                cont.resume(returning: v)
+            }
+            call { finish($0) }
+            DispatchQueue.main.asyncAfter(deadline: .now() + timeout) { finish(false) }
+        }
+    }
+
+    /// Apply the desired charging state. Sailing Mode forces the adapter (CHIE) so the
+    /// battery actively discharges to the lower bound; otherwise the chip's best
+    /// charge-stop method is used.
+    private func applyChargingAllowed(_ allowed: Bool) async {
         guard let proxy = remoteProxy() else { return }
-        let ok = await withCheckedContinuation { (cont: CheckedContinuation<Bool, Never>) in
-            proxy.setAdapterEnabled(enabled) { success in cont.resume(returning: success) }
+        let ok = await xpcBool { reply in
+            if self.sailingEnabled {
+                proxy.setForceDischarge(!allowed, reply: reply)
+            } else {
+                proxy.setAdapterEnabled(allowed, reply: reply)
+            }
         }
         if ok {
-            lastAdapterEnabled = enabled
+            lastAdapterEnabled = allowed
             lastToggleAt = Date()
         }
     }
 
+    /// Clear every charge block (both CHTE inhibit and CHIE adapter-off) so charging
+    /// can proceed no matter which method was last used.
     private func restoreCharging() async {
-        await setAdapter(enabled: true)
+        guard let proxy = remoteProxy() else { return }
+        await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
+            proxy.setForceDischarge(false) { _ in cont.resume() }
+        }
+        await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
+            proxy.setAdapterEnabled(true) { _ in cont.resume() }
+        }
+        lastAdapterEnabled = true
+        lastToggleAt = Date()
     }
 
-    /// Synchronous best-effort restore for app termination — blocks briefly so the
-    /// adapter is re-enabled before the process exits.
+    /// Synchronous best-effort restore for app termination — clears charge blocks and
+    /// returns fans to automatic before the process exits.
     func restoreChargingOnQuit() {
-        guard lastAdapterEnabled == false, let proxy = remoteProxy() else { return }
+        guard let proxy = remoteProxy() else { return }
+        let needsCharge = (lastAdapterEnabled == false)
+        let needsFan = fanControlEnabled
+        guard needsCharge || needsFan else { return }
         let sem = DispatchSemaphore(value: 0)
-        proxy.setAdapterEnabled(true) { _ in sem.signal() }
+        proxy.setFanManual(false, rpm: 0) { _ in
+            proxy.setForceDischarge(false) { _ in
+                proxy.setAdapterEnabled(true) { _ in sem.signal() }
+            }
+        }
         _ = sem.wait(timeout: .now() + 2)
     }
 
@@ -188,13 +319,28 @@ final class ChargeLimitManager: ObservableObject {
             return
         }
 
+        // Calibration takes priority: charge fully to 100%, then resume limiting.
+        if calibrationActive {
+            if batteryLevel >= 100 {
+                finishCalibration()
+            } else {
+                if lastAdapterEnabled != true { Task { await applyChargingAllowed(true) } }
+                return
+            }
+        } else if calibrationEnabled, isCalibrationDue() {
+            startCalibration()
+            return
+        }
+
+        let lower = sailingEnabled ? sailingLower : (limit - hysteresis)
+
         let shouldChargeAllowed: Bool
         if batteryLevel >= limit {
-            shouldChargeAllowed = false                       // at/over limit → stop
-        } else if batteryLevel <= limit - hysteresis {
+            shouldChargeAllowed = false                       // at/over ceiling → stop
+        } else if batteryLevel <= lower {
             shouldChargeAllowed = true                        // dropped below band → resume
         } else {
-            return                                            // inside hysteresis band → hold
+            return                                            // inside band → hold / drift
         }
 
         guard lastAdapterEnabled != shouldChargeAllowed else { return }
@@ -204,6 +350,85 @@ final class ChargeLimitManager: ObservableObject {
             return
         }
 
-        Task { await setAdapter(enabled: shouldChargeAllowed) }
+        Task { await applyChargingAllowed(shouldChargeAllowed) }
+    }
+
+    // MARK: - Calibration
+
+    private func isCalibrationDue() -> Bool {
+        guard let last = lastCalibration else { return true }
+        let days = Date().timeIntervalSince(last) / 86400
+        return days >= Double(calibrationIntervalDays)
+    }
+
+    /// Manually start a calibration cycle now (from the Settings button).
+    func calibrateNow() {
+        guard helperStatus == .ready else { return }
+        startCalibration()
+    }
+
+    private func startCalibration() {
+        guard !calibrationActive else { return }
+        calibrationActive = true
+        Task { await applyChargingAllowed(true) }
+        DynamicIslandManager.shared.trigger(.alert(
+            title: String(localized: "Battery Calibration"),
+            message: String(localized: "Charging to 100% to recalibrate the battery."),
+            isWarning: false
+        ))
+    }
+
+    private func finishCalibration() {
+        calibrationActive = false
+        lastCalibration = Date()
+        UserDefaults.standard.set(lastCalibration!.timeIntervalSince1970, forKey: "lastCalibration")
+        DynamicIslandManager.shared.trigger(.alert(
+            title: String(localized: "Calibration Complete"),
+            message: String(localized: "Battery recalibrated. Charge limit resumed."),
+            isWarning: false
+        ))
+    }
+
+    // MARK: - Fan control
+
+    /// Queries fan hardware info from the helper and (re)applies the saved fan setting.
+    func loadFanInfo() {
+        guard let proxy = remoteProxy() else { return }
+        proxy.getFanInfo { [weak self] count, minRPM, maxRPM in
+            Task { @MainActor in
+                guard let self else { return }
+                self.fanCount = count
+                self.fanMinRPM = minRPM
+                self.fanMaxRPM = maxRPM
+                if self.fanTargetRPM == 0, maxRPM > 0 {
+                    self.fanTargetRPM = max(minRPM, Int(Double(maxRPM) * 0.4))
+                }
+                if self.fanControlEnabled, count > 0 { await self.applyFan() }
+            }
+        }
+    }
+
+    private func applyFan() async {
+        guard helperStatus == .ready, fanCount > 0, let proxy = remoteProxy() else { return }
+        let manual = fanControlEnabled
+        let rpm = min(max(fanTargetRPM, fanMinRPM), fanMaxRPM == 0 ? fanTargetRPM : fanMaxRPM)
+        _ = await xpcBool { reply in proxy.setFanManual(manual, rpm: rpm, reply: reply) }
+    }
+
+    func restoreFanAuto() {
+        guard let proxy = remoteProxy() else { return }
+        proxy.setFanManual(false, rpm: 0) { _ in }
+    }
+
+    /// Failsafe: called with the hottest sensor reading. If fan control is forcing a
+    /// manual speed while the Mac runs hot, revert to automatic so it can cool.
+    func fanTemperatureCheck(maxTempC: Double) {
+        guard fanControlEnabled, fanCount > 0, maxTempC >= fanFailsafeTempC else { return }
+        fanControlEnabled = false   // didSet restores auto
+        DynamicIslandManager.shared.trigger(.alert(
+            title: String(localized: "Fan Control Paused"),
+            message: String(localized: "High temperature — fans returned to automatic."),
+            isWarning: true
+        ))
     }
 }
