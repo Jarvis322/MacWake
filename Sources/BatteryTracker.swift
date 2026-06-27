@@ -861,16 +861,24 @@ class BatteryTracker: ObservableObject {
                 session.endTime = now
                 session.endBatteryLevel = batteryLevel
                 session.events.append(Event(timestamp: now, type: "plugged", battery: batteryLevel))
-                
-                // Add to history
-                history.insert(session, at: 0)
-                // Limit history to 10 entries
-                if history.count > 10 {
-                    history.removeLast()
+
+                // Skip trivial sessions: no battery change and barely any time on battery
+                // (e.g. a quick unplug/replug, or an app restart). These only clutter history.
+                let totalDuration = now.timeIntervalSince(session.startTime)
+                let drained = session.startBattery - batteryLevel
+                let isTrivial = drained <= 0 && totalDuration < 120
+
+                if isTrivial {
+                    print("Skipped trivial session (\(Int(totalDuration))s, \(drained)% change).")
+                } else {
+                    history.insert(session, at: 0)
+                    if history.count > 10 {
+                        history.removeLast()
+                    }
+                    print("Session completed and saved. Screen Time: \(session.screenOnDuration)s")
                 }
 
                 self.currentSession = nil
-                print("Session completed and saved. Screen Time: \(session.screenOnDuration)s")
             }
         } else {
             // Transitioned to Battery: always start a fresh session so each
