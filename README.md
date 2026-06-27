@@ -35,7 +35,9 @@ clicking it opens the full panel — Session, History, Hardware, and Settings.
     *   Cap charging at any level from 50% to 95% to reduce long-term battery wear.
     *   Picks the best method per chip: clean charge-inhibit (CHTE/CH0C) on M1/M2/M3, adapter control (CHIE) on M4 — via a small notarized background helper (one-time approval, no password prompts).
     *   **⛵ Sailing Mode:** let the battery drift down to a lower bound before topping back up, instead of micro-charging at the ceiling — fewer cycles, less heat.
-    *   **🧪 Battery Calibration:** periodically charge to 100% to recalibrate the fuel gauge, with a "Calibrate Now" button.
+    *   **🧪 Deep Battery Calibration:** a full cycle — discharge to ~15%, charge to 100%, hold for one hour — to recalibrate the fuel gauge, on a schedule or via "Calibrate Now" (with live phase status and a Cancel button).
+*   **⌨️ Command-line tool:**
+    *   Install the `macwake` CLI from Settings and control charging from Terminal: `macwake status`, `charging on|off`, `adapter on|off`, `energy auto|low|high`, `fan auto|<rpm>`.
 *   **⚡️ Energy Mode:**
     *   Switch the macOS Energy Mode (Automatic / Low Power / High Power) right from the menu — High Power shown only on Macs that support it.
 *   **🌀 Manual Fan Speed (experimental):**
