@@ -190,54 +190,82 @@ struct MacWakeMenuView: View {
         }
     }
 
+    // MARK: - Modern settings building blocks
+
+    private func iconTile(_ icon: String, _ tint: Color) -> some View {
+        RoundedRectangle(cornerRadius: 7, style: .continuous)
+            .fill(tint.gradient)
+            .frame(width: 26, height: 26)
+            .overlay(Image(systemName: icon).font(.system(size: 12.5, weight: .semibold)).foregroundColor(.white))
+    }
+
+    @ViewBuilder
+    private func settingsCard<C: View>(@ViewBuilder _ content: () -> C) -> some View {
+        VStack(spacing: 0) { content() }
+            .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Color.primary.opacity(0.05)))
+            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Color.primary.opacity(0.05), lineWidth: 1))
+    }
+
+    private func rowDivider() -> some View { Divider().padding(.leading, 49) }
+
+    private func toggleRow(_ icon: String, _ tint: Color, _ title: String, _ binding: Binding<Bool>) -> some View {
+        HStack(spacing: 11) {
+            iconTile(icon, tint)
+            Text(LocalizedStringKey(title)).font(.subheadline)
+            Spacer()
+            Toggle("", isOn: binding).labelsHidden().toggleStyle(.switch).controlSize(.small)
+        }
+        .padding(.horizontal, 12).padding(.vertical, 8)
+    }
+
+    private func actionRow(_ icon: String, _ tint: Color, _ title: String, destructive: Bool = false, _ action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 11) {
+                iconTile(icon, tint)
+                Text(LocalizedStringKey(title)).font(.subheadline).foregroundColor(destructive ? .red : .primary)
+                Spacer()
+                Image(systemName: "chevron.right").font(.system(size: 11, weight: .semibold)).foregroundColor(.secondary.opacity(0.4))
+            }
+            .padding(.horizontal, 12).padding(.vertical, 9)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func sectionLabel(_ title: String) -> some View {
+        HStack {
+            Text(LocalizedStringKey(title))
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundColor(.secondary)
+                .textCase(.uppercase)
+            Spacer()
+        }
+        .padding(.leading, 4)
+    }
+
+    private var launchAtLoginBinding: Binding<Bool> {
+        Binding(get: { isLaunchAtLoginEnabled },
+                set: { v in isLaunchAtLoginEnabled = v; LaunchAgentManager.setEnabled(v) })
+    }
+
     private var settingsTabContent: some View {
         VStack(spacing: 10) {
             notificationPermissionRow
             
-            Toggle(isOn: $tracker.showWidget) {
-                Text("Show Desktop Widget")
-                    .font(.subheadline)
-            }
-            .toggleStyle(SwitchToggleStyle())
-            
-            if tracker.showWidget {
-                Toggle(isOn: $tracker.isWidgetLocked) {
-                    Text("Lock Widget Position")
-                        .font(.subheadline)
+            sectionLabel("General")
+            settingsCard {
+                toggleRow("rectangle.on.rectangle", .blue, "Show Desktop Widget", $tracker.showWidget)
+                if tracker.showWidget {
+                    rowDivider()
+                    toggleRow("lock.fill", .gray, "Lock Widget Position", $tracker.isWidgetLocked)
                 }
-                .toggleStyle(SwitchToggleStyle())
+                rowDivider()
+                toggleRow("power", .green, "Launch at Login", launchAtLoginBinding)
+                rowDivider()
+                toggleRow("sparkles", .purple, "Enable Animations", $tracker.enableAnimations)
+                rowDivider()
+                toggleRow("oval.portrait.tophalf.filled", .indigo, "Dynamic Island Overlay", $tracker.enableDynamicIsland)
             }
-
-            Toggle(isOn: $isLaunchAtLoginEnabled) {
-                Text("Launch at Login")
-                    .font(.subheadline)
-            }
-            .toggleStyle(SwitchToggleStyle())
-            .onChange(of: isLaunchAtLoginEnabled) { oldValue, newValue in
-                LaunchAgentManager.setEnabled(newValue)
-            }
-            
-            Toggle(isOn: $tracker.enableAnimations) {
-                HStack(spacing: 4) {
-                    Text("Enable Animations")
-                        .font(.subheadline)
-                    Image(systemName: "sparkles")
-                        .font(.caption)
-                        .foregroundColor(.purple)
-                }
-            }
-            .toggleStyle(SwitchToggleStyle())
-            
-            Toggle(isOn: $tracker.enableDynamicIsland) {
-                HStack(spacing: 4) {
-                    Text("Dynamic Island Overlay")
-                        .font(.subheadline)
-                    Image(systemName: "oval.portrait.tophalf.filled")
-                        .font(.caption)
-                        .foregroundColor(.indigo)
-                }
-            }
-            .toggleStyle(SwitchToggleStyle())
 
             menuBarSection
 
@@ -249,42 +277,17 @@ struct MacWakeMenuView: View {
 
             cliSection
 
-            VStack(spacing: 8) {
-                Button(action: {
-                    tracker.resetCurrentSession()
-                }) {
-                    HStack {
-                        Image(systemName: "arrow.clockwise")
-                        Text("Reset Session")
-                    }
-                    .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
-
-                Button(action: {
-                    AppDelegate.shared?.checkForUpdates()
-                }) {
-                    HStack {
-                        Image(systemName: "arrow.down.circle")
-                        Text("Check for Updates")
-                    }
-                    .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
-
-                Button(action: {
-                    NSApplication.shared.terminate(nil)
-                }) {
-                    HStack {
-                        Image(systemName: "power")
-                        Text("Quit")
-                    }
-                    .foregroundColor(.red)
-                    .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
+            sectionLabel("Actions")
+            settingsCard {
+                actionRow("sparkles", .pink, "Welcome Tour") { OnboardingManager.shared.show() }
+                rowDivider()
+                actionRow("arrow.clockwise", .orange, "Reset Session") { tracker.resetCurrentSession() }
+                rowDivider()
+                actionRow("arrow.down.circle.fill", .blue, "Check for Updates") { AppDelegate.shared?.checkForUpdates() }
+                rowDivider()
+                actionRow("power", .red, "Quit MacWake", destructive: true) { NSApplication.shared.terminate(nil) }
             }
-            .padding(.top, 4)
+            .padding(.top, 2)
         }
     }
 
@@ -300,15 +303,8 @@ struct MacWakeMenuView: View {
 
     @ViewBuilder
     private var menuBarSection: some View {
-        Divider().padding(.vertical, 2)
-
-        HStack(spacing: 4) {
-            Text("Menu Bar")
-                .font(.subheadline)
-            Image(systemName: "menubar.rectangle")
-                .font(.caption2)
-                .foregroundColor(.blue)
-            Spacer()
+        HStack {
+            sectionLabel("Menu Bar")
             // Live preview of what the menu-bar item will show.
             HStack(spacing: 3) {
                 if tracker.showMenuBarIcon || tracker.menuBarText.isEmpty {
@@ -320,70 +316,52 @@ struct MacWakeMenuView: View {
             }
             .font(.caption.monospacedDigit())
             .foregroundColor(.secondary)
+            .padding(.horizontal, 8).padding(.vertical, 3)
+            .background(Capsule().fill(Color.primary.opacity(0.06)))
+            .padding(.trailing, 4)
         }
 
-        VStack(spacing: 10) {
-            menuBarToggle("Icon", isOn: $tracker.showMenuBarIcon)
-            menuBarToggle("Battery %", isOn: $tracker.showMenuBarPercent)
-            menuBarToggle("Power / Time", isOn: $tracker.showMenuBarPower)
-            menuBarToggle("Time Remaining", isOn: $tracker.showMenuBarTimeRemaining)
-            menuBarToggle("Temperature", isOn: $tracker.showMenuBarTemp)
+        settingsCard {
+            toggleRow("app.badge", .blue, "Icon", $tracker.showMenuBarIcon)
+            rowDivider()
+            toggleRow("percent", .green, "Battery %", $tracker.showMenuBarPercent)
+            rowDivider()
+            toggleRow("bolt.fill", .orange, "Power / Time", $tracker.showMenuBarPower)
+            rowDivider()
+            toggleRow("hourglass", .purple, "Time Remaining", $tracker.showMenuBarTimeRemaining)
+            rowDivider()
+            toggleRow("thermometer.medium", .red, "Temperature", $tracker.showMenuBarTemp)
         }
-        .padding(.top, 2)
-    }
-
-    private func menuBarToggle(_ label: String, isOn: Binding<Bool>) -> some View {
-        Toggle(isOn: isOn) {
-            Text(LocalizedStringKey(label))
-                .font(.subheadline)
-        }
-        .toggleStyle(SwitchToggleStyle())
     }
 
     @ViewBuilder
     private var cliSection: some View {
-        Divider().padding(.vertical, 2)
-
-        HStack(spacing: 4) {
-            Text("Command Line Tool")
-                .font(.subheadline)
-            Image(systemName: "terminal")
-                .font(.caption2)
-                .foregroundColor(.secondary)
-            Spacer()
-            if isCLIInstalled {
-                Text("Installed")
-                    .font(.caption2.bold())
-                    .foregroundColor(.green)
-            }
-        }
-
-        if isCLIInstalled {
-            Text("macwake status · charging on|off · adapter on|off · energy · fan")
-                .font(.system(size: 10, design: .monospaced))
-                .foregroundColor(.secondary)
-            Button(action: {
-                if CLIInstaller.uninstall() { isCLIInstalled = CLIInstaller.isInstalled }
-            }) {
-                Text("Remove").frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.bordered)
-            .controlSize(.small)
-        } else {
-            Text("Control charging from Terminal: installs the \u{2018}macwake\u{2019} command.")
-                .font(.system(size: 10))
-                .foregroundColor(.secondary)
-            Button(action: {
-                if CLIInstaller.install() { isCLIInstalled = CLIInstaller.isInstalled }
-            }) {
-                HStack {
-                    Image(systemName: "terminal")
-                    Text("Install Command Line Tool")
+        sectionLabel("Command Line Tool")
+        settingsCard {
+            HStack(spacing: 11) {
+                iconTile("terminal.fill", isCLIInstalled ? .green : .gray)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("macwake").font(.system(size: 14, weight: .semibold, design: .monospaced))
+                    Text(isCLIInstalled
+                         ? "status · charging · adapter · energy · fan"
+                         : String(localized: "Control charging from Terminal."))
+                        .font(.system(size: 10))
+                        .foregroundColor(.secondary)
                 }
-                .frame(maxWidth: .infinity)
+                Spacer()
+                if isCLIInstalled {
+                    Button(action: {
+                        if CLIInstaller.uninstall() { isCLIInstalled = CLIInstaller.isInstalled }
+                    }) { Text("Remove") }
+                    .buttonStyle(.bordered).controlSize(.small)
+                } else {
+                    Button(action: {
+                        if CLIInstaller.install() { isCLIInstalled = CLIInstaller.isInstalled }
+                    }) { Text("Install") }
+                    .buttonStyle(.borderedProminent).controlSize(.small)
+                }
             }
-            .buttonStyle(.bordered)
-            .controlSize(.small)
+            .padding(.horizontal, 12).padding(.vertical, 9)
         }
     }
 
@@ -398,29 +376,25 @@ struct MacWakeMenuView: View {
     @ViewBuilder
     private var energyModeSection: some View {
         if chargeLimit.helperStatus == .ready {
-            Divider().padding(.vertical, 2)
-
-            HStack(spacing: 4) {
-                Text("Energy Mode")
-                    .font(.subheadline)
-                Image(systemName: "leaf.fill")
-                    .font(.caption2)
-                    .foregroundColor(.green)
-                Spacer()
-            }
-
-            Picker("", selection: Binding(
-                get: { chargeLimit.energyMode },
-                set: { chargeLimit.setEnergyMode($0) }
-            )) {
-                Text("Automatic").tag(0)
-                Text("Low Power").tag(1)
-                if chargeLimit.highPowerSupported {
-                    Text("High Power").tag(2)
+            sectionLabel("Energy Mode")
+            settingsCard {
+                HStack(spacing: 11) {
+                    iconTile("leaf.fill", .green)
+                    Picker("", selection: Binding(
+                        get: { chargeLimit.energyMode },
+                        set: { chargeLimit.setEnergyMode($0) }
+                    )) {
+                        Text("Automatic").tag(0)
+                        Text("Low Power").tag(1)
+                        if chargeLimit.highPowerSupported {
+                            Text("High Power").tag(2)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
                 }
+                .padding(.horizontal, 12).padding(.vertical, 9)
             }
-            .pickerStyle(.segmented)
-            .labelsHidden()
         }
     }
 
@@ -429,240 +403,176 @@ struct MacWakeMenuView: View {
         // Show whenever the Mac actually has fans (app-side detection, like the Hardware
         // tab) and the privileged helper is available to apply the change.
         if chargeLimit.helperStatus == .ready && tracker.hasFans {
-            Divider().padding(.vertical, 2)
-
-            Toggle(isOn: $chargeLimit.fanControlEnabled) {
-                HStack(spacing: 4) {
-                    Text("Manual Fan Speed")
-                        .font(.subheadline)
-                    Image(systemName: "fanblades.fill")
-                        .font(.caption2)
-                        .foregroundColor(.cyan)
-                    Text("BETA")
-                        .font(.system(size: 8, weight: .bold))
-                        .padding(.horizontal, 4).padding(.vertical, 1)
-                        .background(Color.orange.opacity(0.2))
-                        .foregroundColor(.orange)
-                        .cornerRadius(3)
-                }
+            HStack {
+                sectionLabel("Manual Fan Speed")
+                Text("BETA")
+                    .font(.system(size: 8, weight: .bold))
+                    .padding(.horizontal, 4).padding(.vertical, 1)
+                    .background(Color.orange.opacity(0.2))
+                    .foregroundColor(.orange)
+                    .cornerRadius(3)
+                    .padding(.trailing, 4)
             }
-            .toggleStyle(SwitchToggleStyle())
-
-            if chargeLimit.fanControlEnabled {
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        Text("Target")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        Spacer()
-                        Text(String(format: String(localized: "RPM_FMT"), chargeLimit.fanTargetRPM))
-                            .font(.caption.bold())
-                            .foregroundColor(.cyan)
-                    }
-                    Slider(
-                        value: Binding(
-                            get: { Double(min(max(chargeLimit.fanTargetRPM, Int(fanSliderMin)), Int(fanSliderMax))) },
-                            set: { chargeLimit.fanTargetRPM = Int($0) }
-                        ),
-                        in: fanSliderMin...fanSliderMax,
-                        step: 100
-                    )
-                    Text(String(localized: "FAN_SAFETY_NOTE"))
-                        .font(.system(size: 10))
-                        .foregroundColor(.secondary)
+            settingsCard {
+                HStack(spacing: 11) {
+                    iconTile("fanblades.fill", .cyan)
+                    Text("Manual Fan Speed").font(.subheadline)
+                    Spacer()
+                    Toggle("", isOn: $chargeLimit.fanControlEnabled).labelsHidden().toggleStyle(.switch).controlSize(.small)
                 }
-                .padding(.leading, 4)
+                .padding(.horizontal, 12).padding(.vertical, 8)
+
+                if chargeLimit.fanControlEnabled {
+                    rowDivider()
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack {
+                            Text("Target").font(.caption).foregroundColor(.secondary)
+                            Spacer()
+                            Text(String(format: String(localized: "RPM_FMT"), chargeLimit.fanTargetRPM))
+                                .font(.caption.bold()).foregroundColor(.cyan)
+                        }
+                        Slider(
+                            value: Binding(
+                                get: { Double(min(max(chargeLimit.fanTargetRPM, Int(fanSliderMin)), Int(fanSliderMax))) },
+                                set: { chargeLimit.fanTargetRPM = Int($0) }
+                            ),
+                            in: fanSliderMin...fanSliderMax,
+                            step: 100
+                        )
+                        Text(String(localized: "FAN_SAFETY_NOTE"))
+                            .font(.system(size: 10)).foregroundColor(.secondary)
+                    }
+                    .padding(.horizontal, 12).padding(.vertical, 8)
+                }
             }
         }
     }
 
+    private func sliderBlock<C: View>(@ViewBuilder _ content: () -> C) -> some View {
+        VStack(alignment: .leading, spacing: 4) { content() }
+            .padding(.horizontal, 12).padding(.vertical, 8)
+    }
+
     @ViewBuilder
     private var chargeLimitSection: some View {
-        Divider().padding(.vertical, 2)
+        sectionLabel("Charge Limit")
 
         switch chargeLimit.helperStatus {
         case .ready:
-            Toggle(isOn: $chargeLimit.isEnabled) {
-                HStack(spacing: 4) {
-                    Text("Limit Charging")
-                        .font(.subheadline)
-                    Image(systemName: "bolt.badge.automatic")
-                        .font(.caption)
-                        .foregroundColor(.green)
+            settingsCard {
+                HStack(spacing: 11) {
+                    iconTile("bolt.badge.automatic", .green)
+                    Text("Limit Charging").font(.subheadline)
+                    Spacer()
+                    Toggle("", isOn: $chargeLimit.isEnabled).labelsHidden().toggleStyle(.switch).controlSize(.small)
                 }
-            }
-            .toggleStyle(SwitchToggleStyle())
+                .padding(.horizontal, 12).padding(.vertical, 8)
 
-            if chargeLimit.isEnabled {
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        Text("Stop at")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+                if chargeLimit.isEnabled {
+                    rowDivider()
+                    sliderBlock {
+                        HStack {
+                            Text("Stop at").font(.caption).foregroundColor(.secondary)
+                            Spacer()
+                            Text("\(chargeLimit.limit)%").font(.caption.bold()).foregroundColor(.green)
+                        }
+                        Slider(value: Binding(get: { Double(chargeLimit.limit) }, set: { chargeLimit.limit = Int($0) }), in: 50...95, step: 5).tint(.green)
+                        Text(String(format: String(localized: "CL_HOLD_FMT"), chargeLimit.limit))
+                            .font(.system(size: 10)).foregroundColor(.secondary)
+                        HStack(alignment: .top, spacing: 5) {
+                            Image(systemName: "exclamationmark.triangle.fill").font(.system(size: 9)).foregroundColor(.orange)
+                            Text(String(localized: "CL_OPT_WARNING")).font(.system(size: 10)).foregroundColor(.secondary)
+                        }
+                        .padding(.top, 2)
+                    }
+
+                    rowDivider()
+                    HStack(spacing: 11) {
+                        iconTile("sailboat.fill", .blue)
+                        Text("Sailing Mode").font(.subheadline)
                         Spacer()
-                        Text("\(chargeLimit.limit)%")
-                            .font(.caption.bold())
-                            .foregroundColor(.green)
+                        Toggle("", isOn: $chargeLimit.sailingEnabled).labelsHidden().toggleStyle(.switch).controlSize(.small)
                     }
-                    Slider(
-                        value: Binding(
-                            get: { Double(chargeLimit.limit) },
-                            set: { chargeLimit.limit = Int($0) }
-                        ),
-                        in: 50...95,
-                        step: 5
-                    )
-                    Text(String(format: String(localized: "CL_HOLD_FMT"), chargeLimit.limit))
-                        .font(.system(size: 10))
-                        .foregroundColor(.secondary)
-
-                    HStack(alignment: .top, spacing: 5) {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .font(.system(size: 9))
-                            .foregroundColor(.orange)
-                        Text(String(localized: "CL_OPT_WARNING"))
-                            .font(.system(size: 10))
-                            .foregroundColor(.secondary)
-                    }
-                    .padding(.top, 2)
-
-                    Divider().padding(.vertical, 4)
-
-                    // Sailing Mode
-                    Toggle(isOn: $chargeLimit.sailingEnabled) {
-                        HStack(spacing: 4) {
-                            Text("Sailing Mode")
-                                .font(.subheadline)
-                            Image(systemName: "sailboat.fill")
-                                .font(.caption2)
-                                .foregroundColor(.blue)
-                        }
-                    }
-                    .toggleStyle(SwitchToggleStyle())
-
+                    .padding(.horizontal, 12).padding(.vertical, 8)
                     if chargeLimit.sailingEnabled {
-                        HStack {
-                            Text("Recharge at")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            Spacer()
-                            Text("\(chargeLimit.sailingLower)%")
-                                .font(.caption.bold())
-                                .foregroundColor(.blue)
-                        }
-                        Slider(
-                            value: Binding(
-                                get: { Double(chargeLimit.sailingLower) },
-                                set: { chargeLimit.sailingLower = Int($0) }
-                            ),
-                            in: 40...Double(max(45, chargeLimit.limit - 5)),
-                            step: 5
-                        )
-                        Text(String(format: String(localized: "SAILING_DESC_FMT"), chargeLimit.sailingLower, chargeLimit.limit))
-                            .font(.system(size: 10))
-                            .foregroundColor(.secondary)
-                    }
-
-                    Divider().padding(.vertical, 4)
-
-                    // Monthly Calibration
-                    Toggle(isOn: $chargeLimit.calibrationEnabled) {
-                        HStack(spacing: 4) {
-                            Text("Battery Calibration")
-                                .font(.subheadline)
-                            Image(systemName: "gauge.with.needle")
-                                .font(.caption2)
-                                .foregroundColor(.purple)
+                        sliderBlock {
+                            HStack {
+                                Text("Recharge at").font(.caption).foregroundColor(.secondary)
+                                Spacer()
+                                Text("\(chargeLimit.sailingLower)%").font(.caption.bold()).foregroundColor(.blue)
+                            }
+                            Slider(value: Binding(get: { Double(chargeLimit.sailingLower) }, set: { chargeLimit.sailingLower = Int($0) }), in: 40...Double(max(45, chargeLimit.limit - 5)), step: 5).tint(.blue)
+                            Text(String(format: String(localized: "SAILING_DESC_FMT"), chargeLimit.sailingLower, chargeLimit.limit))
+                                .font(.system(size: 10)).foregroundColor(.secondary)
                         }
                     }
-                    .toggleStyle(SwitchToggleStyle())
 
+                    rowDivider()
+                    HStack(spacing: 11) {
+                        iconTile("gauge.with.needle", .purple)
+                        Text("Battery Calibration").font(.subheadline)
+                        Spacer()
+                        Toggle("", isOn: $chargeLimit.calibrationEnabled).labelsHidden().toggleStyle(.switch).controlSize(.small)
+                    }
+                    .padding(.horizontal, 12).padding(.vertical, 8)
                     if chargeLimit.calibrationEnabled {
-                        HStack {
-                            Text("Every")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            Spacer()
-                            Text(String(format: String(localized: "DAYS_FMT"), chargeLimit.calibrationIntervalDays))
-                                .font(.caption.bold())
-                                .foregroundColor(.purple)
+                        sliderBlock {
+                            HStack {
+                                Text("Every").font(.caption).foregroundColor(.secondary)
+                                Spacer()
+                                Text(String(format: String(localized: "DAYS_FMT"), chargeLimit.calibrationIntervalDays)).font(.caption.bold()).foregroundColor(.purple)
+                            }
+                            Slider(value: Binding(get: { Double(chargeLimit.calibrationIntervalDays) }, set: { chargeLimit.calibrationIntervalDays = Int($0) }), in: 7...90, step: 1).tint(.purple)
+                            Text(String(localized: "CALIBRATION_DESC")).font(.system(size: 10)).foregroundColor(.secondary)
                         }
-                        Slider(
-                            value: Binding(
-                                get: { Double(chargeLimit.calibrationIntervalDays) },
-                                set: { chargeLimit.calibrationIntervalDays = Int($0) }
-                            ),
-                            in: 7...90,
-                            step: 1
-                        )
-                        Text(String(localized: "CALIBRATION_DESC"))
-                            .font(.system(size: 10))
-                            .foregroundColor(.secondary)
                     }
 
-                    if chargeLimit.calibrationActive {
-                        VStack(spacing: 4) {
+                    rowDivider()
+                    sliderBlock {
+                        if chargeLimit.calibrationActive {
                             HStack(spacing: 5) {
                                 ProgressView().controlSize(.mini)
-                                Text(calibrationPhaseText)
-                                    .font(.system(size: 10))
-                                    .foregroundColor(.purple)
+                                Text(calibrationPhaseText).font(.system(size: 10)).foregroundColor(.purple)
                                 Spacer()
                             }
-                            Button(action: { chargeLimit.cancelCalibration() }) {
-                                Text("Cancel").frame(maxWidth: .infinity)
+                            Button(action: { chargeLimit.cancelCalibration() }) { Text("Cancel").frame(maxWidth: .infinity) }
+                                .buttonStyle(.bordered).controlSize(.small)
+                        } else {
+                            Button(action: { chargeLimit.calibrateNow() }) {
+                                HStack { Image(systemName: "gauge.with.needle"); Text("Calibrate Now") }.frame(maxWidth: .infinity)
                             }
-                            .buttonStyle(.bordered)
-                            .controlSize(.small)
+                            .buttonStyle(.bordered).controlSize(.small)
                         }
-                        .padding(.top, 2)
-                    } else {
-                        Button(action: { chargeLimit.calibrateNow() }) {
-                            HStack {
-                                Image(systemName: "gauge.with.needle")
-                                Text("Calibrate Now")
-                            }
-                            .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(.bordered)
-                        .controlSize(.small)
-                        .padding(.top, 2)
                     }
                 }
-                .padding(.leading, 4)
             }
 
         case .requiresApproval:
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Approval needed")
-                    .font(.subheadline.bold())
-                Text("Enable the MacWake background item in System Settings to allow charge limiting.")
-                    .font(.system(size: 10))
-                    .foregroundColor(.secondary)
-                Button("Open System Settings") {
-                    chargeLimit.install()
+            settingsCard {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Approval needed").font(.subheadline.bold())
+                    Text("Enable the MacWake background item in System Settings to allow charge limiting.")
+                        .font(.system(size: 10)).foregroundColor(.secondary)
+                    Button("Open System Settings") { chargeLimit.install() }
+                        .buttonStyle(.borderedProminent).controlSize(.small)
                 }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
+                .padding(12)
             }
 
         case .notInstalled:
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(spacing: 4) {
-                    Text("Charge Limit")
-                        .font(.subheadline)
-                    Image(systemName: "bolt.badge.automatic")
-                        .font(.caption)
-                        .foregroundColor(.green)
+            settingsCard {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 11) {
+                        iconTile("bolt.badge.automatic", .green)
+                        Text("Charge Limit").font(.subheadline)
+                        Spacer()
+                    }
+                    Text("Cap charging at a set level to reduce long-term battery wear. Installs a small background helper (one-time approval).")
+                        .font(.system(size: 10)).foregroundColor(.secondary)
+                    Button("Enable Charge Limiting") { chargeLimit.install() }
+                        .buttonStyle(.borderedProminent).controlSize(.small).frame(maxWidth: .infinity)
                 }
-                Text("Cap charging at a set level to reduce long-term battery wear. Installs a small background helper (one-time approval).")
-                    .font(.system(size: 10))
-                    .foregroundColor(.secondary)
-                Button("Enable Charge Limiting") {
-                    chargeLimit.install()
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
+                .padding(12)
             }
         }
     }

@@ -6,6 +6,21 @@
         <description>Wake — Battery Health update feed</description>
         <language>en</language>
         <item>
+            <title>Version 1.17</title>
+            <pubDate>Sun, 28 Jun 2026 00:00:00 +0000</pubDate>
+            <sparkle:version>18</sparkle:version>
+            <sparkle:shortVersionString>1.17</sparkle:shortVersionString>
+            <sparkle:releaseNotesLink>https://github.com/Jarvis322/MacWake/releases/tag/v1.17</sparkle:releaseNotesLink>
+            <enclosure
+                url="https://github.com/Jarvis322/MacWake/releases/download/v1.17/Wake-1.17.dmg"
+                sparkle:version="18"
+                sparkle:shortVersionString="1.17"
+                length="4539665"
+                type="application/octet-stream"
+                sparkle:edSignature="x1vTW0W//iRvhF5ZpBBcrPPt/pnm+3kB1OXQWEfQ5QVMqXoHRfhWzPhDH6bnxaKHkN1v8yGRkHpkUriu85cQCg=="
+            />
+        </item>
+        <item>
             <title>Version 1.16</title>
             <pubDate>Sat, 27 Jun 2026 00:00:00 +0000</pubDate>
             <sparkle:version>17</sparkle:version>

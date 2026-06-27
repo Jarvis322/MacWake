@@ -33,6 +33,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         let config = TelemetryDeck.Config(appID: "47BC5AD6-3456-4A13-97F3-10C169BFDAD6")
         TelemetryDeck.initialize(config: config)
         TelemetryDeck.signal("app.launched")
+
+        // First-run feature tour.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+            OnboardingManager.shared.showIfNeeded()
+        }
     }
 
     /// Called from the menu's "Check for Updates" button.
