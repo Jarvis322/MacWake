@@ -322,6 +322,7 @@ struct MacWakeMenuView: View {
             menuBarToggle("Icon", isOn: $tracker.showMenuBarIcon)
             menuBarToggle("Battery %", isOn: $tracker.showMenuBarPercent)
             menuBarToggle("Power / Time", isOn: $tracker.showMenuBarPower)
+            menuBarToggle("Time Remaining", isOn: $tracker.showMenuBarTimeRemaining)
             menuBarToggle("Temperature", isOn: $tracker.showMenuBarTemp)
         }
         .padding(.leading, 4)
