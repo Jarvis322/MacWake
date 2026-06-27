@@ -114,6 +114,12 @@ If you wish to manage the app via the terminal:
 
 ---
 
+## ❤️ Support
+
+MacWake is free and developed in my spare time. If it helps your battery, consider [sponsoring on GitHub](https://github.com/sponsors/Jarvis322) — it directly supports continued development.
+
+---
+
 ## 🔒 Security & Permissions
 
 The application does not require any administrator (root) privileges to monitor battery status and charging adapters; it relies entirely on standard macOS IOKit APIs. 
