@@ -182,3 +182,61 @@
 "Remove" = "Kaldır";
 "Control charging from Terminal: installs the \U2018macwake\U2019 command." = "Terminal'den şarj kontrolü: \U2018macwake\U2019 komutunu kurar.";
 "Install Command Line Tool" = "Komut Satırı Aracını Kur";
+
+/* Onboarding tour */
+"Welcome to MacWake" = "MacWake'e Hoş Geldin";
+"Your Mac's battery, finally visible. Here's a quick 60-second tour." = "Mac'inin pili, nihayet görünür. İşte 60 saniyelik hızlı bir tur.";
+"Protect your battery" = "Pilini koru";
+"Stop charging at the level you choose and keep the battery cool." = "Seçtiğin seviyede şarjı durdur, pili serin tut.";
+"Cap charging at 50–95% to reduce long-term wear." = "Uzun vadeli aşınmayı azaltmak için şarjı %50–95'te sınırla.";
+"Let it drift in a band instead of micro-charging — fewer cycles." = "Sürekli mikro-şarj yerine bir bantta süzdür — daha az döngü.";
+"Deep Calibration" = "Derin Kalibrasyon";
+"Discharge → full charge → hold, to recalibrate the gauge." = "Boşalt → tam şarj → tut; göstergeyi yeniden kalibre eder.";
+"Take control" = "Kontrolü ele al";
+"Power tools for when you need them." = "İhtiyacın olduğunda güçlü araçlar.";
+"Switch macOS Automatic / Low Power / High Power." = "macOS Otomatik / Düşük Güç / Yüksek Güç arasında geç.";
+"Set a target RPM on Macs with fans (experimental)." = "Fanı olan Mac'lerde hedef RPM ayarla (deneysel).";
+"macwake CLI" = "macwake CLI";
+"Control charging from Terminal — install it in Settings." = "Terminal'den şarjı kontrol et — Ayarlar'dan kur.";
+"At a glance" = "Bir bakışta";
+"See everything without opening anything." = "Hiçbir şey açmadan her şeyi gör.";
+"Dynamic Island" = "Dynamic Island";
+"Hover the notch for a JARVIS arc reactor that pulses with power." = "Çentiğe gel; güçle nabız atan bir JARVIS arc reactor çıkar.";
+"Custom Menu Bar" = "Özel Menü Çubuğu";
+"Pick what shows — %, power, time remaining, temperature." = "Ne görüneceğini seç — %, güç, kalan süre, sıcaklık.";
+"Live readings" = "Canlı ölçümler";
+"Battery, CPU, SSD temps, fan speed, and health decay log." = "Pil, CPU, SSD sıcaklıkları, fan hızı ve sağlık azalma kaydı.";
+"One-time setup" = "Tek seferlik kurulum";
+"Charge limiting, fan, and energy control use a small background helper. The first time you turn on Charge Limiting, macOS asks you to approve it in System Settings — no passwords. Everything else works right away." = "Şarj sınırlama, fan ve enerji kontrolü küçük bir arka plan yardımcısı kullanır. Şarj Sınırlamayı ilk kez açtığında macOS bunu Sistem Ayarları'nda onaylamanı ister — şifre yok. Geri kalan her şey anında çalışır.";
+"Back" = "Geri";
+"Skip" = "Atla";
+"Next" = "İleri";
+"Get Started" = "Başla";
+"Welcome Tour" = "Tanıtım Turu";
+
+/* Interactive onboarding */
+"ONB_LIMIT_FMT" = "Şarj %%%d'de durur ve prizdeyken orada tutulur.";
+"Your Mac's battery, finally visible. Let's take a quick interactive tour — try the controls as you go." = "Mac'inin pili, nihayet görünür. Hızlı, interaktif bir tur yapalım — ilerledikçe kontrolleri dene.";
+"Stop charging at the level you choose to slow battery wear. Drag it:" = "Pil aşınmasını yavaşlatmak için seçtiğin seviyede şarjı durdur. Sürükle:";
+"Sailing & Calibration" = "Süzülme ve Kalibrasyon";
+"Smarter than holding a hard ceiling." = "Sabit bir tavanda tutmaktan daha akıllı.";
+"On notch Macs, hover the notch — you'll see this live JARVIS arc reactor." = "Çentikli Mac'lerde çentiğe gel — bu canlı JARVIS arc reactor'ı görürsün.";
+"The core pulses faster the more power flows in. Color shifts on low battery or heat." = "Daha çok güç aktıkça çekirdek daha hızlı atar. Düşük pilde veya ısıda renk değişir.";
+"Show exactly what you want. Toggle these — the preview updates:" = "Tam istediğini göster. Bunları aç/kapa — önizleme güncellenir:";
+"Power tools" = "Güçlü araçlar";
+"For when you need more control." = "Daha fazla kontrol gerektiğinde.";
+"Energy Mode — set how hard your Mac runs." = "Enerji Modu — Mac'inin ne kadar zorlanacağını ayarla.";
+"Terminal control" = "Terminal kontrolü";
+"Plus manual fan speed on Macs with fans." = "Ayrıca fanı olan Mac'lerde manuel fan hızı.";
+"Approve once" = "Bir kez onayla";
+"The first time you turn on Charge Limiting, macOS asks you to allow it in System Settings — no passwords." = "Şarj Sınırlamayı ilk açtığında macOS bunu Sistem Ayarları'nda onaylamanı ister — şifre yok.";
+"Everything else is instant" = "Geri kalan her şey anında";
+"Monitoring, Dynamic Island, and menu bar work right away." = "İzleme, Dynamic Island ve menü çubuğu hemen çalışır.";
+"100% private" = "%100 gizli";
+"No account, no cloud. Your data never leaves your Mac." = "Hesap yok, bulut yok. Verin Mac'inden çıkmaz.";
+"Power" = "Güç";
+
+/* Settings cards */
+"General" = "Genel";
+"Actions" = "Eylemler";
+"Quit MacWake" = "MacWake'ten Çık";
