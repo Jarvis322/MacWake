@@ -166,6 +166,10 @@ final class ChargeLimitManager: ObservableObject {
                 try? self.service.register()
                 self.connection?.invalidate()
                 self.connection = nil
+                // Re-query fan info against the freshly loaded daemon (older daemons
+                // didn't implement getFanInfo, so fan control stayed hidden).
+                self.fanCount = 0
+                self.loadFanInfo()
             }
         }
     }

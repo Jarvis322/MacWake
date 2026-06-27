@@ -709,7 +709,7 @@ class BatteryTracker: ObservableObject {
     
     private func checkTemperatureAlert() {
         let temp = self.batteryTemperature
-        if temp > 38.0 && (isPluggedIn || isACPowerConnected()) {
+        if temp > 42.0 && (isPluggedIn || isACPowerConnected()) {
             if !highTempAlert {
                 highTempAlert = true
                 TelemetryDeck.signal("alert.highTemperature", parameters: ["temperature": String(format: "%.1f", temp)])
