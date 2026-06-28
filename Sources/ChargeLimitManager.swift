@@ -54,7 +54,11 @@ final class ChargeLimitManager: ObservableObject {
     /// Monthly Calibration: periodically let the battery charge fully to 100% to
     /// recalibrate its fuel gauge, then resume limiting.
     @Published var calibrationEnabled: Bool {
-        didSet { UserDefaults.standard.set(calibrationEnabled, forKey: "calibrationEnabled") }
+        didSet {
+            UserDefaults.standard.set(calibrationEnabled, forKey: "calibrationEnabled")
+            // Turning the schedule off should also stop any calibration in progress.
+            if !calibrationEnabled && calibrationActive { cancelCalibration() }
+        }
     }
 
     @Published var calibrationIntervalDays: Int {
@@ -430,6 +434,7 @@ final class ChargeLimitManager: ObservableObject {
         guard calibrationActive else { return }
         calibrationActive = false
         calibrationHoldStart = nil
+        DynamicIslandManager.shared.dismiss()   // clear the calibration alert immediately
         Task { await restoreCharging() }
     }
 

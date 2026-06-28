@@ -37,8 +37,14 @@ class DynamicIslandStateManager: ObservableObject {
     func trigger(_ newState: DynamicIslandState) {
         switch newState {
         case .charging: show(newState, autoDismissAfter: 5.0)
-        default: show(newState)
+        case .alert:    show(newState, autoDismissAfter: 6.0)
+        default:        show(newState)
         }
+    }
+
+    /// Immediately collapse the island (e.g. when a calibration is cancelled).
+    func dismiss() {
+        withAnimation(Self.springAnimation) { state = .compact }
     }
 }
 
@@ -685,5 +691,9 @@ class DynamicIslandManager {
     func trigger(_ state: DynamicIslandState) {
         guard isEnabled else { return }
         DynamicIslandStateManager.shared.trigger(state)
+    }
+
+    func dismiss() {
+        DynamicIslandStateManager.shared.dismiss()
     }
 }
