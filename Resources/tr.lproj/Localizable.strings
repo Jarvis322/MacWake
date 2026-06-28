@@ -240,3 +240,12 @@
 "General" = "Genel";
 "Actions" = "Eylemler";
 "Quit MacWake" = "MacWake'ten Çık";
+
+/* Advanced controls reframe + onboarding fan */
+"Advanced Controls" = "Gelişmiş Kontroller";
+"Enable the MacWake background item in System Settings to unlock these controls." = "Bu kontrolleri açmak için Sistem Ayarları'nda MacWake arka plan öğesini etkinleştirin.";
+"Charge Limit, Fan & Energy" = "Şarj Limiti, Fan ve Enerji";
+"Cap charging, control fan speed, and set the energy mode. These use a small background helper — approve it once in System Settings, no passwords. You don't have to turn the charge limit on." = "Şarjı sınırla, fan hızını kontrol et ve enerji modunu ayarla. Bunlar küçük bir arka plan yardımcısı kullanır — Sistem Ayarları'nda bir kez onayla, şifre yok. Şarj limitini açmak zorunda değilsin.";
+"Enable Advanced Controls" = "Gelişmiş Kontrolleri Etkinleştir";
+"Control charging from Terminal." = "Terminal'den şarjı kontrol et.";
+"On Macs with fans — auto-reverts above 92°C." = "Fanı olan Mac'lerde — 92°C üstünde otomatiğe döner.";

@@ -237,29 +237,48 @@ struct OnboardingView: View {
     }
 
     private var powerToolsPage: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 14) {
             header("slider.horizontal.3", "Power tools", "For when you need more control.")
 
+            // Energy Mode
             Picker("", selection: $energySel) {
                 Text("Automatic").tag(0); Text("Low Power").tag(1); Text("High Power").tag(2)
             }
             .pickerStyle(.segmented).labelsHidden().frame(maxWidth: 360)
             Text("Energy Mode — set how hard your Mac runs.").font(.caption).foregroundColor(.secondary)
 
-            VStack(alignment: .leading, spacing: 5) {
-                Text("Terminal control").font(.caption.bold()).foregroundColor(.secondary)
-                Group {
-                    Text("$ macwake status").foregroundColor(.green) + Text("   76% · charging").foregroundColor(.secondary)
-                    Text("$ macwake charging off").foregroundColor(.green)
-                    Text("$ macwake fan 3000").foregroundColor(.green)
+            // Manual fan speed (interactive)
+            HStack(spacing: 14) {
+                TimelineView(.animation) { tl in
+                    Image(systemName: "fanblades.fill")
+                        .font(.system(size: 34))
+                        .foregroundColor(.cyan)
+                        .rotationEffect(.degrees(tl.date.timeIntervalSinceReferenceDate * fanRPM * 0.12))
                 }
-                .font(.system(size: 12, design: .monospaced))
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack {
+                        Text("Manual Fan Speed").font(.system(size: 13, weight: .semibold))
+                        Text("BETA").font(.system(size: 8, weight: .bold))
+                            .padding(.horizontal, 4).padding(.vertical, 1)
+                            .background(Color.orange.opacity(0.2)).foregroundColor(.orange).cornerRadius(3)
+                        Spacer()
+                        Text("\(Int(fanRPM)) RPM").font(.caption.bold().monospacedDigit()).foregroundColor(.cyan)
+                    }
+                    Slider(value: $fanRPM, in: 0...6000, step: 100).tint(.cyan)
+                    Text("On Macs with fans — auto-reverts above 92°C.").font(.system(size: 10)).foregroundColor(.secondary)
+                }
             }
-            .padding(12)
-            .frame(maxWidth: 360, alignment: .leading)
-            .background(RoundedRectangle(cornerRadius: 10).fill(Color.black.opacity(0.85)))
+            .frame(maxWidth: 380)
             .padding(.top, 4)
-            Text("Plus manual fan speed on Macs with fans.").font(.caption).foregroundColor(.secondary)
+
+            HStack(spacing: 6) {
+                Image(systemName: "terminal.fill").foregroundColor(.secondary)
+                Text("Plus a ") .foregroundColor(.secondary)
+                + Text("macwake").font(.system(size: 12, design: .monospaced)).foregroundColor(.primary)
+                + Text(" command line tool — install it in Settings.").foregroundColor(.secondary)
+            }
+            .font(.system(size: 12))
+            .padding(.top, 6)
             Spacer()
         }
     }
