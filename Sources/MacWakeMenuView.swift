@@ -455,10 +455,9 @@ struct MacWakeMenuView: View {
 
     @ViewBuilder
     private var chargeLimitSection: some View {
-        sectionLabel("Charge Limit")
-
         switch chargeLimit.helperStatus {
         case .ready:
+            sectionLabel("Charge Limit")
             settingsCard {
                 HStack(spacing: 11) {
                     iconTile("bolt.badge.automatic", .green)
@@ -548,10 +547,11 @@ struct MacWakeMenuView: View {
             }
 
         case .requiresApproval:
+            sectionLabel("Advanced Controls")
             settingsCard {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Approval needed").font(.subheadline.bold())
-                    Text("Enable the MacWake background item in System Settings to allow charge limiting.")
+                    Text("Enable the MacWake background item in System Settings to unlock these controls.")
                         .font(.system(size: 10)).foregroundColor(.secondary)
                     Button("Open System Settings") { chargeLimit.install() }
                         .buttonStyle(.borderedProminent).controlSize(.small)
@@ -560,16 +560,17 @@ struct MacWakeMenuView: View {
             }
 
         case .notInstalled:
+            sectionLabel("Advanced Controls")
             settingsCard {
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: 10) {
                     HStack(spacing: 11) {
                         iconTile("bolt.badge.automatic", .green)
-                        Text("Charge Limit").font(.subheadline)
+                        Text("Charge Limit, Fan & Energy").font(.subheadline.weight(.semibold))
                         Spacer()
                     }
-                    Text("Cap charging at a set level to reduce long-term battery wear. Installs a small background helper (one-time approval).")
-                        .font(.system(size: 10)).foregroundColor(.secondary)
-                    Button("Enable Charge Limiting") { chargeLimit.install() }
+                    Text("Cap charging, control fan speed, and set the energy mode. These use a small background helper — approve it once in System Settings, no passwords. You don't have to turn the charge limit on.")
+                        .font(.system(size: 11)).foregroundColor(.secondary).fixedSize(horizontal: false, vertical: true)
+                    Button("Enable Advanced Controls") { chargeLimit.install() }
                         .buttonStyle(.borderedProminent).controlSize(.small).frame(maxWidth: .infinity)
                 }
                 .padding(12)
