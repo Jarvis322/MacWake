@@ -282,7 +282,7 @@ struct DynamicIslandPanelView: View {
                     Text("\(tracker.currentBatteryLevel)%")
                         .font(.system(size: 24, weight: .bold))
                         .foregroundColor(.white)
-                    Text(tracker.isPluggedIn ? "Charging" : "On Battery")
+                    Text(tracker.isPluggedIn ? String(localized: "Charging") : String(localized: "On Battery"))
                         .font(.system(size: 11, weight: .medium))
                         .foregroundColor(.white.opacity(0.6))
 
@@ -428,7 +428,7 @@ struct DynamicIslandPanelView: View {
                 Text("Charging Connected")
                     .font(.system(size: 20, weight: .bold))
                     .foregroundColor(.white)
-                Text("\(tracker.currentBatteryLevel)% • \(tracker.powerAdapterWatts.map { "\($0)W" } ?? "Power Source")")
+                Text("\(tracker.currentBatteryLevel)% • \(tracker.powerAdapterWatts.map { "\($0)W" } ?? String(localized: "Power Source"))")
                     .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.6))
             }

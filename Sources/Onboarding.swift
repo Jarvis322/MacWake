@@ -273,9 +273,8 @@ struct OnboardingView: View {
 
             HStack(spacing: 6) {
                 Image(systemName: "terminal.fill").foregroundColor(.secondary)
-                Text("Plus a ") .foregroundColor(.secondary)
-                + Text("macwake").font(.system(size: 12, design: .monospaced)).foregroundColor(.primary)
-                + Text(" command line tool — install it in Settings.").foregroundColor(.secondary)
+                Text("Plus a macwake command line tool — install it in Settings.")
+                    .foregroundColor(.secondary)
             }
             .font(.system(size: 12))
             .padding(.top, 6)

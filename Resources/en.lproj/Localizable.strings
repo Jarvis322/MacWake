@@ -30,3 +30,7 @@
 "RPM_FMT" = "%d RPM";
 "FAN_SAFETY_NOTE" = "Reverts to automatic above 92°C to prevent overheating. Experimental — may not work on every Mac.";
 "ONB_LIMIT_FMT" = "Charging stops at %d%% and holds there while plugged in.";
+"CHARGED_FMT" = "%d%% Charged";
+"EFF_SCREEN_FMT" = "%@ min screen-on per 1%% battery";
+"USED_FMT" = "%d%% used";
+"EFF_SHORT_FMT" = "%@m per 1%%";

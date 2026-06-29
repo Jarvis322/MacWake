@@ -33,14 +33,14 @@ struct MacWakeMenuView: View {
                 if tracker.highTempAlert {
                     smartProtectionWarningCard(
                         title: "High Battery Temperature",
-                        message: String(format: "Battery reached %.1f°C. Overheating can shorten battery life. Consider unplugging.", tracker.batteryTemperature),
+                        message: String(format: String(localized: "TEMP_HIGH_BODY_FMT"), tracker.batteryTemperature),
                         icon: "thermometer.high",
                         color: .red
                     )
                 } else if tracker.continuousACAlert {
                     smartProtectionWarningCard(
                         title: "Plugged In All Day",
-                        message: "Your Mac has been on AC power for 24 hours. Discharge the battery occasionally to protect battery health.",
+                        message: String(localized: "Your Mac has been on AC power for 24 hours. Discharge the battery occasionally to protect battery health."),
                         icon: "powerplug",
                         color: .orange
                     )
@@ -718,11 +718,11 @@ struct MacWakeMenuView: View {
                 HStack {
                     Image(systemName: "gauge.with.dots.needle.67percent")
                         .foregroundColor(blueColor)
-                    Text("\(formatDecimal(efficiency)) min screen-on per 1% battery")
+                    Text(String(format: String(localized: "EFF_SCREEN_FMT"), formatDecimal(efficiency)))
                         .font(.caption)
                         .foregroundColor(.secondary)
                     Spacer()
-                    Text("\(session.batteryUsed)% used")
+                    Text(String(format: String(localized: "USED_FMT"), session.batteryUsed))
                         .font(.caption)
                         .fontWeight(.medium)
                 }
@@ -1038,7 +1038,7 @@ struct MacWakeMenuView: View {
                                     .font(.caption2)
                                     .foregroundColor(.secondary)
                                 if let efficiency = pastSession.screenMinutesPerPercent {
-                                    Text("\(formatDecimal(efficiency))m per 1%")
+                                    Text(String(format: String(localized: "EFF_SHORT_FMT"), formatDecimal(efficiency)))
                                         .font(.caption2)
                                         .foregroundColor(blueColor)
                                 }
@@ -1308,7 +1308,7 @@ struct MacWakeMenuView: View {
                 .padding(.top, 2)
             
             VStack(alignment: .leading, spacing: 3) {
-                Text(title)
+                Text(LocalizedStringKey(title))
                     .font(.caption)
                     .fontWeight(.bold)
                     .foregroundColor(color)

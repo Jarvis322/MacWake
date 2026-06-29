@@ -249,3 +249,19 @@
 "Enable Advanced Controls" = "Gelişmiş Kontrolleri Etkinleştir";
 "Control charging from Terminal." = "Terminal'den şarjı kontrol et.";
 "On Macs with fans — auto-reverts above 92°C." = "Fanı olan Mac'lerde — 92°C üstünde otomatiğe döner.";
+
+/* Translation audit — missing strings */
+"Install" = "Kur";
+"Enable" = "Etkinleştir";
+"Charging" = "Şarj Oluyor";
+"Power Source" = "Güç Kaynağı";
+"Recheck battery health now" = "Pil sağlığını şimdi yeniden denetle";
+"Charge limiting, fan, and energy control use a small background helper." = "Şarj sınırlama, fan ve enerji kontrolü küçük bir arka plan yardımcısı kullanır.";
+"Discharge → full charge → hold 1 hour, to recalibrate the gauge." = "Boşalt → tam şarj → 1 saat tut; göstergeyi yeniden kalibre eder.";
+"Let it drift in a band instead of micro-charging — fewer cycles, less heat." = "Sürekli mikro-şarj yerine bir bantta süzdür — daha az döngü, daha az ısı.";
+"Plus a macwake command line tool — install it in Settings." = "Ayrıca bir macwake komut satırı aracı — Ayarlar'dan kur.";
+"status · charging · adapter · energy · fan" = "durum · şarj · adaptör · enerji · fan";
+"CHARGED_FMT" = "%%%d Doldu";
+"EFF_SCREEN_FMT" = "%%1 pil için %@ dk ekran";
+"USED_FMT" = "%%%d kullanıldı";
+"EFF_SHORT_FMT" = "%%1 için %@dk";
