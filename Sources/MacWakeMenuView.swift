@@ -81,6 +81,10 @@ struct MacWakeMenuView: View {
                                     value: inner.frame(in: .named("tabScroll")).maxY
                                 )
                             })
+                            // All five tabs share one ScrollView instance; without a
+                            // per-tab identity, switching tabs keeps the previous tab's
+                            // scroll offset instead of opening at the top.
+                            .id(selectedTab)
                         }
                         .coordinateSpace(name: "tabScroll")
 
@@ -553,16 +557,20 @@ struct MacWakeMenuView: View {
 
                 if chargeLimit.fanControlEnabled {
                     rowDivider()
+                    // Clamp once and reuse it for both the label and the slider's position,
+                    // so they can never show two different numbers when a saved target
+                    // falls outside the freshly recomputed slider bounds.
+                    let clampedTarget = min(max(chargeLimit.fanTargetRPM, Int(fanSliderMin)), Int(fanSliderMax))
                     VStack(alignment: .leading, spacing: 4) {
                         HStack {
                             Text("Target").font(.caption).foregroundColor(.secondary)
                             Spacer()
-                            Text(String(format: String(localized: "RPM_FMT"), chargeLimit.fanTargetRPM))
+                            Text(String(format: String(localized: "RPM_FMT"), clampedTarget))
                                 .font(.caption.bold()).foregroundColor(.cyan)
                         }
                         Slider(
                             value: Binding(
-                                get: { Double(min(max(chargeLimit.fanTargetRPM, Int(fanSliderMin)), Int(fanSliderMax))) },
+                                get: { Double(clampedTarget) },
                                 set: { chargeLimit.fanTargetRPM = Int($0) }
                             ),
                             in: fanSliderMin...fanSliderMax,
