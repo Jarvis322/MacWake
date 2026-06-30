@@ -575,7 +575,12 @@ class BatteryTracker: ObservableObject {
         recordBatterySample(level: level, timestamp: Date())
         ChargeLimitManager.shared.evaluate(batteryLevel: level, isPluggedIn: plugged)
         
-        if plugged {
+        // A charge-limit/sailing/calibration-induced adapter cutoff makes macOS report
+        // "on battery" even though the cable is still attached — don't let that reset the
+        // continuous-AC clock, or the "plugged in all day" reminder can never fire for
+        // anyone running at the charge-limit ceiling.
+        let physicallyPlugged = plugged || ChargeLimitManager.shared.isHoldingChargeOff
+        if physicallyPlugged {
             if acPowerStartTime == nil {
                 acPowerStartTime = Date()
             }
@@ -851,13 +856,13 @@ class BatteryTracker: ObservableObject {
             manufacturer = details["Manufacturer"] as? String
         }
 
-        if let existingIndex = adapterHistory.firstIndex(where: { 
-            $0.watts == watts && ($0.name == name || $0.name == nil || name == nil)
+        // Match on watts + name exactly (nil == nil is fine — two unnamed same-wattage
+        // adapters can't be told apart anyway). The old `|| $0.name == nil || name == nil`
+        // leniency merged a NAMED adapter into an unrelated UNNAMED one of the same
+        // wattage (or vice versa), corrupting the displayed history.
+        if let existingIndex = adapterHistory.firstIndex(where: {
+            $0.watts == watts && $0.name == name
         }) {
-            // If the existing record had no name but we now have one, update it
-            if adapterHistory[existingIndex].name == nil && name != nil {
-                adapterHistory[existingIndex].name = name
-            }
             // If the existing record had no manufacturer but we now have one, update it
             if adapterHistory[existingIndex].manufacturer == nil && manufacturer != nil {
                 adapterHistory[existingIndex].manufacturer = manufacturer
@@ -973,6 +978,11 @@ class BatteryTracker: ObservableObject {
         center.addObserver(forName: NSWorkspace.didWakeNotification, object: nil, queue: .main) { [weak self] _ in
             Task { @MainActor [weak self] in
                 self?.handleStateTransition(to: "active")
+                // evaluate()/the heartbeat don't run while asleep, so charge-limit and
+                // calibration state can be stale for the whole sleep duration otherwise —
+                // re-sync immediately instead of waiting up to 30s for the next heartbeat.
+                guard let self else { return }
+                ChargeLimitManager.shared.evaluate(batteryLevel: self.getBatteryLevel(), isPluggedIn: self.isACPowerConnected())
             }
         }
         

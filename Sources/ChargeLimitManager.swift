@@ -134,6 +134,13 @@ final class ChargeLimitManager: ObservableObject {
         return Date().timeIntervalSince(t) < seconds
     }
 
+    /// True for as long as we are holding the adapter off ourselves (at the charge-limit
+    /// ceiling, or during sailing/calibration force-discharge) — not just briefly after the
+    /// toggle. macOS reports "on battery" in this state even though the cable is still
+    /// physically connected; callers tracking continuous-AC time should treat this the same
+    /// as plugged in, the same way `evaluate()`'s own `physicallyPlugged` check does.
+    var isHoldingChargeOff: Bool { lastAdapterEnabled == false }
+
     private init() {
         let d = UserDefaults.standard
         self.isEnabled = d.bool(forKey: "chargeLimitEnabled")
