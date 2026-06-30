@@ -610,8 +610,10 @@ class BatteryTracker: ObservableObject {
               let details = unmanagedDetails.takeRetainedValue() as? [String: Any] else {
             powerAdapterWatts = nil
             powerAdapterName = nil
-            dynamicWatts = nil
             isOriginalAppleAdapter = false
+            // Battery temperature, cycle count, health, and discharge rate are
+            // valid on battery too — keep refreshing them while unplugged.
+            updateDynamicWatts()
             return
         }
 
@@ -1069,9 +1071,9 @@ class BatteryTracker: ObservableObject {
 
         currentBatteryLevel = level
         isPluggedIn = plugged
-        if plugged {
-            updatePowerAdapterDetails()
-        }
+        // Refresh in both states: on battery this still updates temperature,
+        // cycle count and health (it no longer early-returns without reading them).
+        updatePowerAdapterDetails()
         recordBatterySample(level: level, timestamp: now)
         checkForRapidDrain(now: now)
         ChargeLimitManager.shared.evaluate(batteryLevel: level, isPluggedIn: plugged)
