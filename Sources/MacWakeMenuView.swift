@@ -5,13 +5,16 @@ import Sparkle
 struct MacWakeMenuView: View {
     @ObservedObject var tracker: BatteryTracker
     @ObservedObject private var chargeLimit = ChargeLimitManager.shared
+    @ObservedObject private var processMonitor = ProcessMonitor.shared
     @Environment(\.colorScheme) var colorScheme
     @State private var isLaunchAtLoginEnabled: Bool = LaunchAgentManager.isEnabled
     @State private var selectedTab: Int = 0
     @State private var isScrolledToBottom = false
     @State private var isCLIInstalled = CLIInstaller.isInstalled
+    @State private var processSortMode: Int = 0 // 0 = CPU, 1 = RAM
     private let timer = Timer.publish(every: 1.0, on: .main, in: .common).autoconnect()
     @State private var timerActive = true
+    @State private var secondsTick = 0
     
     private var greenColor: Color { .dynamicGreen(for: colorScheme) }
     private var orangeColor: Color { .dynamicOrange(for: colorScheme) }
@@ -64,6 +67,8 @@ struct MacWakeMenuView: View {
                                 case 2:
                                     hardwareTabContent
                                 case 3:
+                                    monitorTabContent
+                                case 4:
                                     settingsTabContent
                                 default:
                                     EmptyView()
@@ -129,16 +134,30 @@ struct MacWakeMenuView: View {
         .onReceive(timer) { _ in
             guard timerActive else { return }
             tracker.updateDynamicWatts()
+            // Resampling processes costs ~1s (top -l 2 -s 1), so throttle it and only
+            // run while the Monitor tab is actually visible.
+            if selectedTab == 3 {
+                secondsTick += 1
+                if secondsTick % 6 == 0 {
+                    processMonitor.refresh()
+                }
+            }
+        }
+        .onChange(of: selectedTab) { _, newValue in
+            if newValue == 3 {
+                processMonitor.refresh()
+            }
         }
     }
-    
+
     // MARK: - Tab Selector Bar
     private var tabSelectorBar: some View {
         HStack(spacing: 4) {
             TabButton(title: "Session", icon: "chart.bar.fill", isSelected: selectedTab == 0, activeColor: greenColor) { selectedTab = 0 }
             TabButton(title: "History", icon: "clock.fill", isSelected: selectedTab == 1, activeColor: orangeColor) { selectedTab = 1 }
             TabButton(title: "Hardware", icon: "cpu", isSelected: selectedTab == 2, activeColor: blueColor) { selectedTab = 2 }
-            TabButton(title: "Settings", icon: "gearshape.fill", isSelected: selectedTab == 3, activeColor: .purple) { selectedTab = 3 }
+            TabButton(title: "Monitor", icon: "chart.line.uptrend.xyaxis", isSelected: selectedTab == 3, activeColor: .indigo) { selectedTab = 3 }
+            TabButton(title: "Settings", icon: "gearshape.fill", isSelected: selectedTab == 4, activeColor: .purple) { selectedTab = 4 }
         }
         .padding(4)
         .background(Color.secondary.opacity(0.08))
@@ -178,16 +197,113 @@ struct MacWakeMenuView: View {
             Divider()
 
             batteryHealthDecaySection
-            
-            Divider()
-            
-            fanStatusSection
-            
+
             if !tracker.adapterHistory.isEmpty {
                 Divider()
                 adapterHistorySection
             }
         }
+    }
+
+    // MARK: - Monitor Tab (Fan + Top Processes)
+    private var monitorTabContent: some View {
+        VStack(alignment: .leading, spacing: 11) {
+            fanStatusSection
+
+            if chargeLimit.helperStatus == .ready && tracker.hasFans {
+                Divider()
+                fanControlSection
+            } else if tracker.hasFans {
+                Divider()
+                fanControlUnavailableHint
+            }
+
+            Divider()
+
+            topProcessesSection
+        }
+    }
+
+    private var topProcessesSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("TOP APPS")
+                    .font(.caption2)
+                    .fontWeight(.bold)
+                    .foregroundColor(.secondary)
+                Spacer()
+                Picker("", selection: $processSortMode) {
+                    Text("CPU").tag(0)
+                    Text("RAM").tag(1)
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .frame(width: 110)
+            }
+
+            let usages = processSortMode == 0 ? processMonitor.topByCPU : processMonitor.topByMemory
+
+            if usages.isEmpty {
+                HStack(spacing: 8) {
+                    if processMonitor.isLoading {
+                        ProgressView().controlSize(.small)
+                    }
+                    Text(processMonitor.isLoading ? "Sampling…" : "Open this tab to sample running apps.")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+                .padding(10)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.secondary.opacity(0.05))
+                .cornerRadius(8)
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(Array(usages.enumerated()), id: \.element.id) { index, usage in
+                        processRow(usage, mode: processSortMode)
+                        if index < usages.count - 1 {
+                            rowDivider()
+                        }
+                    }
+                }
+                .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Color.primary.opacity(0.05)))
+                .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Color.primary.opacity(0.05), lineWidth: 1))
+            }
+        }
+    }
+
+    private func processRow(_ usage: ProcessUsage, mode: Int) -> some View {
+        HStack(spacing: 11) {
+            Image(nsImage: usage.icon)
+                .resizable()
+                .frame(width: 22, height: 22)
+            Text(usage.name)
+                .font(.subheadline)
+                .lineLimit(1)
+                .truncationMode(.tail)
+            Spacer()
+            Text(mode == 0 ? String(format: "%.0f%%", usage.cpuPercent) : String(format: "%.0f MB", usage.memoryMB))
+                .font(.subheadline.bold().monospacedDigit())
+                .foregroundColor(.indigo)
+        }
+        .padding(.horizontal, 12).padding(.vertical, 7)
+    }
+
+    private var fanControlUnavailableHint: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "lock.fill")
+                .foregroundColor(.secondary)
+                .font(.title3)
+            VStack(alignment: .leading, spacing: 1) {
+                Text("Manual Fan Speed")
+                    .font(.subheadline).fontWeight(.semibold)
+                Text("Enable Advanced Controls in Settings to set a custom fan target.")
+                    .font(.caption2).foregroundColor(.secondary)
+            }
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.secondary.opacity(0.05))
+        .cornerRadius(8)
     }
 
     // MARK: - Modern settings building blocks
@@ -270,8 +386,6 @@ struct MacWakeMenuView: View {
             menuBarSection
 
             chargeLimitSection
-
-            fanControlSection
 
             energyModeSection
 
