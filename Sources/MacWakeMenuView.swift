@@ -127,6 +127,13 @@ struct MacWakeMenuView: View {
             chargeLimit.refreshStatus()
             isCLIInstalled = CLIInstaller.isInstalled
             timerActive = true
+            // .menuBarExtraStyle(.window) keeps this view (and selectedTab) alive across
+            // popover open/close, so reopening parked on Monitor needs an explicit refresh —
+            // onChange(of: selectedTab) only fires on an actual tab change.
+            if selectedTab == 3 {
+                secondsTick = 0
+                processMonitor.refresh()
+            }
         }
         .onDisappear {
             timerActive = false
@@ -145,6 +152,7 @@ struct MacWakeMenuView: View {
         }
         .onChange(of: selectedTab) { _, newValue in
             if newValue == 3 {
+                secondsTick = 0
                 processMonitor.refresh()
             }
         }
@@ -410,9 +418,16 @@ struct MacWakeMenuView: View {
     private var fanSliderMin: Double { Double(max(0, chargeLimit.fanMinRPM)) }
     private var fanSliderMax: Double {
         let reported = chargeLimit.fanMaxRPM
-        if reported > chargeLimit.fanMinRPM + 200 { return Double(reported) }
-        let observed = Int(tracker.currentFanSpeed ?? 0)
-        return Double(max(6500, observed + 1500))
+        let computed: Double
+        if reported > chargeLimit.fanMinRPM + 200 {
+            computed = Double(reported)
+        } else {
+            let observed = Int(tracker.currentFanSpeed ?? 0)
+            computed = Double(max(6500, observed + 1500))
+        }
+        // Guard against a garbage/uninitialized SMC min reading exceeding the computed
+        // max — Slider(in:) requires a non-reversed range or it crashes.
+        return max(computed, fanSliderMin + 100)
     }
 
     @ViewBuilder
@@ -793,7 +808,7 @@ struct MacWakeMenuView: View {
                 statCard(
                     title: "Total Time",
                     value: formatDuration(totalDuration),
-                    subtitle: "Since \(formatTime(session.startTime))",
+                    subtitle: String(format: String(localized: "SINCE_FMT"), formatTime(session.startTime)),
                     color: .primary
                 )
             }

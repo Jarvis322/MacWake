@@ -10,9 +10,12 @@ enum CLIInstaller {
     }
 
     static var isInstalled: Bool {
-        // Installed only if the symlink resolves to *our* embedded tool.
+        // Installed only if the symlink resolves to *our* embedded tool. If something
+        // else occupies linkPath (a regular file from another tool/package manager), we
+        // are NOT "installed" — surfacing that lets Settings offer Install instead of
+        // silently overwriting an unrelated file the next time install() runs.
         guard let dest = try? FileManager.default.destinationOfSymbolicLink(atPath: linkPath) else {
-            return FileManager.default.fileExists(atPath: linkPath)
+            return false
         }
         return dest == embeddedPath
     }
