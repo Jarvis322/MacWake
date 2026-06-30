@@ -157,6 +157,14 @@
 "FAN_SAFETY_NOTE" = "92°C üzerinde aşırı ısınmayı önlemek için otomatiğe döner. Deneysel — her Mac'te çalışmayabilir.";
 "Fan Control Paused" = "Fan Kontrolü Duraklatıldı";
 "High temperature — fans returned to automatic." = "Yüksek sıcaklık — fanlar otomatiğe döndü.";
+"Enable Advanced Controls in Settings to set a custom fan target." = "Özel bir fan hedefi belirlemek için Ayarlar'dan Gelişmiş Kontroller'i etkinleştirin.";
+
+/* Monitor tab — top processes */
+"Monitor" = "Monitör";
+"TOP APPS" = "EN ÇOK KULLANILAN";
+"RAM" = "RAM";
+"Sampling…" = "Ölçülüyor…";
+"Open this tab to sample running apps." = "Çalışan uygulamaları ölçmek için bu sekmeyi açın.";
 
 /* Menu bar customization + Energy Mode */
 "Menu Bar" = "Menü Çubuğu";

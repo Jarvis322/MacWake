@@ -40,8 +40,9 @@ clicking it opens the full panel — Session, History, Hardware, and Settings.
     *   Install the `macwake` CLI from Settings and control charging from Terminal: `macwake status`, `charging on|off`, `adapter on|off`, `energy auto|low|high`, `fan auto|<rpm>`.
 *   **⚡️ Energy Mode:**
     *   Switch the macOS Energy Mode (Automatic / Low Power / High Power) right from the menu — High Power shown only on Macs that support it.
-*   **🌀 Manual Fan Speed (experimental):**
-    *   On Macs with fans, set a manual target RPM — automatically reverts to system control above 92°C as a safety failsafe.
+*   **🌀 Monitor tab — Fan + Top Apps:**
+    *   Fan status, 1-hour speed history, and manual target RPM (experimental — auto-reverts to system control above 92°C) live in their own tab.
+    *   Top running apps ranked by CPU or RAM, sampled on demand like Activity Monitor / iStat Menus.
 *   **🎛️ Customizable Menu Bar:**
     *   Choose exactly what the menu-bar item shows — icon, battery %, power/time, estimated time remaining, and temperature — with a live preview.
 *   **🏝️ Dynamic Island (Notch UI):**
