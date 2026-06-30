@@ -1,5 +1,6 @@
 import Foundation
 import AppKit
+import Darwin
 
 struct ProcessUsage: Identifiable {
     let id: Int32
@@ -88,11 +89,33 @@ final class ProcessMonitor: ObservableObject {
                 let cpu = Double(s[cpuRange])
             else { continue }
 
-            let name = String(s[nameRange]).trimmingCharacters(in: .whitespaces)
+            let truncatedName = String(s[nameRange]).trimmingCharacters(in: .whitespaces)
             let memoryMB = parseMemoryMB(String(s[memRange]))
+            let name = displayName(forPID: pid, fallback: truncatedName)
             results.append(ProcessUsage(id: pid, name: name, cpuPercent: cpu, memoryMB: memoryMB))
         }
         return results
+    }
+
+    /// `top`'s COMMAND column truncates at a fixed width (e.g. "Google Chrome He" instead of
+    /// "Google Chrome Helper (Renderer)"). Resolve the real name the same way Activity Monitor
+    /// does: the running app's localized name when there is one, otherwise the untruncated
+    /// executable name via libproc.
+    nonisolated private static func displayName(forPID pid: Int32, fallback: String) -> String {
+        if let appName = NSRunningApplication(processIdentifier: pid)?.localizedName {
+            return appName
+        }
+        if let path = pidExecutablePath(pid) {
+            return (path as NSString).lastPathComponent
+        }
+        return fallback
+    }
+
+    nonisolated private static func pidExecutablePath(_ pid: Int32) -> String? {
+        var buffer = [Int8](repeating: 0, count: 4 * Int(MAXPATHLEN)) // PROC_PIDPATHINFO_MAXSIZE
+        let length = proc_pidpath(pid, &buffer, UInt32(buffer.count))
+        guard length > 0 else { return nil }
+        return String(cString: buffer)
     }
 
     nonisolated private static func parseMemoryMB(_ raw: String) -> Double {
