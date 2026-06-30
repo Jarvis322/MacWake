@@ -97,6 +97,8 @@
 "LAST_SEEN_FMT" = "Son görülme %@";
 "SCREEN_FMT" = "Ekran: %@";
 "TOTAL_FMT" = "Toplam: %@";
+"SINCE_FMT" = "%@'den beri";
+"SLOW_CHARGING_FMT" = "%dW adaptör bağlı ancak sadece %.1fW güç çekiliyor. Kablonuzu, portunuzu veya bağlantı istasyonunuzu (hub) kontrol edin.";
 "BATTERY_HEALTH_FMT" = "Pil Sağlığı: %%%lld";
 "RECORDED_AT_FMT" = "%lld döngüde kaydedildi";
 "CL_HOLD_FMT" = "Adaptörü duraklatarak pili %%%lld civarında tutar. Limitin altında kalmak için kısa süre pilden çalışır.";
@@ -149,6 +151,8 @@
 "Charging to 100% to recalibrate the battery." = "Pili yeniden kalibre etmek için %100'e şarj ediliyor.";
 "Calibration Complete" = "Kalibrasyon Tamamlandı";
 "Battery recalibrated. Charge limit resumed." = "Pil yeniden kalibre edildi. Şarj limiti devam ediyor.";
+"Calibration Stopped" = "Kalibrasyon Durduruldu";
+"Calibration took too long and was stopped. Charging has resumed." = "Kalibrasyon çok uzun sürdü ve durduruldu. Şarj işlemi devam ediyor.";
 
 /* Fan control */
 "Manual Fan Speed" = "Manuel Fan Hızı";

@@ -73,8 +73,14 @@ final class ChargeLimitManager: ObservableObject {
     @Published private(set) var calibrationActive = false
     @Published private(set) var calibrationPhase: CalibrationPhase = .discharge
     private var calibrationHoldStart: Date?
+    private var calibrationStartedAt: Date?
     private let calibrationDischargeFloor = 15
     private let calibrationHoldSeconds: TimeInterval = 3600   // hold at 100% for 1 hour
+    // Safety backstop: a normal cycle (drain to 15%, recharge to 100%, hold an hour)
+    // should never take this long on AC. If it does — e.g. a genuine unplug mid-cycle
+    // that the self-induced-discharge heuristic can't distinguish from our own cutoff —
+    // abort rather than leave the battery parked low or charging paused indefinitely.
+    private let calibrationMaxDuration: TimeInterval = 8 * 3600
     private(set) var lastCalibration: Date?
 
     // MARK: - Fan control (experimental; only meaningful on Macs with fans)
@@ -342,6 +348,10 @@ final class ChargeLimitManager: ObservableObject {
 
         // Deep calibration takes priority: drain to ~15%, charge to 100%, hold 1 hour.
         if calibrationActive {
+            if let started = calibrationStartedAt, Date().timeIntervalSince(started) > calibrationMaxDuration {
+                abortCalibration()
+                return
+            }
             switch calibrationPhase {
             case .discharge:
                 if batteryLevel <= calibrationDischargeFloor {
@@ -355,14 +365,19 @@ final class ChargeLimitManager: ObservableObject {
                     calibrationPhase = .hold
                     calibrationHoldStart = Date()
                 } else if lastAdapterEnabled != true {
-                    Task { await applyChargingAllowed(true) }
+                    // The discharge phase always cuts power via the adapter key
+                    // (forceDischarge/CHIE), regardless of this chip's normal charge-stop
+                    // method. applyChargingAllowed(true) only clears that normal method
+                    // (e.g. CHTE on M1-M3) and would leave CHIE held off — the battery
+                    // would never actually charge back up. restoreCharging() clears both.
+                    Task { await restoreCharging() }
                 }
                 return
             case .hold:
                 if let s = calibrationHoldStart, Date().timeIntervalSince(s) >= calibrationHoldSeconds {
                     finishCalibration()   // fall through to normal limiting
                 } else {
-                    if lastAdapterEnabled != true { Task { await applyChargingAllowed(true) } }
+                    if lastAdapterEnabled != true { Task { await restoreCharging() } }
                     return
                 }
             }
@@ -421,6 +436,7 @@ final class ChargeLimitManager: ObservableObject {
         calibrationActive = true
         calibrationPhase = .discharge
         calibrationHoldStart = nil
+        calibrationStartedAt = Date()
         Task { await forceDischarge(true) }   // begin by draining
         DynamicIslandManager.shared.trigger(.alert(
             title: String(localized: "Battery Calibration"),
@@ -434,13 +450,29 @@ final class ChargeLimitManager: ObservableObject {
         guard calibrationActive else { return }
         calibrationActive = false
         calibrationHoldStart = nil
+        calibrationStartedAt = nil
         DynamicIslandManager.shared.dismiss()   // clear the calibration alert immediately
         Task { await restoreCharging() }
+    }
+
+    /// Safety backstop: a calibration cycle ran far longer than any normal AC cycle
+    /// should, so stop draining/holding and restore normal charging.
+    private func abortCalibration() {
+        calibrationActive = false
+        calibrationHoldStart = nil
+        calibrationStartedAt = nil
+        Task { await restoreCharging() }
+        DynamicIslandManager.shared.trigger(.alert(
+            title: String(localized: "Calibration Stopped"),
+            message: String(localized: "Calibration took too long and was stopped. Charging has resumed."),
+            isWarning: true
+        ))
     }
 
     private func finishCalibration() {
         calibrationActive = false
         calibrationHoldStart = nil
+        calibrationStartedAt = nil
         lastCalibration = Date()
         UserDefaults.standard.set(lastCalibration!.timeIntervalSince1970, forKey: "lastCalibration")
         DynamicIslandManager.shared.trigger(.alert(

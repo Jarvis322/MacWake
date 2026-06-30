@@ -107,12 +107,18 @@ enum HelperSMC {
         return (count, minRPM, maxRPM)
     }
 
-    /// Force fan 0 to `rpm` (manual) or restore automatic control.
+    /// Force fan 0 to `rpm` (manual, clamped to the fan's reported min/max) or restore
+    /// automatic control.
     static func setFanManual(_ manual: Bool, rpm: Int) -> Bool {
         guard let conn = open() else { return false }
         defer { IOServiceClose(conn) }
         if manual {
-            let okTarget = writeFPE2(conn, "F0Tg", rpm)
+            let minRPM = Int(readFPE2(conn, "F0Mn"))
+            let maxReported = Int(readFPE2(conn, "F0Mx"))
+            // Fall back to a sane ceiling if the chip didn't report a usable max.
+            let maxRPM = maxReported > minRPM ? maxReported : max(minRPM, 8000)
+            let clamped = min(max(rpm, minRPM), maxRPM)
+            let okTarget = writeFPE2(conn, "F0Tg", clamped)
             let okMode = write(conn, "F0Md", 1)   // forced
             return okTarget && okMode
         } else {

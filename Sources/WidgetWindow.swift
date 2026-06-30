@@ -237,7 +237,16 @@ class WidgetManager: ObservableObject {
         
         // Configure frame autosave before showing
         win.setFrameAutosaveName("MacWakeWidgetWindow")
-        
+
+        // setFrameAutosaveName restores any previously saved frame immediately, which can
+        // be off-screen if the display layout changed (monitor disconnected/rearranged).
+        // A locked widget hides its close button and ignores mouse events, so an
+        // off-screen frame would otherwise be permanently inaccessible without deleting
+        // prefs — clamp back onto a currently connected screen.
+        if !NSScreen.screens.contains(where: { $0.visibleFrame.intersects(win.frame) }) {
+            win.setFrame(NSRect(x: 200, y: 200, width: win.frame.width, height: win.frame.height), display: false)
+        }
+
         // Set layout constraints
         win.contentView = effectView
         effectView.addSubview(contentView)

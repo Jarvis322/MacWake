@@ -406,80 +406,101 @@ class BatteryTracker: ObservableObject {
         }
     }
 
+    /// Rolling "last known-good" backup of data.json, refreshed on every successful save
+    /// (see saveData()) so a corrupt/truncated data.json can actually be recovered from.
+    private var backupDataURL: URL {
+        dataURL.deletingPathExtension().appendingPathExtension("json.bak")
+    }
+
     // Load data from file and perform recovery check
     private func loadData() {
-        if FileManager.default.fileExists(atPath: dataURL.path) {
-            do {
-                let data = try Data(contentsOf: dataURL)
-                let decoder = JSONDecoder()
-                let persisted = try decoder.decode(PersistedData.self, from: data)
-                self.history = persisted.history
-                self.currentSession = persisted.currentSession
-                self.appState = persisted.appState
-                self.lastStateChange = persisted.lastStateChange
-                self.batterySamples = persisted.batterySamples ?? []
-                self.adapterHistory = persisted.adapterHistory ?? []
-                self.lastRapidDrainAlert = persisted.lastRapidDrainAlert
-                self.fanSpeedHistory = persisted.fanSpeedHistory ?? []
-                self.healthHistory = persisted.healthHistory ?? []
-                self.acPowerStartTime = persisted.acPowerStartTime
-                
-                // Recovery Check: If there is an active session, check if we rebooted
-                if var session = self.currentSession {
-                    if let bootTime = getSystemBootTime(), bootTime > persisted.lastHeartbeat {
-                        print("System reboot detected. Boot time: \(bootTime), Last Heartbeat: \(persisted.lastHeartbeat)")
-                        
-                        // 1. Close active tracking segment up to last heartbeat
-                        let gap = persisted.lastHeartbeat.timeIntervalSince(persisted.lastStateChange)
-                        if gap > 0 {
-                            if persisted.appState == "active" {
-                                session.screenOnDuration += gap
-                            } else if persisted.appState == "screenSleep" || persisted.appState == "systemSleep" {
-                                session.sleepDuration += gap
-                            }
-                        }
-                        
-                        // 2. The time between last heartbeat and boot was shutdown
-                        let shutdownGap = bootTime.timeIntervalSince(persisted.lastHeartbeat)
-                        if shutdownGap > 0 {
-                            session.shutdownDuration += shutdownGap
-                        }
-                        
-                        // 3. Log shutdown and boot events (avoid duplicates if already cleanly logged)
-                        if session.events.last?.type != "shutdown" && session.events.last?.type != "reboot" && session.events.last?.type != "logout" {
-                            session.events.append(Event(timestamp: persisted.lastHeartbeat, type: "shutdown", battery: session.events.last?.battery ?? 100))
-                        }
-                        session.events.append(Event(timestamp: bootTime, type: "boot", battery: getBatteryLevel()))
-                        
-                        self.currentSession = session
-                        self.lastStateChange = Date() // Fix: Start tracking from current launch time, not bootTime
-                        self.appState = "active" // assume active on boot
-                    }
-                }
+        guard FileManager.default.fileExists(atPath: dataURL.path) else { return }
+        if applyPersistedData(from: dataURL) {
+            saveData() // persist the cleaned-up data (dedup'd history, reboot recovery, etc.)
+            return
+        }
+        print("Failed to decode data.json — attempting recovery from backup")
+        if applyPersistedData(from: backupDataURL) {
+            print("Recovered history from data.json.bak")
+            saveData()
+            return
+        }
+        // Neither file decodes. Preserve the corrupt file for diagnostics and continue
+        // with empty in-memory state rather than silently losing it with no trace.
+        let corruptURL = dataURL.deletingPathExtension().appendingPathExtension("json.corrupt")
+        try? FileManager.default.removeItem(at: corruptURL)
+        try? FileManager.default.copyItem(at: dataURL, to: corruptURL)
+    }
 
-                // Clean up any incorrect or low power adapter records (e.g., < 5W) from history
-                self.adapterHistory.removeAll(where: { $0.watts < 5 })
+    /// Decodes `PersistedData` from `url` and applies it (including the reboot-recovery
+    /// and history-cleanup passes). Returns false — leaving current state untouched — on
+    /// any decode error, so the caller can fall back to an alternate source.
+    private func applyPersistedData(from url: URL) -> Bool {
+        do {
+            let data = try Data(contentsOf: url)
+            let decoder = JSONDecoder()
+            let persisted = try decoder.decode(PersistedData.self, from: data)
+            self.history = persisted.history
+            self.currentSession = persisted.currentSession
+            self.appState = persisted.appState
+            self.lastStateChange = persisted.lastStateChange
+            self.batterySamples = persisted.batterySamples ?? []
+            self.adapterHistory = persisted.adapterHistory ?? []
+            self.lastRapidDrainAlert = persisted.lastRapidDrainAlert
+            self.fanSpeedHistory = persisted.fanSpeedHistory ?? []
+            self.healthHistory = persisted.healthHistory ?? []
+            self.acPowerStartTime = persisted.acPowerStartTime
 
-                // Remove duplicate sessions from history (keeping only the first/most recent occurrence of each ID)
-                var uniqueHistory: [Session] = []
-                var seenIds = Set<UUID>()
-                for session in self.history {
-                    if !seenIds.contains(session.id) {
-                        uniqueHistory.append(session)
-                        seenIds.insert(session.id)
+            // Recovery Check: If there is an active session, check if we rebooted
+            if var session = self.currentSession {
+                if let bootTime = getSystemBootTime(), bootTime > persisted.lastHeartbeat {
+                    print("System reboot detected. Boot time: \(bootTime), Last Heartbeat: \(persisted.lastHeartbeat)")
+
+                    // 1. Close active tracking segment up to last heartbeat
+                    let gap = persisted.lastHeartbeat.timeIntervalSince(persisted.lastStateChange)
+                    if gap > 0 {
+                        if persisted.appState == "active" {
+                            session.screenOnDuration += gap
+                        } else if persisted.appState == "screenSleep" || persisted.appState == "systemSleep" {
+                            session.sleepDuration += gap
+                        }
                     }
+
+                    // 2. The time between last heartbeat and boot was shutdown
+                    let shutdownGap = bootTime.timeIntervalSince(persisted.lastHeartbeat)
+                    if shutdownGap > 0 {
+                        session.shutdownDuration += shutdownGap
+                    }
+
+                    // 3. Log shutdown and boot events (avoid duplicates if already cleanly logged)
+                    if session.events.last?.type != "shutdown" && session.events.last?.type != "reboot" && session.events.last?.type != "logout" {
+                        session.events.append(Event(timestamp: persisted.lastHeartbeat, type: "shutdown", battery: session.events.last?.battery ?? 100))
+                    }
+                    session.events.append(Event(timestamp: bootTime, type: "boot", battery: getBatteryLevel()))
+
+                    self.currentSession = session
+                    self.lastStateChange = Date() // Fix: Start tracking from current launch time, not bootTime
+                    self.appState = "active" // assume active on boot
                 }
-                self.history = uniqueHistory
-                
-                // Save cleaned data
-                saveData()
-            } catch {
-                print("Failed to decode data.json: \(error)")
-                // Back up the corrupted file so history isn't silently lost
-                let backupURL = dataURL.deletingPathExtension().appendingPathExtension("json.bak")
-                try? FileManager.default.removeItem(at: backupURL)
-                try? FileManager.default.copyItem(at: dataURL, to: backupURL)
             }
+
+            // Clean up any incorrect or low power adapter records (e.g., < 5W) from history
+            self.adapterHistory.removeAll(where: { $0.watts < 5 })
+
+            // Remove duplicate sessions from history (keeping only the first/most recent occurrence of each ID)
+            var uniqueHistory: [Session] = []
+            var seenIds = Set<UUID>()
+            for session in self.history {
+                if !seenIds.contains(session.id) {
+                    uniqueHistory.append(session)
+                    seenIds.insert(session.id)
+                }
+            }
+            self.history = uniqueHistory
+            return true
+        } catch {
+            print("Failed to decode \(url.lastPathComponent): \(error)")
+            return false
         }
     }
 
@@ -501,7 +522,14 @@ class BatteryTracker: ObservableObject {
             let encoder = JSONEncoder()
             encoder.outputFormatting = .prettyPrinted
             let data = try encoder.encode(persisted)
-            try data.write(to: dataURL)
+            // Keep a known-good backup one generation behind before overwriting, so a
+            // crash/power-loss mid-write (data.json is rewritten every ~30s) leaves a
+            // real recovery path instead of just a corrupt file (see loadData()).
+            if FileManager.default.fileExists(atPath: dataURL.path) {
+                try? FileManager.default.removeItem(at: backupDataURL)
+                try? FileManager.default.copyItem(at: dataURL, to: backupDataURL)
+            }
+            try data.write(to: dataURL, options: .atomic)
         } catch {
             print("Failed to save data.json: \(error)")
         }
@@ -804,7 +832,7 @@ class BatteryTracker: ObservableObject {
         }
         
         if isSlow {
-            slowChargingAlert = String(format: "%dW adaptör bağlı ancak sadece %.1fW güç çekiliyor. Kablonuzu, portunuzu veya bağlantı istasyonunuzu (hub) kontrol edin.", watts, dyn)
+            slowChargingAlert = String(format: String(localized: "SLOW_CHARGING_FMT"), watts, dyn)
         } else {
             slowChargingAlert = nil
         }

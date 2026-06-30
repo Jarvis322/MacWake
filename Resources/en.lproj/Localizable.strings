@@ -7,6 +7,8 @@
 "LAST_SEEN_FMT" = "Last seen %@";
 "SCREEN_FMT" = "Screen: %@";
 "TOTAL_FMT" = "Total: %@";
+"SINCE_FMT" = "Since %@";
+"SLOW_CHARGING_FMT" = "%dW adapter connected but only drawing %.1fW. Check your cable, port, or hub.";
 "BATTERY_HEALTH_FMT" = "Battery Health: %lld%%";
 "RECORDED_AT_FMT" = "Recorded at %lld cycles";
 "CL_HOLD_FMT" = "Holds the battery near %lld%% by pausing the adapter. Briefly runs on battery to stay below the limit.";

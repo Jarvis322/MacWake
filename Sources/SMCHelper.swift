@@ -210,7 +210,9 @@ class SMCHelper {
                 ptr[2] = output.bytes.2
                 ptr[3] = output.bytes.3
             }
-            return Double(floatVal)
+            let rpm = Double(floatVal)
+            guard rpm.isFinite, rpm >= 0, rpm < 30000 else { return nil }
+            return rpm
         }
 
         return nil

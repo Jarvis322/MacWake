@@ -25,11 +25,19 @@ class DynamicIslandStateManager: ObservableObject {
         duration: 0.5, extraBounce: 0.25, blendDuration: 0.125
     )
 
+    // Invalidates any previously scheduled auto-dismiss whenever a new state is shown, so
+    // two quick triggers (e.g. unplug/replug) can't have the OLDER dismiss fire and cut the
+    // newer notification short. Comparing `state == newState` alone isn't enough since two
+    // unrelated triggers can carry an equal (or both `.charging`) payload.
+    private var dismissGeneration = 0
+
     func show(_ newState: DynamicIslandState, autoDismissAfter seconds: TimeInterval? = nil) {
         withAnimation(Self.springAnimation) { state = newState }
+        dismissGeneration += 1
         guard let seconds else { return }
+        let myGeneration = dismissGeneration
         DispatchQueue.main.asyncAfter(deadline: .now() + seconds) { [weak self] in
-            guard let self, self.state == newState else { return }
+            guard let self, self.dismissGeneration == myGeneration else { return }
             withAnimation(Self.springAnimation) { self.state = .compact }
         }
     }
@@ -44,6 +52,7 @@ class DynamicIslandStateManager: ObservableObject {
 
     /// Immediately collapse the island (e.g. when a calibration is cancelled).
     func dismiss() {
+        dismissGeneration += 1   // invalidate any still-pending scheduled auto-dismiss
         withAnimation(Self.springAnimation) { state = .compact }
     }
 }

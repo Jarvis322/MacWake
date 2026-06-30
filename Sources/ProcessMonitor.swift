@@ -53,7 +53,10 @@ final class ProcessMonitor: ObservableObject {
 
         let outPipe = Pipe()
         task.standardOutput = outPipe
-        task.standardError = Pipe()
+        // Discard stderr directly instead of piping it: an unread Pipe can fill its OS
+        // buffer and make `top` block on write, which would hang readDataToEndOfFile()
+        // below forever.
+        task.standardError = FileHandle.nullDevice
 
         do {
             try task.run()
@@ -65,11 +68,14 @@ final class ProcessMonitor: ObservableObject {
         task.waitUntilExit()
         guard let output = String(data: data, encoding: .utf8) else { return [] }
 
-        // top -l 2 prints two full samples; use the second (more accurate) block.
-        let blocks = output.components(separatedBy: "\n\nProcesses:")
-        let lastBlock = blocks.last ?? output
-        guard let headerRange = lastBlock.range(of: "PID") else { return [] }
-        let rowsText = lastBlock[headerRange.upperBound...]
+        // top -l 2 prints two full samples back-to-back, each starting with its own "PID
+        // COMMAND ..." header line (with no blank line separating the samples). Use the
+        // LAST header so only the second, more accurate sample's rows are parsed.
+        let headerRegex = try! NSRegularExpression(pattern: #"^PID\s+COMMAND"#, options: [.anchorsMatchLines])
+        let fullRange = NSRange(output.startIndex..<output.endIndex, in: output)
+        guard let lastHeaderMatch = headerRegex.matches(in: output, range: fullRange).last,
+              let headerRange = Range(lastHeaderMatch.range, in: output) else { return [] }
+        let rowsText = output[headerRange.upperBound...]
 
         let rowRegex = try! NSRegularExpression(
             pattern: #"^\s*(\d+)\s+(.+?)\s+([\d.]+)\s+([\d.]+[KMGT]?[+\-]?)\s*$"#
