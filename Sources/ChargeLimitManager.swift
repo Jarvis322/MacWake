@@ -82,6 +82,11 @@ final class ChargeLimitManager: ObservableObject {
     // abort rather than leave the battery parked low or charging paused indefinitely.
     private let calibrationMaxDuration: TimeInterval = 8 * 3600
     private(set) var lastCalibration: Date?
+    // If the helper is unreachable (mid-restart, stuck, connection dropped), forceDischarge
+    // retries every evaluate() tick with no bound otherwise — surface a stop instead of
+    // silently retrying forever with no diagnostic.
+    private var calibrationXPCFailureCount = 0
+    private let calibrationXPCFailureLimit = 6
 
     // MARK: - Fan control (experimental; only meaningful on Macs with fans)
 
@@ -356,7 +361,7 @@ final class ChargeLimitManager: ObservableObject {
         // Deep calibration takes priority: drain to ~15%, charge to 100%, hold 1 hour.
         if calibrationActive {
             if let started = calibrationStartedAt, Date().timeIntervalSince(started) > calibrationMaxDuration {
-                abortCalibration()
+                abortCalibration(reason: .timeout)
                 return
             }
             switch calibrationPhase {
@@ -364,7 +369,17 @@ final class ChargeLimitManager: ObservableObject {
                 if batteryLevel <= calibrationDischargeFloor {
                     calibrationPhase = .charge
                 } else if lastAdapterEnabled != false {
-                    Task { await forceDischarge(true) }   // actively drain on AC
+                    Task {
+                        let ok = await forceDischarge(true)   // actively drain on AC
+                        if ok {
+                            self.calibrationXPCFailureCount = 0
+                        } else {
+                            self.calibrationXPCFailureCount += 1
+                            if self.calibrationXPCFailureCount >= self.calibrationXPCFailureLimit {
+                                self.abortCalibration(reason: .helperUnreachable)
+                            }
+                        }
+                    }
                 }
                 return
             case .charge:
@@ -429,13 +444,15 @@ final class ChargeLimitManager: ObservableObject {
     }
 
     /// Force a force-discharge state via the adapter (CHIE), independent of sailing mode.
-    private func forceDischarge(_ on: Bool) async {
-        guard let proxy = remoteProxy() else { return }
+    @discardableResult
+    private func forceDischarge(_ on: Bool) async -> Bool {
+        guard let proxy = remoteProxy() else { return false }
         let ok = await xpcBool { reply in proxy.setForceDischarge(on, reply: reply) }
         if ok {
             lastAdapterEnabled = !on
             lastToggleAt = Date()
         }
+        return ok
     }
 
     private func startCalibration() {
@@ -444,6 +461,7 @@ final class ChargeLimitManager: ObservableObject {
         calibrationPhase = .discharge
         calibrationHoldStart = nil
         calibrationStartedAt = Date()
+        calibrationXPCFailureCount = 0
         Task { await forceDischarge(true) }   // begin by draining
         DynamicIslandManager.shared.trigger(.alert(
             title: String(localized: "Battery Calibration"),
@@ -458,20 +476,33 @@ final class ChargeLimitManager: ObservableObject {
         calibrationActive = false
         calibrationHoldStart = nil
         calibrationStartedAt = nil
+        calibrationXPCFailureCount = 0
         DynamicIslandManager.shared.dismiss()   // clear the calibration alert immediately
         Task { await restoreCharging() }
     }
 
-    /// Safety backstop: a calibration cycle ran far longer than any normal AC cycle
-    /// should, so stop draining/holding and restore normal charging.
-    private func abortCalibration() {
+    private enum CalibrationAbortReason { case timeout, helperUnreachable }
+
+    /// Safety backstop: either the cycle ran far longer than any normal AC cycle should
+    /// (e.g. a genuine unplug mid-cycle), or the helper stopped responding to repeated
+    /// force-discharge calls — either way, stop draining/holding and restore normal
+    /// charging rather than retrying silently forever.
+    private func abortCalibration(reason: CalibrationAbortReason) {
         calibrationActive = false
         calibrationHoldStart = nil
         calibrationStartedAt = nil
+        calibrationXPCFailureCount = 0
         Task { await restoreCharging() }
+        let message: String
+        switch reason {
+        case .timeout:
+            message = String(localized: "Calibration took too long and was stopped. Charging has resumed.")
+        case .helperUnreachable:
+            message = String(localized: "Calibration was stopped because the helper stopped responding. Charging has resumed.")
+        }
         DynamicIslandManager.shared.trigger(.alert(
             title: String(localized: "Calibration Stopped"),
-            message: String(localized: "Calibration took too long and was stopped. Charging has resumed."),
+            message: message,
             isWarning: true
         ))
     }
@@ -480,6 +511,7 @@ final class ChargeLimitManager: ObservableObject {
         calibrationActive = false
         calibrationHoldStart = nil
         calibrationStartedAt = nil
+        calibrationXPCFailureCount = 0
         lastCalibration = Date()
         UserDefaults.standard.set(lastCalibration!.timeIntervalSince1970, forKey: "lastCalibration")
         DynamicIslandManager.shared.trigger(.alert(

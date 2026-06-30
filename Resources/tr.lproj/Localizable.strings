@@ -153,6 +153,7 @@
 "Battery recalibrated. Charge limit resumed." = "Pil yeniden kalibre edildi. Şarj limiti devam ediyor.";
 "Calibration Stopped" = "Kalibrasyon Durduruldu";
 "Calibration took too long and was stopped. Charging has resumed." = "Kalibrasyon çok uzun sürdü ve durduruldu. Şarj işlemi devam ediyor.";
+"Calibration was stopped because the helper stopped responding. Charging has resumed." = "Yardımcı servis yanıt vermediği için kalibrasyon durduruldu. Şarj işlemi devam ediyor.";
 
 /* Fan control */
 "Manual Fan Speed" = "Manuel Fan Hızı";

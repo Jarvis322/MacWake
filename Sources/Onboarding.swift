@@ -21,7 +21,7 @@ final class OnboardingManager: NSObject, NSWindowDelegate {
             NSApp.activate(ignoringOtherApps: true)
             return
         }
-        NSApp.setActivationPolicy(.regular)
+        RegularModeCoordinator.shared.acquire("onboarding")
 
         let host = NSHostingController(rootView: OnboardingView { [weak self] in self?.finish() })
         let w = NSWindow(contentViewController: host)
@@ -45,13 +45,13 @@ final class OnboardingManager: NSObject, NSWindowDelegate {
         window?.delegate = nil
         window?.close()
         window = nil
-        NSApp.setActivationPolicy(.accessory)
+        RegularModeCoordinator.shared.release("onboarding")
     }
 
     func windowWillClose(_ notification: Notification) {
         UserDefaults.standard.set(true, forKey: key)
         window = nil
-        NSApp.setActivationPolicy(.accessory)
+        RegularModeCoordinator.shared.release("onboarding")
     }
 }
 
