@@ -4,6 +4,34 @@ import UserNotifications
 import Sparkle
 import TelemetryDeck
 
+/// Coordinates which features need the app temporarily promoted to a regular (Dock) app
+/// so AppKit will show modal windows/alerts — menu-bar (accessory) apps otherwise never
+/// surface them. Multiple independent owners (Sparkle's update UI, the onboarding window)
+/// can hold this at once; the app only drops back to .accessory once ALL owners have
+/// released, so one owner finishing first can't yank the policy out from under another
+/// owner's still-open window.
+@MainActor
+final class RegularModeCoordinator {
+    static let shared = RegularModeCoordinator()
+    private var holders = Set<String>()
+    private init() {}
+
+    func acquire(_ owner: String) {
+        if holders.isEmpty {
+            NSApp.setActivationPolicy(.regular)
+        }
+        holders.insert(owner)
+    }
+
+    func release(_ owner: String) {
+        holders.remove(owner)
+        if holders.isEmpty {
+            NSApp.setActivationPolicy(.accessory)
+        }
+    }
+}
+
+@MainActor
 class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDelegate, SPUStandardUserDriverDelegate {
     /// SwiftUI's `@NSApplicationDelegateAdaptor` installs its own `SwiftUI.AppDelegate`
     /// as `NSApp.delegate` and forwards lifecycle to ours, so `NSApp.delegate as? AppDelegate`
@@ -15,11 +43,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         updaterDelegate: nil,
         userDriverDelegate: self
     )
-
-    /// True while we've temporarily promoted to a regular (Dock) app so Sparkle's
-    /// update dialogs come to the front. Menu-bar (LSUIElement/accessory) apps don't
-    /// show modal alerts otherwise — the "You're up to date" panel never appears.
-    private var didElevateForUpdate = false
 
     override init() {
         super.init()
@@ -47,27 +70,26 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
     }
 
     private func elevateForUpdateUI() {
-        if NSApp.activationPolicy() != .regular {
-            NSApp.setActivationPolicy(.regular)
-            didElevateForUpdate = true
-        }
+        RegularModeCoordinator.shared.acquire("sparkle")
         NSApp.activate(ignoringOtherApps: true)
     }
 
     // SPUStandardUserDriverDelegate — bring the app forward before any Sparkle alert.
-    var supportsGentleScheduledUpdateReminders: Bool { true }
+    // Sparkle calls these from its own internal queue, not necessarily the main thread,
+    // so they stay nonisolated and hop to MainActor explicitly for the actual work.
+    nonisolated var supportsGentleScheduledUpdateReminders: Bool { true }
 
-    func standardUserDriverWillShowModalAlert() {
-        elevateForUpdateUI()
+    nonisolated func standardUserDriverWillShowModalAlert() {
+        Task { @MainActor in
+            elevateForUpdateUI()
+        }
     }
 
     func applicationDidResignActive(_ notification: Notification) {
-        // Once the user dismisses the update dialog and clicks away, drop back to a
-        // pure menu-bar app (no Dock icon).
-        if didElevateForUpdate {
-            didElevateForUpdate = false
-            NSApp.setActivationPolicy(.accessory)
-        }
+        // Once the user dismisses the update dialog and clicks away, release our hold —
+        // harmless no-op if we never acquired it. The app only actually drops back to a
+        // pure menu-bar app once every other holder (e.g. onboarding) has also released.
+        RegularModeCoordinator.shared.release("sparkle")
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {

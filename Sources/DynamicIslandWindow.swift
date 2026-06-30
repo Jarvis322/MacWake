@@ -499,6 +499,11 @@ class DynamicIslandManager {
     private var screenObserver: Any?
     private var expandWorkItem: DispatchWorkItem?
     private var collapseWorkItem: DispatchWorkItem?
+    // A trigger that arrives before buildWindow() runs (the ~0.5s deferred setup window
+    // after launch) would otherwise start its auto-dismiss timer against a state nothing
+    // is rendering yet, and silently expire before the panel ever exists. Replay it once
+    // the window is actually built instead.
+    private var pendingTrigger: DynamicIslandState?
 
     // Hit-test rects in screen coordinates.
     private var deviceNotchRect: CGRect = .zero
@@ -595,6 +600,12 @@ class DynamicIslandManager {
 
         screenObserver = NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { [weak self] _ in
             Task { @MainActor in self?.positionWindow() }
+        }
+
+        // Replay anything that tried to trigger before the panel existed.
+        if let pending = pendingTrigger {
+            pendingTrigger = nil
+            DynamicIslandStateManager.shared.trigger(pending)
         }
     }
 
@@ -699,10 +710,17 @@ class DynamicIslandManager {
 
     func trigger(_ state: DynamicIslandState) {
         guard isEnabled else { return }
+        guard islandWindow != nil else {
+            // setup()/buildWindow() hasn't run yet — queue it instead of starting an
+            // auto-dismiss timer against a state nothing can render.
+            pendingTrigger = state
+            return
+        }
         DynamicIslandStateManager.shared.trigger(state)
     }
 
     func dismiss() {
+        pendingTrigger = nil
         DynamicIslandStateManager.shared.dismiss()
     }
 }
