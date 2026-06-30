@@ -119,7 +119,7 @@ struct MacWakeMenuView: View {
             }
             .padding(14)
         }
-        .frame(width: 360, height: 450)
+        .frame(width: 360, height: 540)
         .ignoresSafeArea()
         .onAppear {
             tracker.updateDynamicWatts()
