@@ -53,3 +53,8 @@
 "NOTCH_SHELF_HELP" = "Adds a Shelf column to the expanded Dynamic Island: a peek at your last copied text, and a small tray to drag files into temporarily. Off by default since it polls the clipboard.";
 "CLEANING_MODE_HELP" = "Temporarily blocks all keyboard and trackpad input (system-wide) so cleaning the screen or keyboard doesn't type or click anything. Requires Accessibility permission.";
 "CLEANING_SECONDS_FMT" = "%ds remaining";
+"TOPUP_HELP" = "Charge past the limit to 100% just this once (e.g. before travel). The limit turns back on automatically when the battery is full.";
+"TOPUP_ACTIVE_FMT" = "Topping up — %d%%, limit resumes at 100%%";
+"LOW_BATTERY_HELP" = "Get a notification and a Dynamic Island warning at the level you choose, before macOS's own 10% alert. Fires once per discharge.";
+"LOW_BATTERY_FMT" = "Battery at %d%%";
+"LOW_BATTERY_BODY_FMT" = "Battery is down to %d%%. Plug in soon to avoid an unexpected shutdown.";
