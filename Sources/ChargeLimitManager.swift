@@ -37,6 +37,26 @@ final class ChargeLimitManager: ObservableObject {
         }
     }
 
+    /// One-shot "charge to 100% this once" override (e.g. before travel). Cleared
+    /// automatically when the battery reaches 100% or on cancel; deliberately NOT
+    /// persisted so a forgotten override can't outlive a relaunch.
+    @Published var topUpActive = false
+
+    /// Start/cancel the one-shot full charge.
+    func topUp(_ on: Bool) {
+        guard helperStatus == .ready else { return }
+        topUpActive = on
+        if on {
+            Task { await restoreCharging() }   // clear any active charge block right away
+            DynamicIslandManager.shared.trigger(.alert(
+                title: String(localized: "Topping Up"),
+                message: String(localized: "Charging to 100% this once, then the limit resumes."),
+                isWarning: false
+            ))
+        }
+        // On cancel the next evaluate() tick re-applies the normal limit.
+    }
+
     /// Sailing Mode: let the battery drift down to `sailingLower` before topping back
     /// up to `limit`, instead of micro-charging at the ceiling. Fewer cycles, less heat.
     @Published var sailingEnabled: Bool {
@@ -406,6 +426,23 @@ final class ChargeLimitManager: ObservableObject {
         } else if calibrationEnabled, isCalibrationDue() {
             startCalibration()
             return
+        }
+
+        // One-shot Top Up: charge past the limit to 100% this once (e.g. before travel),
+        // then automatically resume normal limiting. Not persisted — a relaunch clears it.
+        if topUpActive {
+            if batteryLevel >= 100 {
+                topUpActive = false
+                DynamicIslandManager.shared.trigger(.alert(
+                    title: String(localized: "Fully Charged"),
+                    message: String(localized: "Top Up complete — the charge limit is back on."),
+                    isWarning: false
+                ))
+                // fall through to normal limiting below
+            } else {
+                if lastAdapterEnabled != true { Task { await restoreCharging() } }
+                return
+            }
         }
 
         let lower = sailingEnabled ? sailingLower : (limit - hysteresis)

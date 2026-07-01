@@ -91,6 +91,23 @@ class BatteryTracker: ObservableObject {
             DynamicIslandManager.shared.recomputeLayout()
         }
     }
+    /// Custom low-battery warning (independent of macOS's built-in 10% alert).
+    @Published var lowBatteryAlertEnabled: Bool = UserDefaults.standard.bool(forKey: "lowBatteryAlertEnabled") {
+        didSet { UserDefaults.standard.set(lowBatteryAlertEnabled, forKey: "lowBatteryAlertEnabled") }
+    }
+    @Published var lowBatteryThreshold: Int = {
+        let saved = UserDefaults.standard.integer(forKey: "lowBatteryThreshold")
+        return saved == 0 ? 20 : min(50, max(5, saved))
+    }() {
+        didSet {
+            let clamped = min(50, max(5, lowBatteryThreshold))
+            if clamped != lowBatteryThreshold { lowBatteryThreshold = clamped; return }
+            UserDefaults.standard.set(lowBatteryThreshold, forKey: "lowBatteryThreshold")
+        }
+    }
+    /// One-shot latch so the alert fires once per discharge cycle, not every heartbeat.
+    private var lowBatteryAlertFired = false
+
     @Published var animatedMenuBarIcon: String = "battery.100.bolt"
     @Published var usbPortInfo: String?
 
@@ -768,6 +785,7 @@ class BatteryTracker: ObservableObject {
         checkTemperatureAlert()
         checkContinuousACAlert()
         checkSlowCharging()
+        checkLowBatteryAlert()
     }
 
     /// Re-reads battery health/cycles on demand and logs a new decay entry if it changed.
@@ -789,6 +807,32 @@ class BatteryTracker: ObservableObject {
         }
     }
     
+    /// Custom low-battery warning ahead of macOS's own 10% alert. Fires once per
+    /// discharge cycle: re-arms when the Mac is plugged in or climbs 5 points back
+    /// above the threshold (so hovering right at the threshold can't spam).
+    private func checkLowBatteryAlert() {
+        guard lowBatteryAlertEnabled else { return }
+        let level = currentBatteryLevel
+        let plugged = isPluggedIn || isACPowerConnected()
+
+        if plugged || level > lowBatteryThreshold + 5 {
+            lowBatteryAlertFired = false
+            return
+        }
+        guard level <= lowBatteryThreshold, !lowBatteryAlertFired else { return }
+        lowBatteryAlertFired = true
+        TelemetryDeck.signal("alert.lowBattery")
+        DynamicIslandManager.shared.trigger(.alert(
+            title: String(localized: "Low Battery"),
+            message: String(format: String(localized: "LOW_BATTERY_FMT"), level),
+            isWarning: true
+        ))
+        sendNotification(
+            title: String(localized: "🪫 Low Battery"),
+            body: String(format: String(localized: "LOW_BATTERY_BODY_FMT"), level)
+        )
+    }
+
     private func checkTemperatureAlert() {
         let temp = self.batteryTemperature
         if temp > 42.0 && (isPluggedIn || isACPowerConnected()) {

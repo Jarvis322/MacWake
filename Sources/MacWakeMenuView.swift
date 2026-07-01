@@ -402,6 +402,19 @@ struct MacWakeMenuView: View {
                     rowDivider()
                     toggleRow("tray.and.arrow.down", .teal, "Dynamic Island Shelf", $tracker.enableNotchShelf, help: "NOTCH_SHELF_HELP")
                 }
+                rowDivider()
+                toggleRow("battery.25percent", .orange, "Low Battery Alert", $tracker.lowBatteryAlertEnabled, help: "LOW_BATTERY_HELP")
+                if tracker.lowBatteryAlertEnabled {
+                    rowDivider()
+                    sliderBlock {
+                        HStack {
+                            Text("Warn at").font(.caption).foregroundColor(.secondary)
+                            Spacer()
+                            Text("\(tracker.lowBatteryThreshold)%").font(.caption.bold()).foregroundColor(.orange)
+                        }
+                        Slider(value: Binding(get: { Double(tracker.lowBatteryThreshold) }, set: { tracker.lowBatteryThreshold = Int($0) }), in: 5...50, step: 5).tint(.orange)
+                    }
+                }
             }
 
             menuBarSection
@@ -676,6 +689,22 @@ struct MacWakeMenuView: View {
                             Text("\(chargeLimit.limit)%").font(.caption.bold()).foregroundColor(.green)
                         }
                         Slider(value: Binding(get: { Double(chargeLimit.limit) }, set: { chargeLimit.limit = Int($0) }), in: 50...95, step: 5).tint(.green)
+                        // One-tap presets for the common limits.
+                        HStack(spacing: 6) {
+                            ForEach([60, 70, 80, 90], id: \.self) { preset in
+                                Button(action: { chargeLimit.limit = preset }) {
+                                    Text("\(preset)%")
+                                        .font(.system(size: 10, weight: .semibold).monospacedDigit())
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 4)
+                                        .background(chargeLimit.limit == preset ? Color.green : Color.primary.opacity(0.07))
+                                        .foregroundColor(chargeLimit.limit == preset ? .white : .primary)
+                                        .cornerRadius(6)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .padding(.top, 2)
                         Text(String(format: String(localized: "CL_HOLD_FMT"), chargeLimit.limit))
                             .font(.system(size: 10)).foregroundColor(.secondary)
                         HStack(alignment: .top, spacing: 5) {
@@ -683,6 +712,27 @@ struct MacWakeMenuView: View {
                             Text(String(localized: "CL_OPT_WARNING")).font(.system(size: 10)).foregroundColor(.secondary)
                         }
                         .padding(.top, 2)
+                    }
+
+                    rowDivider()
+                    // One-shot full charge (e.g. before travel) — limit resumes at 100%.
+                    sliderBlock {
+                        if chargeLimit.topUpActive {
+                            HStack(spacing: 5) {
+                                ProgressView().controlSize(.mini)
+                                Text(String(format: String(localized: "TOPUP_ACTIVE_FMT"), tracker.currentBatteryLevel))
+                                    .font(.system(size: 10)).foregroundColor(.orange)
+                                Spacer()
+                            }
+                            Button(action: { chargeLimit.topUp(false) }) { Text("Cancel").frame(maxWidth: .infinity) }
+                                .buttonStyle(.bordered).controlSize(.small)
+                        } else {
+                            Button(action: { chargeLimit.topUp(true) }) {
+                                HStack { Image(systemName: "battery.100.bolt"); Text("Charge to 100% Once") }.frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(.bordered).controlSize(.small)
+                            .help("TOPUP_HELP")
+                        }
                     }
 
                     rowDivider()

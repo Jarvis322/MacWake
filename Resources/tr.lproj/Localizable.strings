@@ -142,6 +142,22 @@
 "Freezes ALL keyboard/trackpad input, including this app. Hold Escape for 1.5s to unlock early." = "Bu uygulama dahil TÜM klavye/trackpad girdisini dondurur. Erken kilidi açmak için Esc tuşunu 1.5 saniye basılı tut.";
 "CLEANING_SECONDS_FMT" = "%d saniye kaldı";
 "Keyboard and trackpad input is paused. Hold Escape for 1.5s to unlock early." = "Klavye ve trackpad girdisi duraklatıldı. Erken kilidi açmak için Esc tuşunu 1.5 saniye basılı tut.";
+
+/* Top Up + Low Battery Alert */
+"Charge to 100% Once" = "Bir Kereliğine %100'e Doldur";
+"TOPUP_HELP" = "Limiti bir kereliğine aşıp %100'e kadar şarj eder (örn. yolculuk öncesi). Pil dolunca limit otomatik olarak geri devreye girer.";
+"TOPUP_ACTIVE_FMT" = "Dolduruluyor — %%%d, limit %%100'de devam edecek";
+"Topping Up" = "Dolduruluyor";
+"Charging to 100% this once, then the limit resumes." = "Bu seferlik %100'e şarj ediliyor, sonra limit devam edecek.";
+"Fully Charged" = "Tamamen Doldu";
+"Top Up complete — the charge limit is back on." = "Doldurma tamamlandı — şarj limiti tekrar devrede.";
+"Low Battery Alert" = "Düşük Pil Uyarısı";
+"LOW_BATTERY_HELP" = "macOS'un kendi %10 uyarısından önce, seçtiğin seviyede bildirim ve Dynamic Island uyarısı al. Her deşarjda bir kez tetiklenir.";
+"Warn at" = "Uyarı seviyesi";
+"Low Battery" = "Düşük Pil";
+"LOW_BATTERY_FMT" = "Pil %%%d seviyesinde";
+"🪫 Low Battery" = "🪫 Düşük Pil";
+"LOW_BATTERY_BODY_FMT" = "Pil %%%d'e düştü. Beklenmedik kapanmayı önlemek için yakında şarja tak.";
 "BATTERY" = "PİL";
 
 /* Session detail labels */
