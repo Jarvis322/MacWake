@@ -739,6 +739,37 @@ struct MacWakeMenuView: View {
 
                     rowDivider()
                     HStack(spacing: 11) {
+                        iconTile("alarm.fill", .mint)
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text("Full Charge by Schedule").font(.subheadline)
+                            if chargeLimit.scheduledChargeActive {
+                                Text(String(localized: "Charging for your scheduled time…"))
+                                    .font(.system(size: 9)).foregroundColor(.mint)
+                            }
+                        }
+                        Spacer()
+                        if chargeLimit.scheduledChargeEnabled {
+                            DatePicker("", selection: Binding(
+                                get: {
+                                    Calendar.current.date(bySettingHour: chargeLimit.scheduledChargeMinutes / 60,
+                                                          minute: chargeLimit.scheduledChargeMinutes % 60,
+                                                          second: 0, of: Date()) ?? Date()
+                                },
+                                set: { newDate in
+                                    let c = Calendar.current.dateComponents([.hour, .minute], from: newDate)
+                                    chargeLimit.scheduledChargeMinutes = (c.hour ?? 9) * 60 + (c.minute ?? 0)
+                                }
+                            ), displayedComponents: .hourAndMinute)
+                            .labelsHidden()
+                            .datePickerStyle(.compact)
+                        }
+                        Toggle("", isOn: $chargeLimit.scheduledChargeEnabled).labelsHidden().toggleStyle(.switch).controlSize(.small)
+                    }
+                    .padding(.horizontal, 12).padding(.vertical, 8)
+                    .help("SCHEDULE_HELP")
+
+                    rowDivider()
+                    HStack(spacing: 11) {
                         iconTile("thermometer.sun.fill", .red)
                         VStack(alignment: .leading, spacing: 1) {
                             Text("Heat Guard").font(.subheadline)

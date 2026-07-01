@@ -166,6 +166,13 @@
 "Paused — battery is hot, charging will resume when it cools." = "Duraklatıldı — pil sıcak, soğuyunca şarj devam edecek.";
 "Battery cooled down — charging resumed." = "Pil soğudu — şarj devam ediyor.";
 "Export Battery Data (CSV)" = "Pil Verilerini Dışa Aktar (CSV)";
+
+/* Scheduled full charge */
+"Full Charge by Schedule" = "Zamanlanmış Tam Şarj";
+"SCHEDULE_HELP" = "Gece boyunca normal limitte bekler, seçtiğin saate kadar %100'e ulaşacak şekilde şarjı erkenden başlatır — her gün otomatik. Hedeften yaklaşık iki saat sonra normal limit devam eder.";
+"Charging for your scheduled time…" = "Zamanlanmış saat için şarj ediliyor…";
+"Scheduled Charge" = "Zamanlanmış Şarj";
+"Charging to 100% for your scheduled time." = "Zamanlanmış saatin için %100'e şarj ediliyor.";
 "BATTERY" = "PİL";
 
 /* Session detail labels */
