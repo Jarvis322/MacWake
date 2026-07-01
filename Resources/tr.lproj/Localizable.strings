@@ -130,6 +130,13 @@
 "Reset" = "Sıfırla";
 "Animate" = "Animasyon";
 "Notify" = "Bildirim";
+"Fan" = "Fan";
+"Energy" = "Enerji";
+"Dynamic Island Quick Actions" = "Dynamic Island Hızlı İşlemler";
+"NOTCH_ACTIONS_HELP" = "Dynamic Island genişletildiğinde görünen 4 hızlı işlem düğmesini seç. Fan ve Enerji yalnızca Gelişmiş Kontroller etkinken görünür.";
+"Dynamic Island Shelf" = "Dynamic Island Raf";
+"NOTCH_SHELF_HELP" = "Genişletilmiş Dynamic Island'a bir Raf sütunu ekler: son kopyaladığın metnin önizlemesi ve dosyaları geçici olarak sürükleyebileceğin küçük bir tepsi. Panoyu dinlediği için varsayılan olarak kapalıdır.";
+"Drop files here" = "Dosyaları buraya bırak";
 "BATTERY" = "PİL";
 
 /* Session detail labels */

@@ -70,12 +70,53 @@ extension NSScreen {
     }
 }
 
+// MARK: - Notch quick actions (customizable — Settings > Dynamic Island)
+enum NotchQuickAction: String, CaseIterable, Identifiable {
+    case widget, reset, animate, notify, fan, energy
+    var id: String { rawValue }
+
+    var icon: String {
+        switch self {
+        case .widget: return "rectangle.on.rectangle"
+        case .reset: return "arrow.counterclockwise"
+        case .animate: return "sparkles"
+        case .notify: return "bell.fill"
+        case .fan: return "fanblades.fill"
+        case .energy: return "leaf.fill"
+        }
+    }
+
+    var label: String {
+        switch self {
+        case .widget: return "Widget"
+        case .reset: return "Reset"
+        case .animate: return "Animate"
+        case .notify: return "Notify"
+        case .fan: return "Fan"
+        case .energy: return "Energy"
+        }
+    }
+
+    /// Whether this action is meaningful right now (e.g. fan control only on Macs with
+    /// fans and the helper installed) — unavailable ones are skipped in the grid rather
+    /// than shown disabled, so a fanless Mac never sees a dead "Fan" button.
+    @MainActor
+    func isAvailable(tracker: BatteryTracker, chargeLimit: ChargeLimitManager) -> Bool {
+        switch self {
+        case .fan: return tracker.hasFans && chargeLimit.helperStatus == .ready
+        case .energy: return chargeLimit.helperStatus == .ready
+        default: return true
+        }
+    }
+}
+
 // MARK: - Panel View (NotchDrop-style)
 struct DynamicIslandPanelView: View {
     @ObservedObject var tracker: BatteryTracker
     @ObservedObject private var sm = DynamicIslandStateManager.shared
+    @ObservedObject private var chargeLimit = ChargeLimitManager.shared
 
-    private let openedSize = CGSize(width: 840, height: 188)
+    private var openedSize: CGSize { CGSize(width: tracker.enableNotchShelf ? 1028 : 840, height: 188) }
     private let flareSpacing: CGFloat = 16   // size of the concave top-corner flare
 
     private var isOpened: Bool { sm.state != .compact }
@@ -190,29 +231,66 @@ struct DynamicIslandPanelView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
-    // MARK: - Functional controls (real MacWake actions) — 2×2 grid
+    // MARK: - Functional controls — customizable in Settings (up to 4, 2×2 grid)
+    private var resolvedQuickActions: [NotchQuickAction] {
+        tracker.notchQuickActions
+            .compactMap { NotchQuickAction(rawValue: $0) }
+            .filter { $0.isAvailable(tracker: tracker, chargeLimit: chargeLimit) }
+            .prefix(4)
+            .map { $0 }
+    }
+
     private var controlsGrid: some View {
-        VStack(spacing: 8) {
-            HStack(spacing: 8) {
-                controlButton(icon: "rectangle.on.rectangle", label: "Widget",
-                              active: tracker.showWidget) { tracker.showWidget.toggle() }
-                controlButton(icon: "arrow.counterclockwise", label: "Reset",
-                              active: false) { tracker.resetCurrentSession() }
-            }
-            HStack(spacing: 8) {
-                controlButton(icon: "sparkles", label: "Animate",
-                              active: tracker.enableAnimations) { tracker.enableAnimations.toggle() }
-                controlButton(icon: "bell.fill", label: "Notify",
-                              active: tracker.notificationStatus == .authorized) {
-                    if tracker.notificationStatus == .authorized {
-                        tracker.openNotificationSettings()
-                    } else {
-                        tracker.requestNotificationAuthorization()
+        let actions = resolvedQuickActions
+        return VStack(spacing: 8) {
+            ForEach(0..<2, id: \.self) { row in
+                HStack(spacing: 8) {
+                    ForEach(0..<2, id: \.self) { col in
+                        let index = row * 2 + col
+                        if index < actions.count {
+                            quickActionButton(actions[index])
+                        } else {
+                            Color.clear
+                        }
                     }
                 }
             }
         }
         .frame(width: 168)
+    }
+
+    private func quickActionButton(_ action: NotchQuickAction) -> some View {
+        switch action {
+        case .widget:
+            return controlButton(icon: action.icon, label: action.label, active: tracker.showWidget) {
+                tracker.showWidget.toggle()
+            }
+        case .reset:
+            return controlButton(icon: action.icon, label: action.label, active: false) {
+                tracker.resetCurrentSession()
+            }
+        case .animate:
+            return controlButton(icon: action.icon, label: action.label, active: tracker.enableAnimations) {
+                tracker.enableAnimations.toggle()
+            }
+        case .notify:
+            return controlButton(icon: action.icon, label: action.label, active: tracker.notificationStatus == .authorized) {
+                if tracker.notificationStatus == .authorized {
+                    tracker.openNotificationSettings()
+                } else {
+                    tracker.requestNotificationAuthorization()
+                }
+            }
+        case .fan:
+            return controlButton(icon: action.icon, label: action.label, active: chargeLimit.fanControlEnabled) {
+                chargeLimit.fanControlEnabled.toggle()
+            }
+        case .energy:
+            return controlButton(icon: action.icon, label: action.label, active: chargeLimit.energyMode != 0) {
+                let next = chargeLimit.highPowerSupported ? (chargeLimit.energyMode + 1) % 3 : (chargeLimit.energyMode + 1) % 2
+                chargeLimit.setEnergyMode(next)
+            }
+        }
     }
 
     private func controlButton(icon: String, label: String, active: Bool, action: @escaping () -> Void) -> some View {
@@ -232,7 +310,7 @@ struct DynamicIslandPanelView: View {
         .buttonStyle(.plain)
     }
 
-    // MARK: - Expanded Content (three columns: Power | Thermals | Controls)
+    // MARK: - Expanded Content (Power | Thermals | Controls, plus an optional Shelf column)
     private var expandedContent: some View {
         HStack(spacing: 18) {
             leftWidget
@@ -252,6 +330,15 @@ struct DynamicIslandPanelView: View {
                 .padding(.vertical, 8)
 
             controlsGrid
+
+            if tracker.enableNotchShelf {
+                Rectangle()
+                    .fill(Color.white.opacity(0.1))
+                    .frame(width: 1)
+                    .padding(.vertical, 8)
+
+                NotchShelfView()
+            }
         }
     }
 
@@ -487,7 +574,7 @@ class DynamicIslandManager {
     // The window is a fixed full-width strip across the top; the SwiftUI content
     // morphs the notch shape. Height comfortably fits the opened panel.
     private let stripHeight: CGFloat = 300
-    private let openedSize = CGSize(width: 840, height: 188)
+    private var openedSize: CGSize { CGSize(width: (tracker?.enableNotchShelf ?? false) ? 1028 : 840, height: 188) }
     private let hoverInset: CGFloat = -4   // expands the notch hover target a touch
 
     private var islandWindow: NSPanel?
@@ -707,6 +794,12 @@ class DynamicIslandManager {
         } else {
             islandWindow?.orderOut(nil)
         }
+    }
+
+    /// Re-derive the hover hit-test rect after the panel's width changes at runtime
+    /// (e.g. the Notch Shelf column is toggled on/off in Settings).
+    func recomputeLayout() {
+        positionWindow()
     }
 
     func trigger(_ state: DynamicIslandState) {

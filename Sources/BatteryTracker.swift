@@ -77,6 +77,23 @@ class BatteryTracker: ObservableObject {
             UserDefaults.standard.set(enableDynamicIslandHaptics, forKey: "enableDynamicIslandHaptics")
         }
     }
+    /// Which quick-action buttons appear in the Dynamic Island's 2×2 grid (up to 4, in
+    /// this order). Stored as NotchQuickAction raw values. Defaults preserve the original
+    /// fixed set so existing users see no change unless they customize it.
+    @Published var notchQuickActions: [String] = ["widget", "reset", "animate", "notify"] {
+        didSet {
+            UserDefaults.standard.set(notchQuickActions, forKey: "notchQuickActions")
+        }
+    }
+    /// Off by default — this polls the system clipboard, which is worth opting into
+    /// rather than doing passively.
+    @Published var enableNotchShelf: Bool = false {
+        didSet {
+            UserDefaults.standard.set(enableNotchShelf, forKey: "enableNotchShelf")
+            ClipboardWatcher.shared.setEnabled(enableNotchShelf)
+            DynamicIslandManager.shared.recomputeLayout()
+        }
+    }
     @Published var animatedMenuBarIcon: String = "battery.100.bolt"
     @Published var usbPortInfo: String?
 
@@ -384,6 +401,17 @@ class BatteryTracker: ObservableObject {
             self.enableDynamicIsland = true
         }
         self.enableDynamicIslandHaptics = UserDefaults.standard.bool(forKey: "enableDynamicIslandHaptics")
+        if let saved = UserDefaults.standard.array(forKey: "notchQuickActions") as? [String], !saved.isEmpty {
+            self.notchQuickActions = saved
+        }
+        // Guarded (unlike the simple assignments above) since this property's didSet does
+        // real work (repositions the Dynamic Island window) — loadSettings() is called on
+        // every heartbeat/power-status update, so an unconditional assignment would redo
+        // that work every ~30s for no reason.
+        let storedNotchShelf = UserDefaults.standard.bool(forKey: "enableNotchShelf")
+        if storedNotchShelf != enableNotchShelf {
+            self.enableNotchShelf = storedNotchShelf
+        }
         
         // Use UserDefaults to read the value from cfprefsd (memory cache)
         if let defaults = UserDefaults(suiteName: "com.apple.batteryui.charging.mac") {
