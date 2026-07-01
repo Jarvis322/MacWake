@@ -43,6 +43,14 @@ clicking it opens the full panel — Session, History, Hardware, and Settings.
 *   **🌀 Monitor tab — Fan + Top Apps:**
     *   Fan status, 1-hour speed history, and manual target RPM (experimental — auto-reverts to system control above 92°C) live in their own tab.
     *   Top running apps ranked by CPU or RAM, sampled on demand like Activity Monitor / iStat Menus.
+*   **🎯 Smart Charging Extras:**
+    *   One-tap limit presets (60/70/80/90%), a one-shot "Charge to 100% Once" override for travel days, and Full Charge by Schedule — 100% ready at the time you pick, every day.
+    *   Heat Guard pauses charging above 40°C and resumes when the battery cools.
+    *   Custom Low Battery alert at the level you choose, ahead of macOS's own.
+*   **⚡️ Shortcuts & Widget:**
+    *   Shortcuts app actions: Set Charge Limit, Charge to 100% Once, Start Cleaning Mode, Get Battery Status.
+    *   Native macOS widget (small & medium) with battery ring, health, temperature, and limit status.
+    *   Export your health/cycle history, sessions, and adapter log as CSV.
 *   **🎛️ Customizable Menu Bar:**
     *   Choose exactly what the menu-bar item shows — icon, battery %, power/time, estimated time remaining, and temperature — with a live preview.
 *   **🏝️ Dynamic Island (Notch UI):**
