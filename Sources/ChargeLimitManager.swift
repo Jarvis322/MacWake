@@ -57,6 +57,39 @@ final class ChargeLimitManager: ObservableObject {
         // On cancel the next evaluate() tick re-applies the normal limit.
     }
 
+    /// Heat Guard: pause charging while the battery runs hot (charging heat is a major
+    /// driver of battery wear), resume automatically once it cools back down.
+    @Published var heatGuardEnabled: Bool {
+        didSet {
+            UserDefaults.standard.set(heatGuardEnabled, forKey: "heatGuardEnabled")
+            if !heatGuardEnabled && heatGuardPaused { heatGuardPaused = false }
+        }
+    }
+    @Published private(set) var heatGuardPaused = false
+    private let heatGuardPauseTempC: Double = 40
+    private let heatGuardResumeTempC: Double = 37   // hysteresis so it can't flap
+
+    /// Called whenever a fresh battery temperature is read. Only flips the paused flag —
+    /// evaluate() owns the actual SMC toggling, so all charging decisions stay in one place.
+    func heatGuardCheck(batteryTempC: Double) {
+        guard heatGuardEnabled, helperStatus == .ready, !calibrationActive else { return }
+        if !heatGuardPaused, batteryTempC >= heatGuardPauseTempC {
+            heatGuardPaused = true
+            DynamicIslandManager.shared.trigger(.alert(
+                title: String(localized: "Heat Guard"),
+                message: String(format: String(localized: "HEATGUARD_PAUSED_FMT"), batteryTempC),
+                isWarning: true
+            ))
+        } else if heatGuardPaused, batteryTempC <= heatGuardResumeTempC {
+            heatGuardPaused = false
+            DynamicIslandManager.shared.trigger(.alert(
+                title: String(localized: "Heat Guard"),
+                message: String(localized: "Battery cooled down — charging resumed."),
+                isWarning: false
+            ))
+        }
+    }
+
     /// Sailing Mode: let the battery drift down to `sailingLower` before topping back
     /// up to `limit`, instead of micro-charging at the ceiling. Fewer cycles, less heat.
     @Published var sailingEnabled: Bool {
@@ -182,6 +215,7 @@ final class ChargeLimitManager: ObservableObject {
         self.lastCalibration = savedCal == 0 ? nil : Date(timeIntervalSince1970: savedCal)
         self.fanControlEnabled = d.bool(forKey: "fanControlEnabled")
         self.fanTargetRPM = d.integer(forKey: "fanTargetRPM")
+        self.heatGuardEnabled = d.bool(forKey: "heatGuardEnabled")
         refreshStatus()
     }
 
@@ -425,6 +459,14 @@ final class ChargeLimitManager: ObservableObject {
             }
         } else if calibrationEnabled, isCalibrationDue() {
             startCalibration()
+            return
+        }
+
+        // Heat Guard outranks Top Up and normal limiting (never outranks calibration —
+        // heatGuardCheck skips while calibrating so a hot charge phase can't stall it
+        // forever; the calibration timeout still applies).
+        if heatGuardPaused {
+            if lastAdapterEnabled != false { Task { await applyChargingAllowed(false) } }
             return
         }
 

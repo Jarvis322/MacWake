@@ -3,6 +3,7 @@ import Cocoa
 import IOKit.ps
 import IOKit
 import UserNotifications
+import UniformTypeIdentifiers
 import TelemetryDeck
 
 extension Notification.Name {
@@ -738,6 +739,7 @@ class BatteryTracker: ObservableObject {
                 if temperatureSamples.count > 5 {
                     temperatureSamples.removeFirst()
                 }
+                ChargeLimitManager.shared.heatGuardCheck(batteryTempC: temp)
             }
             
             // Read CycleCount
@@ -1210,6 +1212,46 @@ class BatteryTracker: ObservableObject {
     }
 
     // Manual reset command
+    /// Exports battery data as CSV via a save panel: health/cycle history, session
+    /// summaries, and the adapter log — one file with three labelled sections, so a
+    /// spreadsheet import stays trivial.
+    func exportDataAsCSV() {
+        let iso = ISO8601DateFormatter()
+        var csv = "# MacWake battery data export\n"
+
+        csv += "\n[Health History]\ndate,health_percent,cycle_count\n"
+        for r in healthHistory {
+            csv += "\(iso.string(from: r.date)),\(r.health),\(r.cycleCount)\n"
+        }
+
+        csv += "\n[Sessions]\nstart,end,start_battery,end_battery,screen_on_minutes,sleep_minutes,shutdown_minutes,reboots\n"
+        let allSessions = (currentSession.map { [$0] } ?? []) + history
+        for s in allSessions {
+            let end = s.endTime.map { iso.string(from: $0) } ?? ""
+            let endLevel = s.endBatteryLevel.map(String.init) ?? ""
+            csv += "\(iso.string(from: s.startTime)),\(end),\(s.startBattery),\(endLevel),"
+            csv += "\(Int(s.screenOnDuration / 60)),\(Int(s.sleepDuration / 60)),\(Int(s.shutdownDuration / 60)),\(s.rebootCount)\n"
+        }
+
+        csv += "\n[Power Adapters]\nfirst_seen,last_seen,watts,name,manufacturer,times_seen\n"
+        for a in adapterHistory {
+            let name = (a.name ?? "").replacingOccurrences(of: ",", with: " ")
+            let manufacturer = (a.manufacturer ?? "").replacingOccurrences(of: ",", with: " ")
+            csv += "\(iso.string(from: a.firstSeen)),\(iso.string(from: a.lastSeen)),\(a.watts),\(name),\(manufacturer),\(a.seenCount)\n"
+        }
+
+        let panel = NSSavePanel()
+        panel.nameFieldStringValue = "MacWake-Battery-Data.csv"
+        panel.allowedContentTypes = [.commaSeparatedText]
+        panel.canCreateDirectories = true
+        // Accessory apps don't get key-window focus for panels unless activated.
+        NSApp.activate(ignoringOtherApps: true)
+        panel.begin { response in
+            guard response == .OK, let url = panel.url else { return }
+            try? csv.data(using: .utf8)?.write(to: url, options: .atomic)
+        }
+    }
+
     func resetCurrentSession() {
         let now = Date()
         let level = getBatteryLevel()

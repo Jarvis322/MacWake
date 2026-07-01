@@ -58,3 +58,5 @@
 "LOW_BATTERY_HELP" = "Get a notification and a Dynamic Island warning at the level you choose, before macOS's own 10% alert. Fires once per discharge.";
 "LOW_BATTERY_FMT" = "Battery at %d%%";
 "LOW_BATTERY_BODY_FMT" = "Battery is down to %d%%. Plug in soon to avoid an unexpected shutdown.";
+"HEATGUARD_HELP" = "Pauses charging while the battery is above 40°C and resumes at 37°C — charging heat is a major driver of long-term battery wear.";
+"HEATGUARD_PAUSED_FMT" = "Battery at %.0f°C — charging paused until it cools.";
