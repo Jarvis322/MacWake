@@ -57,6 +57,51 @@ final class ChargeLimitManager: ObservableObject {
         // On cancel the next evaluate() tick re-applies the normal limit.
     }
 
+    /// Scheduled full charge: hold the normal limit overnight, then start charging early
+    /// enough that the battery lands at 100% around the chosen time (e.g. "ready by 9:00").
+    /// After the target window passes, normal limiting resumes automatically.
+    @Published var scheduledChargeEnabled: Bool {
+        didSet { UserDefaults.standard.set(scheduledChargeEnabled, forKey: "scheduledChargeEnabled") }
+    }
+    /// Minutes past midnight (local), e.g. 540 = 09:00.
+    @Published var scheduledChargeMinutes: Int {
+        didSet {
+            let clamped = min(1439, max(0, scheduledChargeMinutes))
+            if clamped != scheduledChargeMinutes { scheduledChargeMinutes = clamped; return }
+            UserDefaults.standard.set(scheduledChargeMinutes, forKey: "scheduledChargeMinutes")
+        }
+    }
+    /// True while inside the pre-target charge window (drives the UI status line).
+    @Published private(set) var scheduledChargeActive = false
+    private var scheduledChargeAnnounced = false
+
+    /// Conservative start time: ~2.5 min per missing percent + 15 min buffer. Charging
+    /// slows near 100%, so err on the early side — landing full a bit before the target
+    /// beats landing at 92% when the user unplugs. The window opens `lead` before the
+    /// target and stays open 2h past it, so a Mac that reaches 100% at 08:40 holds full
+    /// through 09:00 instead of instantly drifting back down to the limit. Today's AND
+    /// tomorrow's occurrences are both checked: today's covers the hold-past-target
+    /// stretch after the time passes, tomorrow's covers leads that span midnight.
+    private func scheduledChargeWindow(batteryLevel: Int, now: Date = Date()) -> Bool {
+        guard scheduledChargeEnabled else { return false }
+        let cal = Calendar.current
+        var comps = cal.dateComponents([.year, .month, .day], from: now)
+        comps.hour = scheduledChargeMinutes / 60
+        comps.minute = scheduledChargeMinutes % 60
+        guard let todayTarget = cal.date(from: comps) else { return false }
+
+        let missing = max(0, 100 - batteryLevel)
+        let leadSeconds = Double(missing) * 150 + 900
+
+        for dayOffset in 0...1 {
+            guard let target = cal.date(byAdding: .day, value: dayOffset, to: todayTarget) else { continue }
+            if now >= target.addingTimeInterval(-leadSeconds), now <= target.addingTimeInterval(2 * 3600) {
+                return true
+            }
+        }
+        return false
+    }
+
     /// Heat Guard: pause charging while the battery runs hot (charging heat is a major
     /// driver of battery wear), resume automatically once it cools back down.
     @Published var heatGuardEnabled: Bool {
@@ -216,6 +261,9 @@ final class ChargeLimitManager: ObservableObject {
         self.fanControlEnabled = d.bool(forKey: "fanControlEnabled")
         self.fanTargetRPM = d.integer(forKey: "fanTargetRPM")
         self.heatGuardEnabled = d.bool(forKey: "heatGuardEnabled")
+        self.scheduledChargeEnabled = d.bool(forKey: "scheduledChargeEnabled")
+        let savedSchedule = d.object(forKey: "scheduledChargeMinutes") as? Int
+        self.scheduledChargeMinutes = savedSchedule.map { min(1439, max(0, $0)) } ?? 540   // default 09:00
         refreshStatus()
     }
 
@@ -468,6 +516,27 @@ final class ChargeLimitManager: ObservableObject {
         if heatGuardPaused {
             if lastAdapterEnabled != false { Task { await applyChargingAllowed(false) } }
             return
+        }
+
+        // Scheduled full charge ("ready by 09:00"): inside the pre-target window, charge
+        // to 100% like a Top Up; outside it, fall through to normal limiting.
+        let inScheduledWindow = scheduledChargeWindow(batteryLevel: batteryLevel)
+        if scheduledChargeActive != inScheduledWindow { scheduledChargeActive = inScheduledWindow }
+        if inScheduledWindow {
+            if !scheduledChargeAnnounced, batteryLevel < 100 {
+                scheduledChargeAnnounced = true
+                DynamicIslandManager.shared.trigger(.alert(
+                    title: String(localized: "Scheduled Charge"),
+                    message: String(localized: "Charging to 100% for your scheduled time."),
+                    isWarning: false
+                ))
+            }
+            if batteryLevel < 100, lastAdapterEnabled != true {
+                Task { await restoreCharging() }
+            }
+            return
+        } else {
+            scheduledChargeAnnounced = false
         }
 
         // One-shot Top Up: charge past the limit to 100% this once (e.g. before travel),
