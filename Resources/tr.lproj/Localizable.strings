@@ -158,6 +158,14 @@
 "LOW_BATTERY_FMT" = "Pil %%%d seviyesinde";
 "🪫 Low Battery" = "🪫 Düşük Pil";
 "LOW_BATTERY_BODY_FMT" = "Pil %%%d'e düştü. Beklenmedik kapanmayı önlemek için yakında şarja tak.";
+
+/* Heat Guard + CSV export */
+"Heat Guard" = "Isı Koruması";
+"HEATGUARD_HELP" = "Pil 40°C'nin üzerindeyken şarjı duraklatır, 37°C'ye soğuyunca devam ettirir — şarj ısısı uzun vadeli pil aşınmasının başlıca nedenidir.";
+"HEATGUARD_PAUSED_FMT" = "Pil %.0f°C — soğuyana kadar şarj duraklatıldı.";
+"Paused — battery is hot, charging will resume when it cools." = "Duraklatıldı — pil sıcak, soğuyunca şarj devam edecek.";
+"Battery cooled down — charging resumed." = "Pil soğudu — şarj devam ediyor.";
+"Export Battery Data (CSV)" = "Pil Verilerini Dışa Aktar (CSV)";
 "BATTERY" = "PİL";
 
 /* Session detail labels */

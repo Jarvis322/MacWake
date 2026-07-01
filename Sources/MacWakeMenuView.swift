@@ -433,6 +433,8 @@ struct MacWakeMenuView: View {
                 rowDivider()
                 actionRow("arrow.clockwise", .orange, "Reset Session") { tracker.resetCurrentSession() }
                 rowDivider()
+                actionRow("square.and.arrow.up", .teal, "Export Battery Data (CSV)") { tracker.exportDataAsCSV() }
+                rowDivider()
                 actionRow("arrow.down.circle.fill", .blue, "Check for Updates") { AppDelegate.shared?.checkForUpdates() }
                 rowDivider()
                 actionRow("power", .red, "Quit MacWake", destructive: true) { NSApplication.shared.terminate(nil) }
@@ -734,6 +736,22 @@ struct MacWakeMenuView: View {
                             .help("TOPUP_HELP")
                         }
                     }
+
+                    rowDivider()
+                    HStack(spacing: 11) {
+                        iconTile("thermometer.sun.fill", .red)
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text("Heat Guard").font(.subheadline)
+                            if chargeLimit.heatGuardPaused {
+                                Text(String(localized: "Paused — battery is hot, charging will resume when it cools."))
+                                    .font(.system(size: 9)).foregroundColor(.orange)
+                            }
+                        }
+                        Spacer()
+                        Toggle("", isOn: $chargeLimit.heatGuardEnabled).labelsHidden().toggleStyle(.switch).controlSize(.small)
+                    }
+                    .padding(.horizontal, 12).padding(.vertical, 8)
+                    .help("HEATGUARD_HELP")
 
                     rowDivider()
                     HStack(spacing: 11) {
