@@ -125,15 +125,7 @@
 "CHARGING_DESC_FMT" = "%dW adaptörden şarj oluyor. Güç kablosunu çıkardığında takip otomatik başlar.";
 "UNPLUG_DESC_FMT" = "Güç kablosunu çıkardığında takip otomatik başlar (limit: %%%d).";
 
-/* Dynamic Island controls + chips */
-"Widget" = "Widget";
-"Reset" = "Sıfırla";
-"Animate" = "Animasyon";
-"Notify" = "Bildirim";
-"Fan" = "Fan";
-"Energy" = "Enerji";
-"Dynamic Island Quick Actions" = "Dynamic Island Hızlı İşlemler";
-"NOTCH_ACTIONS_HELP" = "Dynamic Island genişletildiğinde görünen 4 hızlı işlem düğmesini seç. Fan ve Enerji yalnızca Gelişmiş Kontroller etkinken görünür.";
+/* Dynamic Island Shelf */
 "Dynamic Island Shelf" = "Dynamic Island Raf";
 "NOTCH_SHELF_HELP" = "Genişletilmiş Dynamic Island'a bir Raf sütunu ekler: son kopyaladığın metnin önizlemesi ve dosyaları geçici olarak sürükleyebileceğin küçük bir tepsi. Panoyu dinlediği için varsayılan olarak kapalıdır.";
 "Drop files here" = "Dosyaları buraya bırak";
@@ -282,6 +274,9 @@
 "Enable Advanced Controls" = "Gelişmiş Kontrolleri Etkinleştir";
 "Control charging from Terminal." = "Terminal'den şarjı kontrol et.";
 "On Macs with fans — auto-reverts above 92°C." = "Fanı olan Mac'lerde — 92°C üstünde otomatiğe döner.";
+"Turn on the Shelf in Settings for a last-copied-text peek and a file drop tray." = "Son kopyalanan metni önizlemek ve dosya bırakma tepsisi için Ayarlar'dan Raf'ı aç.";
+"Lives in the Monitor tab, next to Top Apps by CPU/RAM." = "Monitor sekmesinde, CPU/RAM'e göre En Çok Kullanılanlar'ın yanında yer alır.";
+"Cleaning Mode locks the keyboard/trackpad while you wipe the screen." = "Temizlik Modu, ekranı silerken klavyeyi/trackpad'i kilitler.";
 
 /* Translation audit — missing strings */
 "Install" = "Kur";
