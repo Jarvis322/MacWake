@@ -136,7 +136,15 @@ struct NotchShelfView: View {
                             }
                             .buttonStyle(.plain)
                         }
-                        .onDrag { NSItemProvider(contentsOf: url) ?? NSItemProvider() }
+                        .onDrag {
+                            // A shelved file can be deleted/moved while parked here; evict
+                            // it instead of handing the receiver a dead URL with no feedback.
+                            guard FileManager.default.fileExists(atPath: url.path) else {
+                                Task { @MainActor in ClipboardWatcher.shared.removeFile(url) }
+                                return NSItemProvider()
+                            }
+                            return NSItemProvider(contentsOf: url) ?? NSItemProvider()
+                        }
                     }
                 }
             }

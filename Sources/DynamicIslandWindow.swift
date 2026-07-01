@@ -571,21 +571,54 @@ class DynamicIslandManager {
     }
 
     private func setupMouseMonitors() {
+        // .leftMouseDragged matters: during a drag session AppKit delivers dragged events,
+        // NOT mouseMoved, so without it hover-expansion can never fire mid-drag and the
+        // Shelf's file drop tray would be unreachable by drag-and-drop.
         if globalMonitor == nil {
-            globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved, .leftMouseDown]) { [weak self] event in
+            globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved, .leftMouseDown, .leftMouseDragged]) { [weak self] event in
+                let type = event.type
                 Task { @MainActor in
-                    if event.type == .leftMouseDown { self?.handleMouseDown() }
-                    else { self?.handleMouseMoved() }
+                    switch type {
+                    case .leftMouseDown: self?.handleMouseDown()
+                    case .leftMouseDragged: self?.handleMouseDragged()
+                    default: self?.handleMouseMoved()
+                    }
                 }
             }
         }
         if localMonitor == nil {
-            localMonitor = NSEvent.addLocalMonitorForEvents(matching: [.mouseMoved, .leftMouseDown]) { [weak self] event in
+            localMonitor = NSEvent.addLocalMonitorForEvents(matching: [.mouseMoved, .leftMouseDown, .leftMouseDragged]) { [weak self] event in
+                let type = event.type
                 Task { @MainActor in
-                    if event.type == .leftMouseDown { self?.handleMouseDown() }
-                    else { self?.handleMouseMoved() }
+                    switch type {
+                    case .leftMouseDown: self?.handleMouseDown()
+                    case .leftMouseDragged: self?.handleMouseDragged()
+                    default: self?.handleMouseMoved()
+                    }
                 }
                 return event
+            }
+        }
+    }
+
+    /// Fired while the user drags something (file, text, window). Only used to open the
+    /// panel so a file can reach the Shelf's drop tray — gated on the Shelf being enabled
+    /// so ordinary window-drags near the menu bar don't pop the island open.
+    private func handleMouseDragged() {
+        guard isEnabled, tracker?.enableNotchShelf == true else { return }
+        let mouse = NSEvent.mouseLocation
+        let state = DynamicIslandStateManager.shared.state
+
+        if state == .compact {
+            if deviceNotchRect.insetBy(dx: hoverInset, dy: hoverInset).contains(mouse) {
+                openPanel()   // immediate — drags move fast, the 0.12s hover delay would miss
+            }
+        } else if state == .expanded {
+            if stayExpandedRect.contains(mouse) {
+                collapseWorkItem?.cancel()
+                collapseWorkItem = nil
+            } else {
+                hoverDidExit()
             }
         }
     }

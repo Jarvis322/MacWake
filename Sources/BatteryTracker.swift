@@ -68,6 +68,11 @@ class BatteryTracker: ObservableObject {
         didSet {
             UserDefaults.standard.set(enableDynamicIsland, forKey: "enableDynamicIsland")
             DynamicIslandManager.shared.updateSettings(enabled: enableDynamicIsland)
+            // The Shelf lives inside the island: with the island off there is no UI
+            // surface for it AND its toggle row is hidden — never keep polling the
+            // clipboard invisibly. Preference is preserved; polling resumes when the
+            // island comes back on.
+            ClipboardWatcher.shared.setEnabled(enableDynamicIsland && enableNotchShelf)
         }
     }
     /// Off by default — a trackpad click "thud" with no visible cause the first time you
@@ -82,7 +87,7 @@ class BatteryTracker: ObservableObject {
     @Published var enableNotchShelf: Bool = false {
         didSet {
             UserDefaults.standard.set(enableNotchShelf, forKey: "enableNotchShelf")
-            ClipboardWatcher.shared.setEnabled(enableNotchShelf)
+            ClipboardWatcher.shared.setEnabled(enableDynamicIsland && enableNotchShelf)
             DynamicIslandManager.shared.recomputeLayout()
         }
     }

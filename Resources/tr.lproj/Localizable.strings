@@ -127,6 +127,7 @@
 
 /* Dynamic Island Shelf */
 "Dynamic Island Shelf" = "Dynamic Island Raf";
+"SHELF" = "RAF";
 "NOTCH_SHELF_HELP" = "Genişletilmiş Dynamic Island'a bir Raf sütunu ekler: son kopyaladığın metnin önizlemesi ve dosyaları geçici olarak sürükleyebileceğin küçük bir tepsi. Panoyu dinlediği için varsayılan olarak kapalıdır.";
 "Drop files here" = "Dosyaları buraya bırak";
 

@@ -29,6 +29,11 @@ final class CleaningModeManager: ObservableObject {
     private var countdownTimer: Timer?
     private var overlayWindows: [NSWindow] = []
     private var escapeHoldStart: Date?
+    /// Scheduled on the first Escape keyDown and cancelled on keyUp, so the 1.5s unlock
+    /// fires even when key-repeat is disabled (holding a key then delivers exactly ONE
+    /// keyDown — a repeat-driven check inside the tap callback would never re-run and
+    /// the escape hatch would silently do nothing for up to the full countdown).
+    private var escapeWorkItem: DispatchWorkItem?
     private let escapeHoldThreshold: TimeInterval = 1.5
     let maxDurationSeconds = 120
 
@@ -65,6 +70,10 @@ final class CleaningModeManager: ObservableObject {
     }
 
     private func tick() {
+        // A tick Task can already be queued when stop() runs (timer fires, then Escape
+        // cancels before the Task drains) — without this guard the stale tick would
+        // decrement a freshly restarted session's counter.
+        guard isActive else { return }
         remainingSeconds -= 1
         if remainingSeconds <= 0 { stop() }
     }
@@ -74,6 +83,8 @@ final class CleaningModeManager: ObservableObject {
         countdownTimer = nil
         removeEventTap()
         hideOverlay()
+        escapeWorkItem?.cancel()
+        escapeWorkItem = nil
         escapeHoldStart = nil
         isActive = false
     }
@@ -139,12 +150,20 @@ final class CleaningModeManager: ObservableObject {
             let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
             if keyCode == 53 { // Escape
                 if type == .keyDown {
-                    if escapeHoldStart == nil { escapeHoldStart = Date() }
-                    if let start = escapeHoldStart, Date().timeIntervalSince(start) >= escapeHoldThreshold {
-                        stop()
+                    if escapeHoldStart == nil {
+                        escapeHoldStart = Date()
+                        // Timer-armed unlock: don't rely on autorepeat keyDowns re-entering
+                        // this callback — with key-repeat disabled they never come.
+                        let work = DispatchWorkItem { [weak self] in
+                            MainActor.assumeIsolated { self?.stop() }
+                        }
+                        escapeWorkItem = work
+                        DispatchQueue.main.asyncAfter(deadline: .now() + escapeHoldThreshold, execute: work)
                     }
                 } else {
                     escapeHoldStart = nil
+                    escapeWorkItem?.cancel()
+                    escapeWorkItem = nil
                 }
             }
         }
@@ -181,7 +200,9 @@ final class CleaningModeManager: ObservableObject {
 /// `MainActor.assumeIsolated` is safe here because the run loop source is attached to
 /// CFRunLoopGetMain(), so this always actually runs on the main thread.
 private let cleaningModeTapCallback: CGEventTapCallBack = { _, type, event, refcon in
-    guard let refcon else { return Unmanaged.passRetained(event) }
+    // passUnretained: the tap callback contract returns the event without an extra
+    // retain — passRetained here would leak one retain per input event.
+    guard let refcon else { return Unmanaged.passUnretained(event) }
     return MainActor.assumeIsolated {
         let manager = Unmanaged<CleaningModeManager>.fromOpaque(refcon).takeUnretainedValue()
         return manager.handleTapEvent(type: type, event: event)
