@@ -37,6 +37,10 @@ let package = Package(
                 "MacWakeShared"
             ],
             path: "CLI"
+        ),
+        .executableTarget(
+            name: "MacWakeWidget",
+            path: "Widget"
         )
     ]
 )
