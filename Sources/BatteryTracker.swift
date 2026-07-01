@@ -4,6 +4,7 @@ import IOKit.ps
 import IOKit
 import UserNotifications
 import UniformTypeIdentifiers
+import WidgetKit
 import TelemetryDeck
 
 extension Notification.Name {
@@ -12,6 +13,10 @@ extension Notification.Name {
 
 @MainActor
 class BatteryTracker: ObservableObject {
+    /// The app's single instance (a SwiftUI @StateObject), exposed for App Intents —
+    /// same pattern as AppDelegate.shared. Weak: the view hierarchy owns it.
+    static private(set) weak var sharedForIntents: BatteryTracker?
+
     @Published var currentBatteryLevel: Int = 100
     @Published var isPluggedIn: Bool = false
     @Published var currentSession: Session?
@@ -293,6 +298,7 @@ class BatteryTracker: ObservableObject {
     }
 
     init() {
+        BatteryTracker.sharedForIntents = self
         loadSettings()
         loadData()
         setupPowerMonitoring()
@@ -788,6 +794,7 @@ class BatteryTracker: ObservableObject {
         checkContinuousACAlert()
         checkSlowCharging()
         checkLowBatteryAlert()
+        updateWidgetSnapshot()
     }
 
     /// Re-reads battery health/cycles on demand and logs a new decay entry if it changed.
@@ -1212,6 +1219,41 @@ class BatteryTracker: ObservableObject {
     }
 
     // Manual reset command
+    // MARK: - WidgetKit snapshot
+
+    /// Mirror of the struct in the widget extension (kept tiny and duplicated on purpose —
+    /// the Widget target is a standalone module and the schema is six fields).
+    private struct WidgetSnapshot: Codable {
+        var level: Int; var isPluggedIn: Bool; var health: Int
+        var temperature: Double; var limitEnabled: Bool; var limit: Int; var timestamp: Date
+    }
+    private var lastWidgetReload = Date.distantPast
+    private var lastWidgetSnapshotKey = ""
+
+    /// Writes the shared-container snapshot the WidgetKit extension renders from, and
+    /// asks WidgetKit to reload — immediately on a meaningful change (level/power/limit),
+    /// otherwise at most every 5 minutes so we stay well inside the reload budget.
+    func updateWidgetSnapshot() {
+        guard let container = FileManager.default.containerURL(
+            forSecurityApplicationGroupIdentifier: "6NK6D7LL79.com.jarvisit.macwake") else { return }
+        let cl = ChargeLimitManager.shared
+        let snap = WidgetSnapshot(
+            level: currentBatteryLevel, isPluggedIn: isPluggedIn, health: batteryHealth,
+            temperature: batteryTemperature, limitEnabled: cl.isEnabled && cl.helperStatus == .ready,
+            limit: cl.limit, timestamp: Date()
+        )
+        try? FileManager.default.createDirectory(at: container, withIntermediateDirectories: true)
+        if let data = try? JSONEncoder().encode(snap) {
+            try? data.write(to: container.appendingPathComponent("widget-snapshot.json"), options: .atomic)
+        }
+        let key = "\(snap.level)|\(snap.isPluggedIn)|\(snap.limitEnabled)|\(snap.limit)"
+        if key != lastWidgetSnapshotKey || Date().timeIntervalSince(lastWidgetReload) > 300 {
+            lastWidgetSnapshotKey = key
+            lastWidgetReload = Date()
+            WidgetCenter.shared.reloadAllTimelines()
+        }
+    }
+
     /// Exports battery data as CSV via a save panel: health/cycle history, session
     /// summaries, and the adapter log — one file with three labelled sections, so a
     /// spreadsheet import stays trivial.

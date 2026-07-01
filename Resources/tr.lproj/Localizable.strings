@@ -173,6 +173,22 @@
 "Charging for your scheduled time…" = "Zamanlanmış saat için şarj ediliyor…";
 "Scheduled Charge" = "Zamanlanmış Şarj";
 "Charging to 100% for your scheduled time." = "Zamanlanmış saatin için %100'e şarj ediliyor.";
+
+/* WidgetKit widget + App Intents */
+"Open MacWake" = "MacWake'i Aç";
+"Health %d%%" = "Sağlık %%%d";
+"Limit %d%%" = "Limit %%%d";
+"No charge limit" = "Şarj limiti yok";
+"Open MacWake to refresh" = "Yenilemek için MacWake'i aç";
+"Battery level, health, temperature, and charge limit at a glance." = "Pil seviyesi, sağlık, sıcaklık ve şarj limiti bir bakışta.";
+"Advanced Controls aren't set up yet — enable them once in MacWake's settings." = "Gelişmiş Kontroller henüz kurulmamış — MacWake ayarlarından bir kez etkinleştir.";
+"INTENT_LIMIT_SET_FMT" = "Şarj limiti %%%d olarak ayarlandı.";
+"Topping up to 100% — the limit resumes when full." = "%100'e dolduruluyor — dolunca limit devam edecek.";
+"Cleaning Mode needs Accessibility permission — approve MacWake in System Settings, then try again." = "Temizlik Modu Erişilebilirlik izni gerektiriyor — Sistem Ayarları'nda MacWake'i onayla, sonra tekrar dene.";
+"Cleaning Mode is on. Hold Escape to unlock early." = "Temizlik Modu açık. Erken kilidi açmak için Esc'i basılı tut.";
+"MacWake is still starting up — try again in a moment." = "MacWake hâlâ başlıyor — birazdan tekrar dene.";
+"AC Power" = "Prize Bağlı";
+"INTENT_STATUS_FMT" = "Pil %%%1$d, %2$@, sağlık %%%3$d, sıcaklık %4$.1f°C.";
 "BATTERY" = "PİL";
 
 /* Session detail labels */

@@ -59,9 +59,9 @@ cat <<EOF > "${CONTENTS_DIR}/Info.plist"
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.35</string>
+    <string>1.36</string>
     <key>CFBundleVersion</key>
-    <string>36</string>
+    <string>37</string>
     <key>LSMinimumSystemVersion</key>
     <string>14.0</string>
     <key>LSApplicationCategoryType</key>
@@ -99,6 +99,38 @@ DEVELOPER_DIR="${DEVELOPER_DIR:-$XCODE_DIR}" swift build -c release
 echo "=== Copying Binary to App Bundle ==="
 cp .build/release/MacWake "${MACOS_DIR}/MacWake"
 
+echo "=== Generating App Intents metadata (Shortcuts support) ==="
+# swift build doesn't run Xcode's appintentsmetadataprocessor, so Shortcuts would never
+# discover our intents. The new swift-build system does emit the .swiftconstvalues the
+# processor needs, so we invoke it manually and ship Metadata.appintents in Resources.
+XC_APP="$(ls -d /Applications/Xcode*.app | head -1)"
+TOOLCHAIN="${XC_APP}/Contents/Developer/Toolchains/XcodeDefault.xctoolchain"
+AI_SDK="$(DEVELOPER_DIR=${XC_APP}/Contents/Developer xcrun --sdk macosx --show-sdk-path)"
+AI_XCV="$(DEVELOPER_DIR=${XC_APP}/Contents/Developer xcodebuild -version 2>/dev/null | grep Build | awk '{print $3}')"
+AI_TMP="$(mktemp -d)"
+ls Sources/*.swift > "${AI_TMP}/sources.txt"
+find .build/out/Intermediates.noindex/MacWake.build/Release/MacWake-p.build -name "*.swiftconstvalues" > "${AI_TMP}/constvals.txt"
+if "${TOOLCHAIN}/usr/bin/appintentsmetadataprocessor" \
+    --output "${AI_TMP}/out" \
+    --toolchain-dir "${TOOLCHAIN}" \
+    --module-name MacWake \
+    --sdk-root "${AI_SDK}" \
+    --xcode-version "${AI_XCV}" \
+    --platform-family macOS \
+    --deployment-target 14.0 \
+    --target-triple arm64-apple-macos14.0 \
+    --source-file-list "${AI_TMP}/sources.txt" \
+    --swift-const-vals-list "${AI_TMP}/constvals.txt" \
+    --binary-file .build/release/MacWake \
+    --force --no-app-shortcuts-localization --quiet-warnings 2>/dev/null \
+    && [ -d "${AI_TMP}/out/Metadata.appintents" ]; then
+    cp -R "${AI_TMP}/out/Metadata.appintents" "${RESOURCES_DIR}/Metadata.appintents"
+    echo "Metadata.appintents embedded ($(ls "${AI_TMP}/out/Metadata.appintents" | wc -l | tr -d ' ') files)."
+else
+    echo "WARNING: App Intents metadata generation failed — Shortcuts actions won't appear."
+fi
+rm -rf "${AI_TMP}"
+
 echo "=== Embedding command-line tool ==="
 HELPERS_DIR="${CONTENTS_DIR}/Helpers"
 mkdir -p "${HELPERS_DIR}"
@@ -126,6 +158,48 @@ cat <<EOF > "${LAUNCHD_DIR}/com.jarvisit.macwake.helper.plist"
     <array>
         <string>com.jarvisit.macwake</string>
     </array>
+</dict>
+</plist>
+EOF
+
+echo "=== Embedding WidgetKit extension ==="
+# Hand-rolled .appex (no Xcode project): WidgetKit discovers it via the NSExtension
+# point identifier; chronod requires the appex under Contents/PlugIns with a bundle id
+# prefixed by the host app's.
+WIDGET_DIR="${CONTENTS_DIR}/PlugIns/MacWakeWidget.appex"
+mkdir -p "${WIDGET_DIR}/Contents/MacOS" "${WIDGET_DIR}/Contents/Resources"
+cp .build/release/MacWakeWidget "${WIDGET_DIR}/Contents/MacOS/MacWakeWidget"
+# The widget is its own bundle — it needs its own copies of the localization tables.
+for lproj in Resources/*.lproj; do
+    [ -d "$lproj" ] || continue
+    cp -R "$lproj" "${WIDGET_DIR}/Contents/Resources/"
+done
+cat <<EOF > "${WIDGET_DIR}/Contents/Info.plist"
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleExecutable</key>
+    <string>MacWakeWidget</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.jarvisit.macwake.widget</string>
+    <key>CFBundleName</key>
+    <string>MacWake Widget</string>
+    <key>CFBundleDisplayName</key>
+    <string>MacWake</string>
+    <key>CFBundlePackageType</key>
+    <string>XPC!</string>
+    <key>CFBundleShortVersionString</key>
+    <string>$(grep -A1 CFBundleShortVersionString "${CONTENTS_DIR}/Info.plist" | grep string | sed 's/.*<string>\(.*\)<\/string>.*/\1/')</string>
+    <key>CFBundleVersion</key>
+    <string>$(grep -A1 '<key>CFBundleVersion</key>' "${CONTENTS_DIR}/Info.plist" | grep string | sed 's/.*<string>\(.*\)<\/string>.*/\1/')</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>14.0</string>
+    <key>NSExtension</key>
+    <dict>
+        <key>NSExtensionPointIdentifier</key>
+        <string>com.apple.widgetkit-extension</string>
+    </dict>
 </dict>
 </plist>
 EOF
@@ -171,6 +245,11 @@ codesign --force --options runtime --timestamp \
 echo "=== Signing privileged helper daemon ==="
 codesign --force --options runtime --timestamp \
     --sign "${SIGN_IDENTITY}" "${MACOS_DIR}/MacWakeHelper"
+
+echo "=== Signing WidgetKit extension ==="
+codesign --force --options runtime --timestamp \
+    --entitlements "$(pwd)/MacWakeWidget.entitlements" \
+    --sign "${SIGN_IDENTITY}" "${WIDGET_DIR}"
 
 echo "=== Signing main binary and app bundle ==="
 codesign --force --options runtime --timestamp --entitlements "${ENTITLEMENTS}" \
