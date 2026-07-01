@@ -336,7 +336,7 @@ struct MacWakeMenuView: View {
 
     private func rowDivider() -> some View { Divider().padding(.leading, 49) }
 
-    private func toggleRow(_ icon: String, _ tint: Color, _ title: String, _ binding: Binding<Bool>) -> some View {
+    private func toggleRow(_ icon: String, _ tint: Color, _ title: String, _ binding: Binding<Bool>, help: String? = nil) -> some View {
         HStack(spacing: 11) {
             iconTile(icon, tint)
             Text(LocalizedStringKey(title)).font(.subheadline)
@@ -344,6 +344,7 @@ struct MacWakeMenuView: View {
             Toggle("", isOn: binding).labelsHidden().toggleStyle(.switch).controlSize(.small)
         }
         .padding(.horizontal, 12).padding(.vertical, 8)
+        .help(help.map { LocalizedStringKey($0) } ?? "")
     }
 
     private func actionRow(_ icon: String, _ tint: Color, _ title: String, destructive: Bool = false, _ action: @escaping () -> Void) -> some View {
@@ -382,17 +383,21 @@ struct MacWakeMenuView: View {
             
             sectionLabel("General")
             settingsCard {
-                toggleRow("rectangle.on.rectangle", .blue, "Show Desktop Widget", $tracker.showWidget)
+                toggleRow("rectangle.on.rectangle", .blue, "Show Desktop Widget", $tracker.showWidget, help: "WIDGET_HELP")
                 if tracker.showWidget {
                     rowDivider()
-                    toggleRow("lock.fill", .gray, "Lock Widget Position", $tracker.isWidgetLocked)
+                    toggleRow("lock.fill", .gray, "Lock Widget Position", $tracker.isWidgetLocked, help: "WIDGET_LOCK_HELP")
                 }
                 rowDivider()
-                toggleRow("power", .green, "Launch at Login", launchAtLoginBinding)
+                toggleRow("power", .green, "Launch at Login", launchAtLoginBinding, help: "LAUNCH_AT_LOGIN_HELP")
                 rowDivider()
-                toggleRow("sparkles", .purple, "Enable Animations", $tracker.enableAnimations)
+                toggleRow("sparkles", .purple, "Enable Animations", $tracker.enableAnimations, help: "ANIMATIONS_HELP")
                 rowDivider()
-                toggleRow("oval.portrait.tophalf.filled", .indigo, "Dynamic Island Overlay", $tracker.enableDynamicIsland)
+                toggleRow("oval.portrait.tophalf.filled", .indigo, "Dynamic Island Overlay", $tracker.enableDynamicIsland, help: "DYNAMIC_ISLAND_HELP")
+                if tracker.enableDynamicIsland {
+                    rowDivider()
+                    toggleRow("hand.tap", .pink, "Dynamic Island Haptics", $tracker.enableDynamicIslandHaptics, help: "HAPTICS_HELP")
+                }
             }
 
             menuBarSection
@@ -459,7 +464,7 @@ struct MacWakeMenuView: View {
             rowDivider()
             toggleRow("percent", .green, "Battery %", $tracker.showMenuBarPercent)
             rowDivider()
-            toggleRow("bolt.fill", .orange, "Power / Time", $tracker.showMenuBarPower)
+            toggleRow("bolt.fill", .orange, "Power / Time", $tracker.showMenuBarPower, help: "MENUBAR_POWER_HELP")
             rowDivider()
             toggleRow("hourglass", .purple, "Time Remaining", $tracker.showMenuBarTimeRemaining)
             rowDivider()
@@ -527,6 +532,7 @@ struct MacWakeMenuView: View {
                     .labelsHidden()
                 }
                 .padding(.horizontal, 12).padding(.vertical, 9)
+                .help("ENERGY_MODE_HELP")
             }
         }
     }
@@ -554,6 +560,7 @@ struct MacWakeMenuView: View {
                     Toggle("", isOn: $chargeLimit.fanControlEnabled).labelsHidden().toggleStyle(.switch).controlSize(.small)
                 }
                 .padding(.horizontal, 12).padding(.vertical, 8)
+                .help("FAN_CONTROL_HELP")
 
                 if chargeLimit.fanControlEnabled {
                     rowDivider()
@@ -603,6 +610,7 @@ struct MacWakeMenuView: View {
                     Toggle("", isOn: $chargeLimit.isEnabled).labelsHidden().toggleStyle(.switch).controlSize(.small)
                 }
                 .padding(.horizontal, 12).padding(.vertical, 8)
+                .help("CL_HELP")
 
                 if chargeLimit.isEnabled {
                     rowDivider()
@@ -630,6 +638,7 @@ struct MacWakeMenuView: View {
                         Toggle("", isOn: $chargeLimit.sailingEnabled).labelsHidden().toggleStyle(.switch).controlSize(.small)
                     }
                     .padding(.horizontal, 12).padding(.vertical, 8)
+                    .help("SAILING_HELP")
                     if chargeLimit.sailingEnabled {
                         sliderBlock {
                             HStack {
@@ -651,6 +660,7 @@ struct MacWakeMenuView: View {
                         Toggle("", isOn: $chargeLimit.calibrationEnabled).labelsHidden().toggleStyle(.switch).controlSize(.small)
                     }
                     .padding(.horizontal, 12).padding(.vertical, 8)
+                    .help("CALIBRATION_HELP")
                     if chargeLimit.calibrationEnabled {
                         sliderBlock {
                             HStack {

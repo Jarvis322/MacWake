@@ -70,6 +70,13 @@ class BatteryTracker: ObservableObject {
             DynamicIslandManager.shared.updateSettings(enabled: enableDynamicIsland)
         }
     }
+    /// Off by default — a trackpad click "thud" with no visible cause the first time you
+    /// hover the notch is confusing for anyone who doesn't already know what it is.
+    @Published var enableDynamicIslandHaptics: Bool = false {
+        didSet {
+            UserDefaults.standard.set(enableDynamicIslandHaptics, forKey: "enableDynamicIslandHaptics")
+        }
+    }
     @Published var animatedMenuBarIcon: String = "battery.100.bolt"
     @Published var usbPortInfo: String?
 
@@ -376,6 +383,7 @@ class BatteryTracker: ObservableObject {
         } else {
             self.enableDynamicIsland = true
         }
+        self.enableDynamicIslandHaptics = UserDefaults.standard.bool(forKey: "enableDynamicIslandHaptics")
         
         // Use UserDefaults to read the value from cfprefsd (memory cache)
         if let defaults = UserDefaults(suiteName: "com.apple.batteryui.charging.mac") {
