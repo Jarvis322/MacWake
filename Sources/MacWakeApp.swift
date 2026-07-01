@@ -100,6 +100,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         // Never leave the adapter disabled (CHIE=8) after we quit, or the Mac would
         // keep discharging on AC until reboot. Best-effort synchronous restore.
         ChargeLimitManager.shared.restoreChargingOnQuit()
+        // Never leave keyboard/trackpad input blocked after we quit — the countdown
+        // timer already stops it on its own, but a quit mid-cleaning must not rely on
+        // that timer alone.
+        CleaningModeManager.shared.stop()
     }
 
     func userNotificationCenter(
