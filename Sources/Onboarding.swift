@@ -207,6 +207,14 @@ struct OnboardingView: View {
             .padding(.top, 6)
             Text("The core pulses faster the more power flows in. Color shifts on low battery or heat.")
                 .font(.system(size: 12)).foregroundColor(.secondary).multilineTextAlignment(.center).frame(maxWidth: 440)
+
+            HStack(spacing: 6) {
+                Image(systemName: "tray.and.arrow.down").foregroundColor(.secondary)
+                Text("Turn on the Shelf in Settings for a last-copied-text peek and a file drop tray.")
+                    .foregroundColor(.secondary)
+            }
+            .font(.system(size: 12))
+            .padding(.top, 4)
             Spacer()
         }
     }
@@ -265,18 +273,26 @@ struct OnboardingView: View {
                         Text("\(Int(fanRPM)) RPM").font(.caption.bold().monospacedDigit()).foregroundColor(.cyan)
                     }
                     Slider(value: $fanRPM, in: 0...6000, step: 100).tint(.cyan)
-                    Text("On Macs with fans — auto-reverts above 92°C.").font(.system(size: 10)).foregroundColor(.secondary)
+                    Text("Lives in the Monitor tab, next to Top Apps by CPU/RAM.").font(.system(size: 10)).foregroundColor(.secondary)
                 }
             }
             .frame(maxWidth: 380)
             .padding(.top, 4)
 
-            HStack(spacing: 6) {
-                Image(systemName: "terminal.fill").foregroundColor(.secondary)
-                Text("Plus a macwake command line tool — install it in Settings.")
-                    .foregroundColor(.secondary)
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 6) {
+                    Image(systemName: "terminal.fill").foregroundColor(.secondary)
+                    Text("Plus a macwake command line tool — install it in Settings.")
+                        .foregroundColor(.secondary)
+                }
+                HStack(spacing: 6) {
+                    Image(systemName: "hand.raised.slash.fill").foregroundColor(.secondary)
+                    Text("Cleaning Mode locks the keyboard/trackpad while you wipe the screen.")
+                        .foregroundColor(.secondary)
+                }
             }
             .font(.system(size: 12))
+            .frame(maxWidth: 400, alignment: .leading)
             .padding(.top, 6)
             Spacer()
         }

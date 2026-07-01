@@ -404,10 +404,6 @@ struct MacWakeMenuView: View {
                 }
             }
 
-            if tracker.enableDynamicIsland {
-                notchQuickActionsSection
-            }
-
             menuBarSection
 
             chargeLimitSection
@@ -447,53 +443,6 @@ struct MacWakeMenuView: View {
         // Guard against a garbage/uninitialized SMC min reading exceeding the computed
         // max — Slider(in:) requires a non-reversed range or it crashes.
         return max(computed, fanSliderMin + 100)
-    }
-
-    private func isNotchActionSelected(_ action: NotchQuickAction) -> Bool {
-        tracker.notchQuickActions.contains(action.rawValue)
-    }
-
-    private func toggleNotchAction(_ action: NotchQuickAction) {
-        if let idx = tracker.notchQuickActions.firstIndex(of: action.rawValue) {
-            tracker.notchQuickActions.remove(at: idx)
-        } else if tracker.notchQuickActions.count < 4 {
-            tracker.notchQuickActions.append(action.rawValue)
-        }
-    }
-
-    @ViewBuilder
-    private var notchQuickActionsSection: some View {
-        HStack {
-            sectionLabel("Dynamic Island Quick Actions")
-            Spacer()
-            Text("\(tracker.notchQuickActions.count)/4")
-                .font(.system(size: 10, weight: .medium))
-                .foregroundColor(.secondary)
-                .padding(.trailing, 4)
-        }
-        settingsCard {
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
-                ForEach(NotchQuickAction.allCases) { action in
-                    let selected = isNotchActionSelected(action)
-                    let atLimit = tracker.notchQuickActions.count >= 4 && !selected
-                    Button(action: { toggleNotchAction(action) }) {
-                        VStack(spacing: 4) {
-                            Image(systemName: action.icon).font(.system(size: 13, weight: .semibold))
-                            Text(LocalizedStringKey(action.label)).font(.system(size: 9, weight: .medium))
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 8)
-                        .foregroundColor(selected ? .white : .primary.opacity(atLimit ? 0.3 : 0.8))
-                        .background(selected ? Color.indigo : Color.primary.opacity(0.06))
-                        .cornerRadius(9)
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(atLimit)
-                }
-            }
-            .padding(12)
-        }
-        .help("NOTCH_ACTIONS_HELP")
     }
 
     @ViewBuilder
