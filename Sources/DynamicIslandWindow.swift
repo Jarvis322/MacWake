@@ -557,6 +557,7 @@ class DynamicIslandManager {
     }
 
     private func performHaptic() {
+        guard tracker?.enableDynamicIslandHaptics == true else { return }
         NSHapticFeedbackManager.defaultPerformer.perform(.levelChange, performanceTime: .now)
     }
 

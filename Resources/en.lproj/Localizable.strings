@@ -36,3 +36,17 @@
 "EFF_SCREEN_FMT" = "%@ min screen-on per 1%% battery";
 "USED_FMT" = "%d%% used";
 "EFF_SHORT_FMT" = "%@m per 1%%";
+
+/* Settings hover tooltips */
+"CL_HELP" = "Stops charging automatically at the percentage below, instead of always charging to 100%. Reduces long-term battery wear.";
+"SAILING_HELP" = "Lets the battery drift down and recharge within a range instead of holding a fixed level — less time parked at a high charge.";
+"CALIBRATION_HELP" = "Periodically drains the battery to about 15%, fully recharges it, and holds at 100% for an hour to keep the battery's charge readout accurate.";
+"ENERGY_MODE_HELP" = "Switches the macOS Energy Mode — Automatic balances performance and battery, Low Power extends battery life, High Power favors performance (on Macs that support it).";
+"FAN_CONTROL_HELP" = "Overrides automatic fan control with a fixed target speed. Experimental — automatically reverts to automatic if the Mac gets too hot.";
+"WIDGET_HELP" = "Shows a small always-visible battery gauge on the desktop, separate from the menu bar.";
+"WIDGET_LOCK_HELP" = "Prevents the desktop widget from being dragged or accidentally moved.";
+"LAUNCH_AT_LOGIN_HELP" = "Starts MacWake automatically when you log in.";
+"ANIMATIONS_HELP" = "Enables the charging animation and the animated menu-bar icon.";
+"DYNAMIC_ISLAND_HELP" = "Shows a notch-style overlay with charging status, alerts, and quick controls.";
+"HAPTICS_HELP" = "Gives a light trackpad click when the Dynamic Island opens or closes.";
+"MENUBAR_POWER_HELP" = "Shows charging wattage while plugged in, or time spent on screen while on battery.";

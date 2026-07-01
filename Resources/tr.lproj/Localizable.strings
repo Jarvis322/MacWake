@@ -61,6 +61,7 @@
 "Launch at Login" = "Girişte Başlat";
 "Enable Animations" = "Animasyonları Etkinleştir";
 "Dynamic Island Overlay" = "Dynamic Island Katmanı";
+"Dynamic Island Haptics" = "Dynamic Island Dokunsal Geri Bildirim";
 "Reset Session" = "Oturumu Sıfırla";
 "Check for Updates" = "Güncellemeleri Denetle";
 "Quit" = "Çıkış";
@@ -278,3 +279,17 @@
 "EFF_SCREEN_FMT" = "%%1 pil için %@ dk ekran";
 "USED_FMT" = "%%%d kullanıldı";
 "EFF_SHORT_FMT" = "%%1 için %@dk";
+
+/* Settings hover tooltips */
+"CL_HELP" = "Her zaman %100'e kadar şarj etmek yerine, aşağıda belirlediğin yüzdede otomatik olarak şarjı durdurur. Uzun vadede pil aşınmasını azaltır.";
+"SAILING_HELP" = "Pili sabit bir seviyede tutmak yerine bir bant içinde süzdürüp tekrar şarj eder — yüksek şarjda daha az zaman geçirir.";
+"CALIBRATION_HELP" = "Belirli aralıklarla pili ~%15'e kadar boşaltır, tam şarj eder ve %100'de bir saat tutar; böylece pilin şarj göstergesi doğru kalır.";
+"ENERGY_MODE_HELP" = "macOS Enerji Modunu değiştirir — Otomatik performans ile pili dengeler, Düşük Güç pil ömrünü uzatır, Yüksek Güç performansı önceliklendirir (destekleyen Mac'lerde).";
+"FAN_CONTROL_HELP" = "Otomatik fan kontrolünü sabit bir hedef hızla değiştirir. Deneysel — Mac çok ısınırsa otomatiğe geri döner.";
+"WIDGET_HELP" = "Menü çubuğundan ayrı olarak, masaüstünde her zaman görünen küçük bir pil göstergesi gösterir.";
+"WIDGET_LOCK_HELP" = "Masaüstü widget'ının sürüklenmesini veya yanlışlıkla taşınmasını engeller.";
+"LAUNCH_AT_LOGIN_HELP" = "Giriş yaptığında MacWake'i otomatik olarak başlatır.";
+"ANIMATIONS_HELP" = "Şarj animasyonunu ve animasyonlu menü çubuğu simgesini etkinleştirir.";
+"DYNAMIC_ISLAND_HELP" = "Şarj durumu, uyarılar ve hızlı kontroller içeren çentik tarzı bir katman gösterir.";
+"HAPTICS_HELP" = "Dynamic Island açılıp kapandığında hafif bir trackpad tıklaması hissettirir.";
+"MENUBAR_POWER_HELP" = "Şarj olurken watt değerini, pil ile çalışırken ekranda geçirilen süreyi gösterir.";
