@@ -137,6 +137,18 @@
 "Dynamic Island Shelf" = "Dynamic Island Raf";
 "NOTCH_SHELF_HELP" = "Genişletilmiş Dynamic Island'a bir Raf sütunu ekler: son kopyaladığın metnin önizlemesi ve dosyaları geçici olarak sürükleyebileceğin küçük bir tepsi. Panoyu dinlediği için varsayılan olarak kapalıdır.";
 "Drop files here" = "Dosyaları buraya bırak";
+
+/* Cleaning Mode */
+"Cleaning Mode" = "Temizlik Modu";
+"Lock keyboard & trackpad" = "Klavye ve trackpad'i kilitle";
+"So wiping the screen doesn't type or click anything." = "Böylece ekranı silerken bir şey yazılmaz veya tıklanmaz.";
+"CLEANING_MODE_HELP" = "Ekranı veya klavyeyi temizlerken yanlışlık olmasın diye, tüm klavye ve trackpad girdisini sistem genelinde geçici olarak durdurur. Erişilebilirlik izni gerektirir.";
+"Duration" = "Süre";
+"Needs Accessibility permission — click Start, approve it in System Settings, then click Start again." = "Erişilebilirlik izni gerekiyor — Başlat'a tıkla, Sistem Ayarları'nda onayla, sonra tekrar Başlat'a tıkla.";
+"Start Cleaning Mode" = "Temizlik Modunu Başlat";
+"Freezes ALL keyboard/trackpad input, including this app. Hold Escape for 1.5s to unlock early." = "Bu uygulama dahil TÜM klavye/trackpad girdisini dondurur. Erken kilidi açmak için Esc tuşunu 1.5 saniye basılı tut.";
+"CLEANING_SECONDS_FMT" = "%d saniye kaldı";
+"Keyboard and trackpad input is paused. Hold Escape for 1.5s to unlock early." = "Klavye ve trackpad girdisi duraklatıldı. Erken kilidi açmak için Esc tuşunu 1.5 saniye basılı tut.";
 "BATTERY" = "PİL";
 
 /* Session detail labels */

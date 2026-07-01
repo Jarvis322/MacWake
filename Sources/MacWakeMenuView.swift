@@ -6,6 +6,8 @@ struct MacWakeMenuView: View {
     @ObservedObject var tracker: BatteryTracker
     @ObservedObject private var chargeLimit = ChargeLimitManager.shared
     @ObservedObject private var processMonitor = ProcessMonitor.shared
+    @ObservedObject private var cleaningMode = CleaningModeManager.shared
+    @State private var cleaningDuration: Int = 30
     @Environment(\.colorScheme) var colorScheme
     @State private var isLaunchAtLoginEnabled: Bool = LaunchAgentManager.isEnabled
     @State private var selectedTab: Int = 0
@@ -414,6 +416,8 @@ struct MacWakeMenuView: View {
 
             cliSection
 
+            cleaningModeSection
+
             sectionLabel("Actions")
             settingsCard {
                 actionRow("sparkles", .pink, "Welcome Tour") { OnboardingManager.shared.show() }
@@ -553,6 +557,55 @@ struct MacWakeMenuView: View {
                 }
             }
             .padding(.horizontal, 12).padding(.vertical, 9)
+        }
+    }
+
+    @ViewBuilder
+    private var cleaningModeSection: some View {
+        sectionLabel("Cleaning Mode")
+        settingsCard {
+            HStack(spacing: 11) {
+                iconTile("hand.raised.slash.fill", .cyan)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Lock keyboard & trackpad").font(.subheadline)
+                    Text("So wiping the screen doesn't type or click anything.")
+                        .font(.system(size: 10)).foregroundColor(.secondary)
+                }
+                Spacer()
+            }
+            .padding(.horizontal, 12).padding(.vertical, 8)
+            .help("CLEANING_MODE_HELP")
+
+            rowDivider()
+            HStack {
+                Text("Duration").font(.caption).foregroundColor(.secondary)
+                Spacer()
+                Picker("", selection: $cleaningDuration) {
+                    Text("15s").tag(15)
+                    Text("30s").tag(30)
+                    Text("60s").tag(60)
+                    Text("90s").tag(90)
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .frame(width: 180)
+            }
+            .padding(.horizontal, 12).padding(.vertical, 8)
+
+            rowDivider()
+            VStack(alignment: .leading, spacing: 6) {
+                if !cleaningMode.hasAccessibilityPermission {
+                    Text(String(localized: "Needs Accessibility permission — click Start, approve it in System Settings, then click Start again."))
+                        .font(.system(size: 10)).foregroundColor(.secondary)
+                }
+                Button(action: { cleaningMode.start(durationSeconds: cleaningDuration) }) {
+                    HStack { Image(systemName: "lock.fill"); Text("Start Cleaning Mode") }.frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent).controlSize(.small).tint(.cyan)
+                Text(String(localized: "Freezes ALL keyboard/trackpad input, including this app. Hold Escape for 1.5s to unlock early."))
+                    .font(.system(size: 10)).foregroundColor(.secondary)
+            }
+            .padding(.horizontal, 12).padding(.vertical, 8)
         }
     }
 
