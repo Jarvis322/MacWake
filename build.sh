@@ -59,9 +59,9 @@ cat <<EOF > "${CONTENTS_DIR}/Info.plist"
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.36</string>
+    <string>1.37</string>
     <key>CFBundleVersion</key>
-    <string>37</string>
+    <string>38</string>
     <key>LSMinimumSystemVersion</key>
     <string>14.0</string>
     <key>LSApplicationCategoryType</key>
@@ -270,7 +270,7 @@ echo "Local copy: $(pwd)/${APP_DIR}"
 echo "/Applications copy: /Applications/${APP_NAME}.app"
 echo ""
 echo "To notarize and distribute:"
-echo "  1. ditto -c -k --keepParent ${APP_DIR} Wake-1.0.zip"
-echo "  2. xcrun notarytool submit Wake-1.0.zip --keychain-profile wake-notary --wait"
-echo "  3. xcrun stapler staple ${APP_DIR} && xcrun stapler staple Wake-1.0.zip"
-echo "  4. .build/artifacts/sparkle/Sparkle/bin/sign_update Wake-1.0.zip  # get EdDSA sig for appcast.xml"
+echo "  1. ditto -c -k --keepParent ${APP_DIR} Wake-1.37.zip"
+echo "  2. xcrun notarytool submit Wake-1.37.zip --keychain-profile wake-notary --wait"
+echo "  3. xcrun stapler staple ${APP_DIR} && xcrun stapler staple Wake-1.37.zip"
+echo "  4. .build/artifacts/sparkle/Sparkle/bin/sign_update Wake-1.37.zip  # get EdDSA sig for appcast.xml"

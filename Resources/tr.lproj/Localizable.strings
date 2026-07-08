@@ -341,6 +341,7 @@
 "EFF_SCREEN_FMT" = "%%1 pil için %@ dk ekran";
 "USED_FMT" = "%%%d kullanıldı";
 "EFF_SHORT_FMT" = "%%1 için %@dk";
+"RAW_CAPACITY_NOTE_FMT" = "Pil kontrolcüsünden ham kapasite: %%%d";
 
 /* Settings hover tooltips */
 "CL_HELP" = "Her zaman %100'e kadar şarj etmek yerine, aşağıda belirlediğin yüzdede otomatik olarak şarjı durdurur. Uzun vadede pil aşınmasını azaltır.";

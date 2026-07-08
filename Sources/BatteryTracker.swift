@@ -29,6 +29,7 @@ class BatteryTracker: ObservableObject {
     @Published var powerAdapterName: String?
     @Published var isOriginalAppleAdapter: Bool = false
     @Published var batteryHealth: Int = 100
+    @Published var rawBatteryHealth: Int?
     @Published var batteryCycles: Int = 0
     @Published var batteryTemperature: Double = 0.0
     @Published var temperatureSamples: [Double] = []
@@ -753,16 +754,7 @@ class BatteryTracker: ObservableObject {
                 batteryCycles = cycles
             }
             
-            // Read Battery Health
-            if let nominalMax = dict["NominalChargeCapacity"] as? Int,
-               let design = dict["DesignCapacity"] as? Int, design > 0 {
-                batteryHealth = min(100, nominalMax * 100 / design)
-            } else if let rawMax = dict["AppleRawMaxCapacity"] as? Int,
-                      let design = dict["DesignCapacity"] as? Int, design > 0 {
-                batteryHealth = min(100, rawMax * 100 / design)
-            } else if let maxCap = dict["MaxCapacity"] as? Int {
-                batteryHealth = maxCap
-            }
+            updateBatteryHealth(from: dict)
             
             // Calculate dynamic watts whether plugged in or not
             var calculatedWatts: Double = 0
@@ -795,6 +787,30 @@ class BatteryTracker: ObservableObject {
         checkSlowCharging()
         checkLowBatteryAlert()
         updateWidgetSnapshot()
+    }
+
+    private func updateBatteryHealth(from dict: [String: Any]) {
+        let design = dict["DesignCapacity"] as? Int
+        let nominalMax = dict["NominalChargeCapacity"] as? Int
+        let rawMax = dict["AppleRawMaxCapacity"] as? Int
+
+        let rawHealth: Int?
+        if let nominalMax, let design, design > 0 {
+            rawHealth = min(100, nominalMax * 100 / design)
+        } else if let rawMax, let design, design > 0 {
+            rawHealth = min(100, rawMax * 100 / design)
+        } else {
+            rawHealth = nil
+        }
+
+        rawBatteryHealth = rawHealth
+
+        if let reportedMaxCapacity = dict["MaxCapacity"] as? Int,
+           (0...100).contains(reportedMaxCapacity) {
+            batteryHealth = reportedMaxCapacity
+        } else if let rawHealth {
+            batteryHealth = rawHealth
+        }
     }
 
     /// Re-reads battery health/cycles on demand and logs a new decay entry if it changed.

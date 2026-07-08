@@ -61,6 +61,7 @@
 "HEATGUARD_HELP" = "Pauses charging while the battery is above 40°C and resumes at 37°C — charging heat is a major driver of long-term battery wear.";
 "HEATGUARD_PAUSED_FMT" = "Battery at %.0f°C — charging paused until it cools.";
 "SCHEDULE_HELP" = "Holds the normal limit overnight, then starts charging early enough to reach 100% by the time you pick — every day, automatically. Normal limiting resumes about two hours after the target.";
+"RAW_CAPACITY_NOTE_FMT" = "Raw capacity from battery controller: %d%%";
 "Health %d%%" = "Health %d%%";
 "Limit %d%%" = "Limit %d%%";
 "INTENT_LIMIT_SET_FMT" = "Charge limit set to %d%%.";

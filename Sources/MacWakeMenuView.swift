@@ -1145,6 +1145,12 @@ struct MacWakeMenuView: View {
                     color: tracker.batteryTemperature > 42 ? .red : orangeColor
                 )
             }
+
+            if let rawHealth = tracker.rawBatteryHealth, rawHealth != tracker.batteryHealth {
+                Text(String(format: String(localized: "RAW_CAPACITY_NOTE_FMT"), rawHealth))
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            }
         }
     }
 
