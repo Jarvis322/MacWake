@@ -40,7 +40,13 @@ let package = Package(
         ),
         .executableTarget(
             name: "MacWakeWidget",
-            path: "Widget"
+            path: "Widget",
+            // App extensions must use NSExtensionMain as their Mach-O entry point (App
+            // Store validation 90898). swift build's default executable entry is _main;
+            // override it for the widget appex.
+            linkerSettings: [
+                .unsafeFlags(["-Xlinker", "-e", "-Xlinker", "_NSExtensionMain"])
+            ]
         )
     ]
 )
