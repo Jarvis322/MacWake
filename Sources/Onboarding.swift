@@ -60,7 +60,12 @@ final class OnboardingManager: NSObject, NSWindowDelegate {
 struct OnboardingView: View {
     let onFinish: () -> Void
     @State private var page = 0
-    private let total = 7
+    /// Logical page ids in presentation order. The App Store build skips the pages that
+    /// tout helper-backed features (charge limit, sailing/calibration, power tools).
+    private var pageOrder: [Int] {
+        Distribution.isAppStore ? [0, 3, 4, 6] : [0, 1, 2, 3, 4, 5, 6]
+    }
+    private var total: Int { pageOrder.count }
 
     // Interactive demo state
     @State private var demoLimit: Double = 80
@@ -73,13 +78,13 @@ struct OnboardingView: View {
     @State private var mbTemp = false
 
     private var accent: Color {
-        [.green, .green, .teal, .cyan, .blue, .indigo, .orange][page]
+        [.green, .green, .teal, .cyan, .blue, .indigo, .orange][pageOrder[page]]
     }
 
     var body: some View {
         VStack(spacing: 0) {
             ZStack {
-                switch page {
+                switch pageOrder[page] {
                 case 0: welcomePage
                 case 1: chargeLimitPage
                 case 2: sailingCalibrationPage

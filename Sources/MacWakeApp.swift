@@ -1,7 +1,9 @@
 import SwiftUI
 import AppKit
 import UserNotifications
+#if !APPSTORE
 import Sparkle
+#endif
 import TelemetryDeck
 
 /// Coordinates which features need the app temporarily promoted to a regular (Dock) app
@@ -32,17 +34,19 @@ final class RegularModeCoordinator {
 }
 
 @MainActor
-class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDelegate, SPUStandardUserDriverDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDelegate {
     /// SwiftUI's `@NSApplicationDelegateAdaptor` installs its own `SwiftUI.AppDelegate`
     /// as `NSApp.delegate` and forwards lifecycle to ours, so `NSApp.delegate as? AppDelegate`
     /// is nil. Expose our instance directly for the menu's "Check for Updates" action.
     static private(set) weak var shared: AppDelegate?
 
+    #if !APPSTORE
     lazy var updaterController = SPUStandardUpdaterController(
         startingUpdater: true,
         updaterDelegate: nil,
         userDriverDelegate: self
     )
+    #endif
 
     override init() {
         super.init()
@@ -51,7 +55,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         UNUserNotificationCenter.current().delegate = self
+        #if !APPSTORE
         _ = updaterController   // force-start the updater at launch
+        #endif
 
         let config = TelemetryDeck.Config(appID: "47BC5AD6-3456-4A13-97F3-10C169BFDAD6")
         TelemetryDeck.initialize(config: config)
@@ -63,26 +69,18 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         }
     }
 
-    /// Called from the menu's "Check for Updates" button.
+    /// Called from the menu's "Check for Updates" button. No-op on the App Store build —
+    /// the row is hidden there and updates are the store's job.
     @objc func checkForUpdates() {
+        #if !APPSTORE
         elevateForUpdateUI()
         updaterController.checkForUpdates(nil)
+        #endif
     }
 
-    private func elevateForUpdateUI() {
+    fileprivate func elevateForUpdateUI() {
         RegularModeCoordinator.shared.acquire("sparkle")
         NSApp.activate(ignoringOtherApps: true)
-    }
-
-    // SPUStandardUserDriverDelegate — bring the app forward before any Sparkle alert.
-    // Sparkle calls these from its own internal queue, not necessarily the main thread,
-    // so they stay nonisolated and hop to MainActor explicitly for the actual work.
-    nonisolated var supportsGentleScheduledUpdateReminders: Bool { true }
-
-    nonisolated func standardUserDriverWillShowModalAlert() {
-        Task { @MainActor in
-            elevateForUpdateUI()
-        }
     }
 
     func applicationDidResignActive(_ notification: Notification) {
@@ -113,6 +111,21 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         [.banner, .sound]
     }
 }
+
+#if !APPSTORE
+// SPUStandardUserDriverDelegate — bring the app forward before any Sparkle alert.
+// Sparkle calls these from its own internal queue, not necessarily the main thread,
+// so they stay nonisolated and hop to MainActor explicitly for the actual work.
+extension AppDelegate: SPUStandardUserDriverDelegate {
+    nonisolated var supportsGentleScheduledUpdateReminders: Bool { true }
+
+    nonisolated func standardUserDriverWillShowModalAlert() {
+        Task { @MainActor in
+            elevateForUpdateUI()
+        }
+    }
+}
+#endif
 
 @main
 struct MacWakeApp: App {

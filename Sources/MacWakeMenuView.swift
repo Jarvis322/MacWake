@@ -1,6 +1,5 @@
 import SwiftUI
 import Combine
-import Sparkle
 
 struct MacWakeMenuView: View {
     @ObservedObject var tracker: BatteryTracker
@@ -170,7 +169,11 @@ struct MacWakeMenuView: View {
             TabButton(title: "Session", icon: "chart.bar.fill", isSelected: selectedTab == 0, activeColor: greenColor) { selectedTab = 0 }
             TabButton(title: "History", icon: "clock.fill", isSelected: selectedTab == 1, activeColor: orangeColor) { selectedTab = 1 }
             TabButton(title: "Hardware", icon: "cpu", isSelected: selectedTab == 2, activeColor: blueColor) { selectedTab = 2 }
-            TabButton(title: "Monitor", icon: "chart.line.uptrend.xyaxis", isSelected: selectedTab == 3, activeColor: .indigo) { selectedTab = 3 }
+            // The Monitor tab needs SMC fan access and `top` process visibility — both
+            // unavailable inside the App Store sandbox, so the tab is dropped there.
+            if !Distribution.isAppStore {
+                TabButton(title: "Monitor", icon: "chart.line.uptrend.xyaxis", isSelected: selectedTab == 3, activeColor: .indigo) { selectedTab = 3 }
+            }
             TabButton(title: "Settings", icon: "gearshape.fill", isSelected: selectedTab == 4, activeColor: .purple) { selectedTab = 4 }
         }
         .padding(4)
@@ -419,13 +422,17 @@ struct MacWakeMenuView: View {
 
             menuBarSection
 
-            chargeLimitSection
+            // Sandboxed App Store build: no privileged helper, so no charge control /
+            // energy / CLI; no CGEventTap, so no Cleaning Mode; updates come from the store.
+            if !Distribution.isAppStore {
+                chargeLimitSection
 
-            energyModeSection
+                energyModeSection
 
-            cliSection
+                cliSection
 
-            cleaningModeSection
+                cleaningModeSection
+            }
 
             sectionLabel("Actions")
             settingsCard {
@@ -434,8 +441,10 @@ struct MacWakeMenuView: View {
                 actionRow("arrow.clockwise", .orange, "Reset Session") { tracker.resetCurrentSession() }
                 rowDivider()
                 actionRow("square.and.arrow.up", .teal, "Export Battery Data (CSV)") { tracker.exportDataAsCSV() }
-                rowDivider()
-                actionRow("arrow.down.circle.fill", .blue, "Check for Updates") { AppDelegate.shared?.checkForUpdates() }
+                if !Distribution.isAppStore {
+                    rowDivider()
+                    actionRow("arrow.down.circle.fill", .blue, "Check for Updates") { AppDelegate.shared?.checkForUpdates() }
+                }
                 rowDivider()
                 actionRow("power", .red, "Quit MacWake", destructive: true) { NSApplication.shared.terminate(nil) }
             }

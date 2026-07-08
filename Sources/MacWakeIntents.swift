@@ -6,6 +6,7 @@ import Foundation
 // and copies the result into Contents/Resources. Intents run inside the app process
 // (AppIntents launches the menu-bar app in the background if it isn't running).
 
+#if !APPSTORE
 struct SetChargeLimitIntent: AppIntent {
     static let title: LocalizedStringResource = "Set Charge Limit"
     static let description = IntentDescription("Turns on charge limiting and sets the maximum battery percentage.")
@@ -59,6 +60,8 @@ struct StartCleaningModeIntent: AppIntent {
     }
 }
 
+#endif
+
 struct BatteryStatusIntent: AppIntent {
     static let title: LocalizedStringResource = "Get Battery Status"
     static let description = IntentDescription("Returns the battery level, power source, health, and temperature.")
@@ -79,12 +82,14 @@ struct BatteryStatusIntent: AppIntent {
 
 struct MacWakeShortcuts: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
+        #if !APPSTORE
         AppShortcut(
             intent: TopUpIntent(),
             phrases: ["Charge to full with \(.applicationName)"],
             shortTitle: "Charge to 100% Once",
             systemImageName: "battery.100.bolt"
         )
+        #endif
         AppShortcut(
             intent: BatteryStatusIntent(),
             phrases: ["Get battery status with \(.applicationName)"],

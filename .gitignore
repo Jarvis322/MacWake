@@ -26,3 +26,6 @@ test_*.swift
 dump_*.swift
 scan_*.swift
 list_smc.swift
+appstore-build/
+.build-appstore/
+profiles/

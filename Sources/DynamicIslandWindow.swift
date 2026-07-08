@@ -75,7 +75,7 @@ struct DynamicIslandPanelView: View {
     @ObservedObject var tracker: BatteryTracker
     @ObservedObject private var sm = DynamicIslandStateManager.shared
 
-    private var openedSize: CGSize { CGSize(width: tracker.enableNotchShelf ? 847 : 660, height: 188) }
+    private var openedSize: CGSize { DynamicIslandManager.openedSize(shelfEnabled: tracker.enableNotchShelf) }
     private let flareSpacing: CGFloat = 16   // size of the concave top-corner flare
 
     private var isOpened: Bool { sm.state != .compact }
@@ -196,13 +196,17 @@ struct DynamicIslandPanelView: View {
             leftWidget
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            Rectangle()
-                .fill(Color.white.opacity(0.1))
-                .frame(width: 1)
-                .padding(.vertical, 8)
+            // Temperatures/fan need SMC access — dead inside the App Store sandbox,
+            // so the whole column is dropped there rather than showing zeros.
+            if !Distribution.isAppStore {
+                Rectangle()
+                    .fill(Color.white.opacity(0.1))
+                    .frame(width: 1)
+                    .padding(.vertical, 8)
 
-            rightWidget
-                .frame(maxWidth: .infinity, alignment: .leading)
+                rightWidget
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
 
             if tracker.enableNotchShelf {
                 Rectangle()
@@ -447,7 +451,14 @@ class DynamicIslandManager {
     // The window is a fixed full-width strip across the top; the SwiftUI content
     // morphs the notch shape. Height comfortably fits the opened panel.
     private let stripHeight: CGFloat = 300
-    private var openedSize: CGSize { CGSize(width: (tracker?.enableNotchShelf ?? false) ? 847 : 660, height: 188) }
+    private var openedSize: CGSize { Self.openedSize(shelfEnabled: tracker?.enableNotchShelf ?? false) }
+
+    /// Single source of truth for the expanded panel size, shared with the SwiftUI view.
+    /// The App Store build drops the temperatures column (sandbox), so it's narrower.
+    static func openedSize(shelfEnabled: Bool) -> CGSize {
+        let base: CGFloat = Distribution.isAppStore ? 470 : 660
+        return CGSize(width: shelfEnabled ? base + 187 : base, height: 188)
+    }
     private let hoverInset: CGFloat = -4   // expands the notch hover target a touch
 
     private var islandWindow: NSPanel?
