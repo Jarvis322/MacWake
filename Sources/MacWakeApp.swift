@@ -61,7 +61,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
 
         let config = TelemetryDeck.Config(appID: "47BC5AD6-3456-4A13-97F3-10C169BFDAD6")
         TelemetryDeck.initialize(config: config)
-        TelemetryDeck.signal("app.launched")
+        // Same TelemetryDeck app id for both distributions — the channel parameter is
+        // what keeps App Store and GitHub numbers separable in the dashboard.
+        TelemetryDeck.signal("app.launched", parameters: ["channel": Distribution.isAppStore ? "appstore" : "github"])
 
         // First-run feature tour.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
