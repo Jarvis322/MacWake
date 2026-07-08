@@ -1251,7 +1251,7 @@ class BatteryTracker: ObservableObject {
     /// otherwise at most every 5 minutes so we stay well inside the reload budget.
     func updateWidgetSnapshot() {
         guard let container = FileManager.default.containerURL(
-            forSecurityApplicationGroupIdentifier: "6NK6D7LL79.com.jarvisit.macwake") else { return }
+            forSecurityApplicationGroupIdentifier: Distribution.appGroupID) else { return }
         let cl = ChargeLimitManager.shared
         let snap = WidgetSnapshot(
             level: currentBatteryLevel, isPluggedIn: isPluggedIn, health: batteryHealth,

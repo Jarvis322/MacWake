@@ -5,7 +5,13 @@ import SwiftUI
 // writes a small JSON snapshot into the shared app-group container on every heartbeat;
 // this sandboxed extension only ever reads that file — no IOKit, no helper access.
 
+// Must mirror Distribution.appGroupID in the app target (this extension is a separate
+// module): team-prefixed for Developer ID, portal-registered "group." for App Store.
+#if APPSTORE
+let kAppGroupID = "group.com.jarvisit.macwake"
+#else
 let kAppGroupID = "6NK6D7LL79.com.jarvisit.macwake"
+#endif
 
 struct BatterySnapshot: Codable {
     var level: Int
