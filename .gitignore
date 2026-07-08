@@ -26,11 +26,12 @@ test_*.swift
 dump_*.swift
 scan_*.swift
 list_smc.swift
-AppStore/appstore-build/
 appstore-build/
 .build-appstore/
-AppStore/profiles/
 
 # Signing certs — NEVER commit private keys
 *.p12
 MacWake-Secrets/
+
+# App Store build tooling — local only, keep out of the public repo
+AppStore/
