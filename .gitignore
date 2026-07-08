@@ -26,9 +26,10 @@ test_*.swift
 dump_*.swift
 scan_*.swift
 list_smc.swift
+AppStore/appstore-build/
 appstore-build/
 .build-appstore/
-profiles/
+AppStore/profiles/
 
 # Signing certs — NEVER commit private keys
 *.p12
