@@ -8,7 +8,7 @@ import SwiftUI
 // Must mirror Distribution.appGroupID in the app target (this extension is a separate
 // module): team-prefixed for Developer ID, portal-registered "group." for App Store.
 #if APPSTORE
-let kAppGroupID = "group.com.jarvisit.macwake"
+let kAppGroupID = "group.jarvisit.macwake"
 #else
 let kAppGroupID = "6NK6D7LL79.com.jarvisit.macwake"
 #endif

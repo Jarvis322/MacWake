@@ -29,3 +29,7 @@ list_smc.swift
 appstore-build/
 .build-appstore/
 profiles/
+
+# Signing certs — NEVER commit private keys
+*.p12
+MacWake-Secrets/

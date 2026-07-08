@@ -6,9 +6,9 @@ import Foundation
 enum Distribution {
     #if APPSTORE
     static let isAppStore = true
-    /// App Store requires a portal-registered group, and the portal only accepts the
-    /// "group." prefix.
-    static let appGroupID = "group.com.jarvisit.macwake"
+    /// Portal-registered group (must match exactly what the provisioning profiles
+    /// authorize — the App Group was registered as group.jarvisit.macwake).
+    static let appGroupID = "group.jarvisit.macwake"
     #else
     static let isAppStore = false
     /// Team-prefixed legacy style: auto-authorized for same-team Developer ID apps with
