@@ -1,3 +1,4 @@
+#if !APPSTORE
 import Foundation
 
 /// Installs/removes the embedded `macwake` command-line tool by symlinking it into
@@ -38,3 +39,5 @@ enum CLIInstaller {
         return err == nil
     }
 }
+
+#endif

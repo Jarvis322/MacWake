@@ -190,6 +190,7 @@
 "Cleaning Mode is on. Hold Escape to unlock early." = "Temizlik Modu açık. Erken kilidi açmak için Esc'i basılı tut.";
 "MacWake is still starting up — try again in a moment." = "MacWake hâlâ başlıyor — birazdan tekrar dene.";
 "AC Power" = "Prize Bağlı";
+"Battery" = "Pil";
 "INTENT_STATUS_FMT" = "Pil %%%1$d, %2$@, sağlık %%%3$d, sıcaklık %4$.1f°C.";
 "BATTERY" = "PİL";
 

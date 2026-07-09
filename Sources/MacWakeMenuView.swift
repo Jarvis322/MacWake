@@ -16,7 +16,9 @@ struct MacWakeMenuView: View {
     @State private var isLaunchAtLoginEnabled: Bool = LaunchAgentManager.isEnabled
     @State private var selectedTab: Int = 0
     @State private var isScrolledToBottom = false
+    #if !APPSTORE
     @State private var isCLIInstalled = CLIInstaller.isInstalled
+    #endif
     @State private var processSortMode: Int = 0 // 0 = CPU, 1 = RAM
     private let timer = Timer.publish(every: 1.0, on: .main, in: .common).autoconnect()
     @State private var timerActive = true
@@ -137,7 +139,9 @@ struct MacWakeMenuView: View {
             tracker.updateDynamicWatts()
             isLaunchAtLoginEnabled = LaunchAgentManager.isEnabled
             chargeLimit.refreshStatus()
+            #if !APPSTORE
             isCLIInstalled = CLIInstaller.isInstalled
+            #endif
             timerActive = true
             #if !APPSTORE
             // .menuBarExtraStyle(.window) keeps this view (and selectedTab) alive across
@@ -522,6 +526,7 @@ struct MacWakeMenuView: View {
         }
     }
 
+    #if !APPSTORE
     @ViewBuilder
     private var cliSection: some View {
         sectionLabel("Command Line Tool")
@@ -552,6 +557,7 @@ struct MacWakeMenuView: View {
             .padding(.horizontal, 12).padding(.vertical, 9)
         }
     }
+    #endif
 
     #if !APPSTORE
     @ViewBuilder

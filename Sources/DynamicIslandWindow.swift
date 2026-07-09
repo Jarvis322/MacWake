@@ -601,6 +601,20 @@ class DynamicIslandManager {
             }
             .store(in: &cancellables)
 
+        #if !APPSTORE
+        // Music appearing/disappearing changes openedSize (width += 210), which shifts the
+        // hover hit-test rect. Only recomputeLayout() (via positionWindow) refreshes the
+        // cached openedRect — without this the rect goes stale when a song starts or stops,
+        // so the expanded panel collapses out from under the cursor. Recompute on change.
+        Publishers.Merge(
+            NowPlayingManager.shared.$info.map { _ in () },
+            NowPlayingManager.shared.$isEnabled.map { _ in () }
+        )
+        .receive(on: RunLoop.main)
+        .sink { [weak self] in self?.recomputeLayout() }
+        .store(in: &cancellables)
+        #endif
+
         screenObserver = NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { [weak self] _ in
             Task { @MainActor in self?.positionWindow() }
         }

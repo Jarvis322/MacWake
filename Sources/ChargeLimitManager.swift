@@ -24,7 +24,13 @@ final class ChargeLimitManager: ObservableObject {
     @Published var isEnabled: Bool {
         didSet {
             UserDefaults.standard.set(isEnabled, forKey: "chargeLimitEnabled")
-            if !isEnabled { Task { await self.restoreCharging() } }
+            if !isEnabled {
+                // A calibration in progress would otherwise be stranded: evaluate() bails
+                // at its `isEnabled` guard, so calibrationActive never clears and even the
+                // timeout backstop stops firing. Cancelling also restores charging.
+                if calibrationActive { cancelCalibration() }
+                else { Task { await self.restoreCharging() } }
+            }
         }
     }
 
@@ -82,8 +88,16 @@ final class ChargeLimitManager: ObservableObject {
     /// through 09:00 instead of instantly drifting back down to the limit. Today's AND
     /// tomorrow's occurrences are both checked: today's covers the hold-past-target
     /// stretch after the time passes, tomorrow's covers leads that span midnight.
+    /// The target we've committed to charging for, if any. Latching is essential: the
+    /// lead is sized off `missing`, which shrinks as the battery fills, pushing the
+    /// open-boundary (`target - lead`) LATER in real time. Without a latch, a Mac that
+    /// charges faster than the clock re-crosses that moving boundary and stutters —
+    /// pause/resume/pause near ~95% — flapping the SMC and Dynamic Island. Once the
+    /// window opens for a target, we hold it open through the post-target window.
+    private var scheduledWindowLatch: Date?
+
     private func scheduledChargeWindow(batteryLevel: Int, now: Date = Date()) -> Bool {
-        guard scheduledChargeEnabled else { return false }
+        guard scheduledChargeEnabled else { scheduledWindowLatch = nil; return false }
         let cal = Calendar.current
         var comps = cal.dateComponents([.year, .month, .day], from: now)
         comps.hour = scheduledChargeMinutes / 60
@@ -95,10 +109,18 @@ final class ChargeLimitManager: ObservableObject {
 
         for dayOffset in 0...1 {
             guard let target = cal.date(byAdding: .day, value: dayOffset, to: todayTarget) else { continue }
-            if now >= target.addingTimeInterval(-leadSeconds), now <= target.addingTimeInterval(2 * 3600) {
+            let closeAt = target.addingTimeInterval(2 * 3600)
+            // Already committed to this target and still within its window → stay open,
+            // regardless of how far the shrinking lead has drifted the open-boundary.
+            if scheduledWindowLatch == target, now <= closeAt {
+                return true
+            }
+            if now >= target.addingTimeInterval(-leadSeconds), now <= closeAt {
+                scheduledWindowLatch = target
                 return true
             }
         }
+        scheduledWindowLatch = nil
         return false
     }
 
@@ -706,7 +728,10 @@ final class ChargeLimitManager: ObservableObject {
     // MARK: - Energy Mode
 
     /// Reads the current macOS Energy Mode from `pmset -g custom` (no root needed).
+    /// Energy Mode is a helper-backed feature; the App Store build has no helper and can't
+    /// spawn subprocesses in the sandbox, so this whole path (Process/pmset) is compiled out.
     func readEnergyMode() {
+        #if !APPSTORE
         let p = Process()
         p.executableURL = URL(fileURLWithPath: "/usr/bin/pmset")
         p.arguments = ["-g", "custom"]
@@ -727,8 +752,10 @@ final class ChargeLimitManager: ObservableObject {
         } catch {
             // pmset unavailable — leave defaults.
         }
+        #endif
     }
 
+    #if !APPSTORE
     private func lastValue(of key: String, in text: String) -> Int {
         var result = 0
         for line in text.split(separator: "\n") where line.contains(key) {
@@ -737,6 +764,7 @@ final class ChargeLimitManager: ObservableObject {
         }
         return result
     }
+    #endif
 
     /// Applies an Energy Mode via the helper (needs root). 0=Auto, 1=Low, 2=High.
     func setEnergyMode(_ mode: Int) {

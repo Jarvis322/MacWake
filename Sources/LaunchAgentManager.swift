@@ -15,7 +15,13 @@ struct LaunchAgentManager {
     }
     
     static func setEnabled(_ enable: Bool) {
+        // Migrating away from the old GitHub LaunchAgent uses launchctl + a file removal
+        // under ~/Library/LaunchAgents — both denied by the App Store sandbox, and App
+        // Store installs never had that legacy agent anyway, so skip it there. Launch-at-
+        // Login itself (SMAppService below) works in both builds.
+        #if !APPSTORE
         cleanupLegacyLaunchAgents()
+        #endif
 
         do {
             if enable {
@@ -30,6 +36,7 @@ struct LaunchAgentManager {
         }
     }
 
+    #if !APPSTORE
     private static func cleanupLegacyLaunchAgents() {
         let libraryDirectory = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask).first!
         let launchAgentsDirectory = libraryDirectory.appendingPathComponent("LaunchAgents")
@@ -52,4 +59,5 @@ struct LaunchAgentManager {
             }
         }
     }
+    #endif
 }
