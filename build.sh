@@ -59,9 +59,9 @@ cat <<EOF > "${CONTENTS_DIR}/Info.plist"
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.37</string>
+    <string>1.38</string>
     <key>CFBundleVersion</key>
-    <string>38</string>
+    <string>39</string>
     <key>LSMinimumSystemVersion</key>
     <string>14.0</string>
     <key>LSApplicationCategoryType</key>
@@ -76,6 +76,8 @@ cat <<EOF > "${CONTENTS_DIR}/Info.plist"
     <string>Copyright © 2026 MacWake. All rights reserved.</string>
     <key>NSUserNotificationAlertStyle</key>
     <string>alert</string>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>MacWake reads the current track and controls playback in Spotify and Apple Music to show Now Playing in the Dynamic Island.</string>
     <key>ITSAppUsesNonExemptEncryption</key>
     <false/>
     <key>SUPublicEDKey</key>

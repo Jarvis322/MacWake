@@ -6,5 +6,10 @@
     <array>
         <string>6NK6D7LL79.com.jarvisit.macwake</string>
     </array>
+    <!-- Send Apple Events to Spotify/Apple Music for the Now Playing panel. Required for
+         a hardened-runtime app to control other apps; the user still grants Automation
+         permission per target. (Developer ID build only — App Store build has no music.) -->
+    <key>com.apple.security.automation.apple-events</key>
+    <true/>
 </dict>
 </plist>

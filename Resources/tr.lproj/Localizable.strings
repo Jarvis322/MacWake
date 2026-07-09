@@ -129,6 +129,8 @@
 "Dynamic Island Shelf" = "Dynamic Island Raf";
 "SHELF" = "RAF";
 "NOTCH_SHELF_HELP" = "Genişletilmiş Dynamic Island'a bir Raf sütunu ekler: son kopyaladığın metnin önizlemesi ve dosyaları geçici olarak sürükleyebileceğin küçük bir tepsi. Panoyu dinlediği için varsayılan olarak kapalıdır.";
+"Now Playing" = "Şimdi Çalan";
+"NOW_PLAYING_HELP" = "Spotify veya Apple Music'te çalan şarkıyı Dynamic Island'da gösterir; önceki / oynat-duraklat / sonraki kontrolleriyle. macOS ilk seferinde bu uygulamaları kontrol etme izni ister.";
 "Drop files here" = "Dosyaları buraya bırak";
 
 /* Cleaning Mode */

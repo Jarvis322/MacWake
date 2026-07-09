@@ -9,6 +9,7 @@ struct MacWakeMenuView: View {
     #if !APPSTORE
     @ObservedObject private var processMonitor = ProcessMonitor.shared
     @ObservedObject private var cleaningMode = CleaningModeManager.shared
+    @ObservedObject private var nowPlaying = NowPlayingManager.shared
     @State private var cleaningDuration: Int = 30
     #endif
     @Environment(\.colorScheme) var colorScheme
@@ -418,6 +419,10 @@ struct MacWakeMenuView: View {
                     toggleRow("hand.tap", .pink, "Dynamic Island Haptics", $tracker.enableDynamicIslandHaptics, help: "HAPTICS_HELP")
                     rowDivider()
                     toggleRow("tray.and.arrow.down", .teal, "Dynamic Island Shelf", $tracker.enableNotchShelf, help: "NOTCH_SHELF_HELP")
+                    #if !APPSTORE
+                    rowDivider()
+                    toggleRow("music.note", .pink, "Now Playing", $nowPlaying.isEnabled, help: "NOW_PLAYING_HELP")
+                    #endif
                 }
                 rowDivider()
                 toggleRow("battery.25percent", .orange, "Low Battery Alert", $tracker.lowBatteryAlertEnabled, help: "LOW_BATTERY_HELP")

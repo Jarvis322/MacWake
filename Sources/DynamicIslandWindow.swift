@@ -74,8 +74,13 @@ extension NSScreen {
 struct DynamicIslandPanelView: View {
     @ObservedObject var tracker: BatteryTracker
     @ObservedObject private var sm = DynamicIslandStateManager.shared
+    #if !APPSTORE
+    @ObservedObject private var nowPlaying = NowPlayingManager.shared
+    #endif
 
-    private var openedSize: CGSize { DynamicIslandManager.openedSize(shelfEnabled: tracker.enableNotchShelf) }
+    private var openedSize: CGSize {
+        DynamicIslandManager.openedSize(shelfEnabled: tracker.enableNotchShelf, musicShown: DynamicIslandManager.musicShown)
+    }
     private let flareSpacing: CGFloat = 16   // size of the concave top-corner flare
 
     private var isOpened: Bool { sm.state != .compact }
@@ -207,6 +212,17 @@ struct DynamicIslandPanelView: View {
                 rightWidget
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
+
+            #if !APPSTORE
+            if nowPlaying.isEnabled, nowPlaying.info != nil {
+                Rectangle()
+                    .fill(Color.white.opacity(0.1))
+                    .frame(width: 1)
+                    .padding(.vertical, 8)
+
+                NowPlayingView()
+            }
+            #endif
 
             if tracker.enableNotchShelf {
                 Rectangle()
@@ -451,13 +467,28 @@ class DynamicIslandManager {
     // The window is a fixed full-width strip across the top; the SwiftUI content
     // morphs the notch shape. Height comfortably fits the opened panel.
     private let stripHeight: CGFloat = 300
-    private var openedSize: CGSize { Self.openedSize(shelfEnabled: tracker?.enableNotchShelf ?? false) }
+    private var openedSize: CGSize {
+        Self.openedSize(shelfEnabled: tracker?.enableNotchShelf ?? false, musicShown: Self.musicShown)
+    }
+
+    /// Whether the Now Playing column should be shown (feature on + something playing).
+    /// Always false on the App Store build (the feature is compiled out there).
+    static var musicShown: Bool {
+        #if !APPSTORE
+        NowPlayingManager.shared.isEnabled && NowPlayingManager.shared.info != nil
+        #else
+        false
+        #endif
+    }
 
     /// Single source of truth for the expanded panel size, shared with the SwiftUI view.
     /// The App Store build drops the temperatures column (sandbox), so it's narrower.
-    static func openedSize(shelfEnabled: Bool) -> CGSize {
-        let base: CGFloat = Distribution.isAppStore ? 470 : 660
-        return CGSize(width: shelfEnabled ? base + 187 : base, height: 188)
+    /// Grows for the optional Shelf and Now Playing columns when they're active.
+    static func openedSize(shelfEnabled: Bool, musicShown: Bool) -> CGSize {
+        var width: CGFloat = Distribution.isAppStore ? 470 : 660
+        if shelfEnabled { width += 187 }
+        if musicShown { width += 210 }
+        return CGSize(width: width, height: 188)
     }
     private let hoverInset: CGFloat = -4   // expands the notch hover target a touch
 
