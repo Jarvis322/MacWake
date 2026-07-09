@@ -5,7 +5,7 @@ import IOKit
 import UserNotifications
 import UniformTypeIdentifiers
 import WidgetKit
-import TelemetryDeck
+
 
 extension Notification.Name {
     static let powerSourceChanged = Notification.Name("powerSourceChanged")
@@ -323,17 +323,21 @@ class BatteryTracker: ObservableObject {
     }
 
     private func updateFanSpeed() {
+        // Fan/thermal reads go through the SMC, which the App Store sandbox blocks (and
+        // AppleSMC access trips App Store's private-API scanner) — so this is compiled
+        // out entirely on that build. hasFans stays false, currentFanSpeed nil.
+        #if !APPSTORE
         let fanCount = SMCHelper.getFanCount()
         self.hasFans = fanCount > 0
-        
+
         if fanCount > 0 {
             if let rpm = SMCHelper.getFanSpeed(fanIndex: 0) {
                 self.currentFanSpeed = rpm
-                
+
                 let now = Date()
                 if fanSpeedHistory.isEmpty || now.timeIntervalSince(fanSpeedHistory.last!.timestamp) >= 30 {
                     fanSpeedHistory.append(FanSpeedSample(timestamp: now, rpm: rpm))
-                    
+
                     if fanSpeedHistory.count > 120 {
                         fanSpeedHistory.removeFirst()
                     }
@@ -346,8 +350,10 @@ class BatteryTracker: ObservableObject {
         }
 
         updateSystemSensors()
+        #endif
     }
 
+    #if !APPSTORE
     private func updateSystemSensors() {
         let sensors = ThermalSensors.shared
         guard sensors.isAvailable else { return }
@@ -359,6 +365,7 @@ class BatteryTracker: ObservableObject {
         let maxTemp = max(cpuTemperature ?? 0, gpuTemperature ?? 0, batteryTemperature)
         ChargeLimitManager.shared.fanTemperatureCheck(maxTempC: maxTemp)
     }
+    #endif
 
     private func initializePowerStatus() {
         let level = getBatteryLevel()
@@ -733,12 +740,17 @@ class BatteryTracker: ObservableObject {
         
         var wattsVal: Double? = nil
         if result == kIOReturnSuccess, let dict = properties?.takeRetainedValue() as? [String: Any] {
-            // Read Temperature: IORegistry key (Intel Macs) or SMC TB0T (Apple Silicon)
+            // Read Temperature: IORegistry key (Intel Macs) or SMC TB0T (Apple Silicon).
+            // SMC fallback is compiled out on the App Store build (sandbox/private-API).
             let rawTemp: Double?
             if let tempRaw = dict["Temperature"] as? Int {
                 rawTemp = Double(tempRaw) / 100.0
             } else {
+                #if !APPSTORE
                 rawTemp = SMCHelper.getBatteryTemperature()
+                #else
+                rawTemp = nil
+                #endif
             }
             if let temp = rawTemp, temp > -40 {
                 batteryTemperature = temp
@@ -846,7 +858,7 @@ class BatteryTracker: ObservableObject {
         }
         guard level <= lowBatteryThreshold, !lowBatteryAlertFired else { return }
         lowBatteryAlertFired = true
-        TelemetryDeck.signal("alert.lowBattery")
+        Analytics.signal("alert.lowBattery")
         DynamicIslandManager.shared.trigger(.alert(
             title: String(localized: "Low Battery"),
             message: String(format: String(localized: "LOW_BATTERY_FMT"), level),
@@ -863,7 +875,7 @@ class BatteryTracker: ObservableObject {
         if temp > 42.0 && (isPluggedIn || isACPowerConnected()) {
             if !highTempAlert {
                 highTempAlert = true
-                TelemetryDeck.signal("alert.highTemperature", parameters: ["temperature": String(format: "%.1f", temp)])
+                Analytics.signal("alert.highTemperature", parameters: ["temperature": String(format: "%.1f", temp)])
                 DynamicIslandManager.shared.trigger(.alert(
                     title: String(localized: "High Battery Temperature"),
                     message: String(format: String(localized: "TEMP_REACHED_FMT"), temp),
@@ -893,7 +905,7 @@ class BatteryTracker: ObservableObject {
         if duration >= 86400.0 && currentBatteryLevel >= 99 {
             if !continuousACAlert {
                 continuousACAlert = true
-                TelemetryDeck.signal("alert.pluggedInAllDay")
+                Analytics.signal("alert.pluggedInAllDay")
                 DynamicIslandManager.shared.trigger(.alert(
                     title: String(localized: "Plugged In All Day"),
                     message: String(localized: "Your Mac has been plugged in for 24 hours. Discharge the battery."),
@@ -1442,7 +1454,7 @@ class BatteryTracker: ObservableObject {
         guard drop >= 5, alertCooldownPassed else { return }
 
         lastRapidDrainAlert = now
-        TelemetryDeck.signal("alert.fastDrain", parameters: ["drop": "\(drop)", "minutes": "\(minutes)"])
+        Analytics.signal("alert.fastDrain", parameters: ["drop": "\(drop)", "minutes": "\(minutes)"])
         sendNotification(
             title: String(localized: "Wake: Fast Battery Drain"),
             body: String(format: String(localized: "DRAIN_BODY_FMT"), drop, minutes, currentBatteryLevel)

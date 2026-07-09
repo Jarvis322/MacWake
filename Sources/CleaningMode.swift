@@ -1,3 +1,4 @@
+#if !APPSTORE
 import AppKit
 import SwiftUI
 
@@ -234,3 +235,5 @@ struct CleaningOverlayView: View {
         .background(Color.black.opacity(0.45))
     }
 }
+
+#endif

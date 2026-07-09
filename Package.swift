@@ -1,15 +1,32 @@
 // swift-tools-version: 5.9
 import PackageDescription
+import Foundation
+
+// The App Store build sets MACWAKE_APPSTORE=1 (see AppStore/build-appstore.sh). In that
+// mode we drop the Sparkle and TelemetryDeck dependencies entirely, so neither library's
+// code is linked into the sandboxed binary — App Store's automated scanner flags a
+// third-party library's symbols whether or not they're actually called at runtime.
+let isAppStore = ProcessInfo.processInfo.environment["MACWAKE_APPSTORE"] == "1"
+
+let packageDeps: [Package.Dependency] = isAppStore ? [] : [
+    .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.0.0"),
+    .package(url: "https://github.com/TelemetryDeck/SwiftSDK", from: "2.0.0"),
+]
+
+let macwakeDeps: [Target.Dependency] = isAppStore
+    ? ["MacWakeShared"]
+    : [
+        "MacWakeShared",
+        .product(name: "Sparkle", package: "Sparkle"),
+        .product(name: "TelemetryDeck", package: "SwiftSDK"),
+      ]
 
 let package = Package(
     name: "MacWake",
     platforms: [
         .macOS(.v14)
     ],
-    dependencies: [
-        .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.0.0"),
-        .package(url: "https://github.com/TelemetryDeck/SwiftSDK", from: "2.0.0")
-    ],
+    dependencies: packageDeps,
     targets: [
         .target(
             name: "MacWakeShared",
@@ -17,11 +34,7 @@ let package = Package(
         ),
         .executableTarget(
             name: "MacWake",
-            dependencies: [
-                "MacWakeShared",
-                .product(name: "Sparkle", package: "Sparkle"),
-                .product(name: "TelemetryDeck", package: "SwiftSDK")
-            ],
+            dependencies: macwakeDeps,
             path: "Sources"
         ),
         .executableTarget(

@@ -1,3 +1,4 @@
+#if !APPSTORE
 import Foundation
 import IOKit
 
@@ -218,3 +219,5 @@ class SMCHelper {
         return nil
     }
 }
+
+#endif

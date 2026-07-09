@@ -1,3 +1,4 @@
+#if !APPSTORE
 import Foundation
 import IOKit
 
@@ -95,3 +96,5 @@ final class ThermalSensors {
     /// SSD / NAND flash temperature — average of the "NAND" channel sensors.
     var ssdTemperature: Double? { average(matching: ["nand", "ssd"]) }
 }
+
+#endif

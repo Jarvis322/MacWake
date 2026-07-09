@@ -4,9 +4,13 @@ import Combine
 struct MacWakeMenuView: View {
     @ObservedObject var tracker: BatteryTracker
     @ObservedObject private var chargeLimit = ChargeLimitManager.shared
+    // Monitor tab (process sampling) and Cleaning Mode don't exist in the sandboxed
+    // App Store build — their backing types are compiled out there.
+    #if !APPSTORE
     @ObservedObject private var processMonitor = ProcessMonitor.shared
     @ObservedObject private var cleaningMode = CleaningModeManager.shared
     @State private var cleaningDuration: Int = 30
+    #endif
     @Environment(\.colorScheme) var colorScheme
     @State private var isLaunchAtLoginEnabled: Bool = LaunchAgentManager.isEnabled
     @State private var selectedTab: Int = 0
@@ -67,8 +71,10 @@ struct MacWakeMenuView: View {
                                     historyTabContent
                                 case 2:
                                     hardwareTabContent
+                                #if !APPSTORE
                                 case 3:
                                     monitorTabContent
+                                #endif
                                 case 4:
                                     settingsTabContent
                                 default:
@@ -132,6 +138,7 @@ struct MacWakeMenuView: View {
             chargeLimit.refreshStatus()
             isCLIInstalled = CLIInstaller.isInstalled
             timerActive = true
+            #if !APPSTORE
             // .menuBarExtraStyle(.window) keeps this view (and selectedTab) alive across
             // popover open/close, so reopening parked on Monitor needs an explicit refresh —
             // onChange(of: selectedTab) only fires on an actual tab change.
@@ -139,6 +146,7 @@ struct MacWakeMenuView: View {
                 secondsTick = 0
                 processMonitor.refresh()
             }
+            #endif
         }
         .onDisappear {
             timerActive = false
@@ -146,6 +154,7 @@ struct MacWakeMenuView: View {
         .onReceive(timer) { _ in
             guard timerActive else { return }
             tracker.updateDynamicWatts()
+            #if !APPSTORE
             // Resampling processes costs ~1s (top -l 2 -s 1), so throttle it and only
             // run while the Monitor tab is actually visible.
             if selectedTab == 3 {
@@ -154,12 +163,15 @@ struct MacWakeMenuView: View {
                     processMonitor.refresh()
                 }
             }
+            #endif
         }
         .onChange(of: selectedTab) { _, newValue in
+            #if !APPSTORE
             if newValue == 3 {
                 secondsTick = 0
                 processMonitor.refresh()
             }
+            #endif
         }
     }
 
@@ -223,6 +235,7 @@ struct MacWakeMenuView: View {
     }
 
     // MARK: - Monitor Tab (Fan + Top Processes)
+    #if !APPSTORE
     private var monitorTabContent: some View {
         VStack(alignment: .leading, spacing: 11) {
             fanStatusSection
@@ -322,6 +335,7 @@ struct MacWakeMenuView: View {
         .background(Color.secondary.opacity(0.05))
         .cornerRadius(8)
     }
+    #endif
 
     // MARK: - Modern settings building blocks
 
@@ -424,15 +438,16 @@ struct MacWakeMenuView: View {
 
             // Sandboxed App Store build: no privileged helper, so no charge control /
             // energy / CLI; no CGEventTap, so no Cleaning Mode; updates come from the store.
-            if !Distribution.isAppStore {
-                chargeLimitSection
+            // Compile-time (#if), not runtime — the backing types are stripped from that build.
+            #if !APPSTORE
+            chargeLimitSection
 
-                energyModeSection
+            energyModeSection
 
-                cliSection
+            cliSection
 
-                cleaningModeSection
-            }
+            cleaningModeSection
+            #endif
 
             sectionLabel("Actions")
             settingsCard {
@@ -533,6 +548,7 @@ struct MacWakeMenuView: View {
         }
     }
 
+    #if !APPSTORE
     @ViewBuilder
     private var cleaningModeSection: some View {
         sectionLabel("Cleaning Mode")
@@ -581,6 +597,7 @@ struct MacWakeMenuView: View {
             .padding(.horizontal, 12).padding(.vertical, 8)
         }
     }
+    #endif
 
     private var calibrationPhaseText: String {
         switch chargeLimit.calibrationPhase {

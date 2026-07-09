@@ -4,7 +4,6 @@ import UserNotifications
 #if !APPSTORE
 import Sparkle
 #endif
-import TelemetryDeck
 
 /// Coordinates which features need the app temporarily promoted to a regular (Dock) app
 /// so AppKit will show modal windows/alerts — menu-bar (accessory) apps otherwise never
@@ -59,11 +58,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         _ = updaterController   // force-start the updater at launch
         #endif
 
-        let config = TelemetryDeck.Config(appID: "47BC5AD6-3456-4A13-97F3-10C169BFDAD6")
-        TelemetryDeck.initialize(config: config)
-        // Same TelemetryDeck app id for both distributions — the channel parameter is
-        // what keeps App Store and GitHub numbers separable in the dashboard.
-        TelemetryDeck.signal("app.launched", parameters: ["channel": Distribution.isAppStore ? "appstore" : "github"])
+        // Analytics is a no-op on the App Store build (no third-party lib in that binary).
+        Analytics.initialize()
+        Analytics.signal("app.launched", parameters: ["channel": Distribution.isAppStore ? "appstore" : "github"])
 
         // First-run feature tour.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
@@ -102,8 +99,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         ChargeLimitManager.shared.restoreChargingOnQuit()
         // Never leave keyboard/trackpad input blocked after we quit — the countdown
         // timer already stops it on its own, but a quit mid-cleaning must not rely on
-        // that timer alone.
+        // that timer alone. (Cleaning Mode doesn't exist in the sandboxed App Store build.)
+        #if !APPSTORE
         CleaningModeManager.shared.stop()
+        #endif
     }
 
     func userNotificationCenter(

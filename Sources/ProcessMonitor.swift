@@ -1,3 +1,4 @@
+#if !APPSTORE
 import Foundation
 import AppKit
 import Darwin
@@ -142,3 +143,5 @@ final class ProcessMonitor: ObservableObject {
         }
     }
 }
+
+#endif
