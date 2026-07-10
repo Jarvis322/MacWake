@@ -203,8 +203,23 @@ final class NowPlayingManager: ObservableObject {
         guard let app = info?.app else { return }
         queue.async { [weak self] in
             _ = Self.runAppleScript("tell application \"\(app.rawValue)\" to \(command)")
-            // Reflect the change quickly instead of waiting for the next 3s tick.
-            Task { @MainActor in self?.poll() }
+            // The player needs a beat to load the new track before `current track`
+            // reflects it — a single immediate read races that switch and returns the
+            // old/transitioning track, so the title and artwork would look stuck until
+            // the next 3s tick (or a re-hover). Re-read a few times over ~1.5s so the
+            // change shows up promptly.
+            Task { @MainActor in self?.pollBurst() }
+        }
+    }
+
+    /// Read now-playing several times in quick succession after a control command,
+    /// covering the brief window while Spotify/Music switches tracks.
+    private func pollBurst() {
+        poll()
+        for delay in [0.25, 0.6, 1.2] {
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                self?.poll()
+            }
         }
     }
 
