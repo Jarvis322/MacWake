@@ -10,7 +10,28 @@
             <pubDate>Fri, 10 Jul 2026 00:00:00 +0000</pubDate>
             <sparkle:version>40</sparkle:version>
             <sparkle:shortVersionString>1.39</sparkle:shortVersionString>
-            <sparkle:releaseNotesLink>https://github.com/Jarvis322/MacWake/releases/tag/v1.39</sparkle:releaseNotesLink>
+            <description><![CDATA[
+                <meta charset="utf-8">
+                <style>
+                    :root { color-scheme: light dark; }
+                    body { font: 13px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; margin: 4px 2px; color: #1d1d1f; }
+                    h1 { font-size: 15px; margin: 0 0 2px; }
+                    .date { font-size: 11px; opacity: .5; margin: 0 0 14px; }
+                    .tag { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; opacity: .55; margin: 0 0 8px; }
+                    ul { margin: 0; padding-left: 18px; }
+                    li { margin-bottom: 8px; }
+                    b { font-weight: 600; }
+                    @media (prefers-color-scheme: dark) { body { color: #f5f5f7; } }
+                </style>
+                <h1>Wake 1.39</h1>
+                <p class="date">10 July 2026</p>
+                <p class="tag">🐛 Bug fixes</p>
+                <ul>
+                    <li><b>Now Playing</b> — the track title and artwork now update instantly when you skip to the previous or next song, instead of lagging until the next refresh or a re-hover.</li>
+                    <li><b>Charge limit</b> — fixed a stutter near full battery during scheduled charging, and a rare freeze if you turned the charge limit off while a calibration cycle was running.</li>
+                    <li><b>Dynamic Island</b> — the panel no longer collapses out from under the cursor when music starts or stops.</li>
+                </ul>
+            ]]></description>
             <enclosure
                 url="https://github.com/Jarvis322/MacWake/releases/download/v1.39/Wake-1.39.dmg"
                 sparkle:version="40"
@@ -25,7 +46,26 @@
             <pubDate>Wed, 09 Jul 2026 00:00:00 +0000</pubDate>
             <sparkle:version>39</sparkle:version>
             <sparkle:shortVersionString>1.38</sparkle:shortVersionString>
-            <sparkle:releaseNotesLink>https://github.com/Jarvis322/MacWake/releases/tag/v1.38</sparkle:releaseNotesLink>
+            <description><![CDATA[
+                <meta charset="utf-8">
+                <style>
+                    :root { color-scheme: light dark; }
+                    body { font: 13px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; margin: 4px 2px; color: #1d1d1f; }
+                    h1 { font-size: 15px; margin: 0 0 2px; }
+                    .date { font-size: 11px; opacity: .5; margin: 0 0 14px; }
+                    .tag { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; opacity: .55; margin: 0 0 8px; }
+                    ul { margin: 0; padding-left: 18px; }
+                    li { margin-bottom: 8px; }
+                    b { font-weight: 600; }
+                    @media (prefers-color-scheme: dark) { body { color: #f5f5f7; } }
+                </style>
+                <h1>Wake 1.38</h1>
+                <p class="date">9 July 2026</p>
+                <p class="tag">✨ New</p>
+                <ul>
+                    <li><b>Now Playing 🎵</b> — see the current Spotify or Apple Music track right in the Dynamic Island, with previous / play-pause / next controls. Opt in from <b>Settings › Now Playing</b>. (Developer ID build; the App Store build doesn't include this.)</li>
+                </ul>
+            ]]></description>
             <enclosure
                 url="https://github.com/Jarvis322/MacWake/releases/download/v1.38/Wake-1.38.dmg"
                 sparkle:version="39"
