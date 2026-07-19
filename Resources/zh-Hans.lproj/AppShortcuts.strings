@@ -1,0 +1,3 @@
+/* App Shortcut invocation phrases. Keep ${applicationName} intact. */
+"Charge to full with ${applicationName}" = "使用 ${applicationName} 将电池充满";
+"Get battery status with ${applicationName}" = "使用 ${applicationName} 获取电池状态";

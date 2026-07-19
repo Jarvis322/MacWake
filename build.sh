@@ -55,6 +55,7 @@ cat <<EOF > "${CONTENTS_DIR}/Info.plist"
     <array>
         <string>en</string>
         <string>tr</string>
+        <string>zh-Hans</string>
     </array>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
@@ -124,8 +125,18 @@ if "${TOOLCHAIN}/usr/bin/appintentsmetadataprocessor" \
     --source-file-list "${AI_TMP}/sources.txt" \
     --swift-const-vals-list "${AI_TMP}/constvals.txt" \
     --binary-file .build/release/MacWake \
-    --force --no-app-shortcuts-localization --quiet-warnings 2>/dev/null \
+    --force --quiet-warnings 2>/dev/null \
     && [ -d "${AI_TMP}/out/Metadata.appintents" ]; then
+    APP_SHORTCUTS_PROCESSOR="${TOOLCHAIN}/usr/bin/appshortcutstringsprocessor"
+    for strings_file in Resources/*.lproj/AppShortcuts.strings; do
+        [ -f "$strings_file" ] || continue
+        "$APP_SHORTCUTS_PROCESSOR" \
+            --source-file "$strings_file" \
+            --input-data-path "${AI_TMP}/out/Metadata.appintents" \
+            --platform-family macOS \
+            --deployment-target 14.0
+        echo "Validated App Shortcuts localization: $strings_file"
+    done
     cp -R "${AI_TMP}/out/Metadata.appintents" "${RESOURCES_DIR}/Metadata.appintents"
     echo "Metadata.appintents embedded ($(ls "${AI_TMP}/out/Metadata.appintents" | wc -l | tr -d ' ') files)."
 else

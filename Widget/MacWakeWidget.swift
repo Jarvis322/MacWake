@@ -150,7 +150,7 @@ struct BatteryWidget: Widget {
         StaticConfiguration(kind: "com.jarvisit.macwake.battery", provider: BatteryProvider()) { entry in
             BatteryWidgetView(entry: entry)
         }
-        .configurationDisplayName("MacWake Battery")
+        .configurationDisplayName(LocalizedStringResource("MacWake Battery"))
         .description(String(localized: "Battery level, health, temperature, and charge limit at a glance."))
         .supportedFamilies([.systemSmall, .systemMedium])
     }
