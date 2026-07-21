@@ -384,15 +384,24 @@ struct MacWakeMenuView: View {
 
     private func rowDivider() -> some View { Divider().padding(.leading, 49) }
 
-    private func toggleRow(_ icon: String, _ tint: Color, _ title: String, _ binding: Binding<Bool>, help: String? = nil) -> some View {
+    private func toggleRow(_ icon: String, _ tint: Color, _ title: String, _ binding: Binding<Bool>, subtitle: String? = nil, help: String? = nil) -> some View {
         HStack(spacing: 11) {
             iconTile(icon, tint)
-            Text(LocalizedStringKey(title)).font(.subheadline)
-            Spacer()
+            VStack(alignment: .leading, spacing: 2) {
+                Text(LocalizedStringKey(title)).font(.subheadline)
+                if let subtitle {
+                    Text(LocalizedStringKey(subtitle))
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            Spacer(minLength: 8)
             Toggle("", isOn: binding).labelsHidden().toggleStyle(.switch).controlSize(.small)
         }
-        .padding(.horizontal, 12).padding(.vertical, 8)
-        .help(help.map { LocalizedStringKey($0) } ?? "")
+        .padding(.horizontal, 12).padding(.vertical, subtitle == nil ? 8 : 9)
+        .help(help.map { LocalizedStringKey($0) } ?? (subtitle.map { LocalizedStringKey($0) } ?? ""))
     }
 
     private func actionRow(_ icon: String, _ tint: Color, _ title: String, destructive: Bool = false, _ action: @escaping () -> Void) -> some View {
@@ -409,8 +418,13 @@ struct MacWakeMenuView: View {
         .buttonStyle(.plain)
     }
 
-    private func sectionLabel(_ title: String) -> some View {
-        HStack {
+    private func sectionLabel(_ title: String, icon: String? = nil) -> some View {
+        HStack(spacing: 5) {
+            if let icon {
+                Image(systemName: icon)
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundColor(.secondary)
+            }
             Text(LocalizedStringKey(title))
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundColor(.secondary)
@@ -458,38 +472,13 @@ struct MacWakeMenuView: View {
     #endif
 
     private var settingsTabContent: some View {
-        VStack(spacing: 10) {
-            notificationPermissionRow
-            
-            sectionLabel("General")
-            settingsCard {
-                #if !APPSTORE
-                languageRow
+        VStack(spacing: 16) {
+            // NOTIFICATIONS — permission status + the alerts it drives, together.
+            settingsSection("Notifications", icon: "bell.fill") {
+                notificationPermissionRow
+                    .padding(.horizontal, 12).padding(.vertical, 9)
                 rowDivider()
-                #endif
-                toggleRow("rectangle.on.rectangle", .blue, "Show Desktop Widget", $tracker.showWidget, help: "WIDGET_HELP")
-                if tracker.showWidget {
-                    rowDivider()
-                    toggleRow("lock.fill", .gray, "Lock Widget Position", $tracker.isWidgetLocked, help: "WIDGET_LOCK_HELP")
-                }
-                rowDivider()
-                toggleRow("power", .green, "Launch at Login", launchAtLoginBinding, help: "LAUNCH_AT_LOGIN_HELP")
-                rowDivider()
-                toggleRow("sparkles", .purple, "Enable Animations", $tracker.enableAnimations, help: "ANIMATIONS_HELP")
-                rowDivider()
-                toggleRow("oval.portrait.tophalf.filled", .indigo, "Dynamic Island Overlay", $tracker.enableDynamicIsland, help: "DYNAMIC_ISLAND_HELP")
-                if tracker.enableDynamicIsland {
-                    rowDivider()
-                    toggleRow("hand.tap", .pink, "Dynamic Island Haptics", $tracker.enableDynamicIslandHaptics, help: "HAPTICS_HELP")
-                    rowDivider()
-                    toggleRow("tray.and.arrow.down", .teal, "Dynamic Island Shelf", $tracker.enableNotchShelf, help: "NOTCH_SHELF_HELP")
-                    #if !APPSTORE
-                    rowDivider()
-                    toggleRow("music.note", .pink, "Now Playing", $nowPlaying.isEnabled, help: "NOW_PLAYING_HELP")
-                    #endif
-                }
-                rowDivider()
-                toggleRow("battery.25percent", .orange, "Low Battery Alert", $tracker.lowBatteryAlertEnabled, help: "LOW_BATTERY_HELP")
+                toggleRow("battery.25percent", .orange, "Low Battery Alert", $tracker.lowBatteryAlertEnabled, subtitle: "LOW_BATTERY_HELP")
                 if tracker.lowBatteryAlertEnabled {
                     rowDivider()
                     sliderBlock {
@@ -503,23 +492,55 @@ struct MacWakeMenuView: View {
                 }
             }
 
-            menuBarSection
+            // GENERAL — startup, language, motion.
+            settingsSection("General", icon: "gearshape.fill") {
+                #if !APPSTORE
+                languageRow
+                rowDivider()
+                #endif
+                toggleRow("power", .green, "Launch at Login", launchAtLoginBinding, subtitle: "LAUNCH_AT_LOGIN_HELP")
+                rowDivider()
+                toggleRow("sparkles", .purple, "Enable Animations", $tracker.enableAnimations, subtitle: "ANIMATIONS_HELP")
+            }
+
+            // DYNAMIC ISLAND — the overlay and everything nested under it.
+            settingsSection("Dynamic Island", icon: "oval.portrait.tophalf.filled") {
+                toggleRow("oval.portrait.tophalf.filled", .indigo, "Dynamic Island Overlay", $tracker.enableDynamicIsland, subtitle: "DYNAMIC_ISLAND_HELP")
+                if tracker.enableDynamicIsland {
+                    rowDivider()
+                    toggleRow("hand.tap", .pink, "Dynamic Island Haptics", $tracker.enableDynamicIslandHaptics, subtitle: "HAPTICS_HELP")
+                    rowDivider()
+                    toggleRow("tray.and.arrow.down", .teal, "Dynamic Island Shelf", $tracker.enableNotchShelf, subtitle: "NOTCH_SHELF_HELP")
+                    #if !APPSTORE
+                    rowDivider()
+                    toggleRow("music.note", .pink, "Now Playing", $nowPlaying.isEnabled, subtitle: "NOW_PLAYING_HELP")
+                    #endif
+                }
+            }
+
+            // DESKTOP WIDGET
+            settingsSection("Desktop Widget", icon: "rectangle.on.rectangle") {
+                toggleRow("rectangle.on.rectangle", .blue, "Show Desktop Widget", $tracker.showWidget, subtitle: "WIDGET_HELP")
+                if tracker.showWidget {
+                    rowDivider()
+                    toggleRow("lock.fill", .gray, "Lock Widget Position", $tracker.isWidgetLocked, subtitle: "WIDGET_LOCK_HELP")
+                }
+            }
+
+            VStack(alignment: .leading, spacing: 7) { menuBarSection }
 
             // Sandboxed App Store build: no privileged helper, so no charge control /
             // energy / CLI; no CGEventTap, so no Cleaning Mode; updates come from the store.
             // Compile-time (#if), not runtime — the backing types are stripped from that build.
             #if !APPSTORE
-            chargeLimitSection
-
-            energyModeSection
-
-            cliSection
-
-            cleaningModeSection
+            VStack(alignment: .leading, spacing: 7) { chargeLimitSection }
+            VStack(alignment: .leading, spacing: 7) { energyModeSection }
+            VStack(alignment: .leading, spacing: 7) { cliSection }
+            VStack(alignment: .leading, spacing: 7) { cleaningModeSection }
             #endif
 
-            sectionLabel("Actions")
-            settingsCard {
+            // ACTIONS
+            settingsSection("Actions", icon: "bolt.fill") {
                 actionRow("sparkles", .pink, "Welcome Tour") { OnboardingManager.shared.show() }
                 rowDivider()
                 actionRow("arrow.clockwise", .orange, "Reset Session") { tracker.resetCurrentSession() }
@@ -532,7 +553,15 @@ struct MacWakeMenuView: View {
                 rowDivider()
                 actionRow("power", .red, "Quit MacWake", destructive: true) { NSApplication.shared.terminate(nil) }
             }
-            .padding(.top, 2)
+        }
+    }
+
+    /// A titled settings group: an icon + uppercase label tightly coupled to its card.
+    @ViewBuilder
+    private func settingsSection<C: View>(_ title: String, icon: String, @ViewBuilder _ content: () -> C) -> some View {
+        VStack(alignment: .leading, spacing: 7) {
+            sectionLabel(title, icon: icon)
+            settingsCard(content)
         }
     }
 
@@ -556,7 +585,7 @@ struct MacWakeMenuView: View {
     @ViewBuilder
     private var menuBarSection: some View {
         HStack {
-            sectionLabel("Menu Bar")
+            sectionLabel("Menu Bar", icon: "menubar.rectangle")
             // Live preview of what the menu-bar item will show.
             HStack(spacing: 3) {
                 if tracker.showMenuBarIcon || tracker.menuBarText.isEmpty {
@@ -589,7 +618,7 @@ struct MacWakeMenuView: View {
     #if !APPSTORE
     @ViewBuilder
     private var cliSection: some View {
-        sectionLabel("Command Line Tool")
+        sectionLabel("Command Line Tool", icon: "terminal")
         settingsCard {
             HStack(spacing: 11) {
                 iconTile("terminal.fill", isCLIInstalled ? .green : .gray)
@@ -622,7 +651,7 @@ struct MacWakeMenuView: View {
     #if !APPSTORE
     @ViewBuilder
     private var cleaningModeSection: some View {
-        sectionLabel("Cleaning Mode")
+        sectionLabel("Cleaning Mode", icon: "hand.raised.slash")
         settingsCard {
             HStack(spacing: 11) {
                 iconTile("hand.raised.slash.fill", .cyan)
@@ -681,7 +710,7 @@ struct MacWakeMenuView: View {
     @ViewBuilder
     private var energyModeSection: some View {
         if chargeLimit.helperStatus == .ready {
-            sectionLabel("Energy Mode")
+            sectionLabel("Energy Mode", icon: "leaf")
             settingsCard {
                 HStack(spacing: 11) {
                     iconTile("leaf.fill", .green)
@@ -768,7 +797,7 @@ struct MacWakeMenuView: View {
     private var chargeLimitSection: some View {
         switch chargeLimit.helperStatus {
         case .ready:
-            sectionLabel("Charge Limit")
+            sectionLabel("Charge Limit", icon: "bolt.badge.checkmark")
             settingsCard {
                 HStack(spacing: 11) {
                     iconTile("bolt.badge.automatic", .green)

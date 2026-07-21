@@ -314,6 +314,8 @@
 
 /* Settings cards */
 "General" = "Genel";
+"Notifications" = "Bildirimler";
+"Desktop Widget" = "Masaüstü Widget";
 "Actions" = "Eylemler";
 "Quit MacWake" = "MacWake'ten Çık";
 
