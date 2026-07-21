@@ -359,3 +359,14 @@
 "DYNAMIC_ISLAND_HELP" = "Şarj durumu, uyarılar ve hızlı kontroller içeren çentik tarzı bir katman gösterir.";
 "HAPTICS_HELP" = "Dynamic Island açılıp kapandığında hafif bir trackpad tıklaması hissettirir.";
 "MENUBAR_POWER_HELP" = "Şarj olurken watt değerini, pil ile çalışırken ekranda geçirilen süreyi gösterir.";
+
+/* App language selector */
+"Language" = "Dil";
+"Follow System" = "Sistem Dilini Kullan";
+"Restart MacWake to apply language changes" = "Dil değişikliklerini uygulamak için MacWake'i yeniden başlat";
+"MacWake needs to restart before the selected language appears." = "Seçilen dilin görünmesi için MacWake'in yeniden başlatılması gerekiyor.";
+"Later" = "Daha Sonra";
+"Restart Now" = "Şimdi Yeniden Başlat";
+"MacWake couldn't restart" = "MacWake yeniden başlatılamadı";
+"Quit and reopen MacWake to apply the language change." = "Dil değişikliğini uygulamak için MacWake'ten çıkıp yeniden açın.";
+"OK" = "Tamam";

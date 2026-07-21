@@ -68,3 +68,14 @@
 "Limit %d%%" = "Limit %d%%";
 "INTENT_LIMIT_SET_FMT" = "Charge limit set to %d%%.";
 "INTENT_STATUS_FMT" = "Battery %1$d%%, %2$@, health %3$d%%, temperature %4$.1f°C.";
+
+/* App language selector */
+"Language" = "Language";
+"Follow System" = "Follow System";
+"Restart MacWake to apply language changes" = "Restart MacWake to apply language changes";
+"MacWake needs to restart before the selected language appears." = "MacWake needs to restart before the selected language appears.";
+"Later" = "Later";
+"Restart Now" = "Restart Now";
+"MacWake couldn't restart" = "MacWake couldn't restart";
+"Quit and reopen MacWake to apply the language change." = "Quit and reopen MacWake to apply the language change.";
+"OK" = "OK";

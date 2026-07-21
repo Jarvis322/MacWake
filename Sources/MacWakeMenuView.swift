@@ -20,6 +20,9 @@ struct MacWakeMenuView: View {
     @State private var isCLIInstalled = CLIInstaller.isInstalled
     #endif
     @State private var processSortMode: Int = 0 // 0 = CPU, 1 = RAM
+    @State private var selectedAppLanguage = AppLanguagePreference.selectedLanguageIdentifier
+    @State private var showLanguageRestartAlert = false
+    @State private var showLanguageRestartError = false
     private let timer = Timer.publish(every: 1.0, on: .main, in: .common).autoconnect()
     @State private var timerActive = true
     @State private var secondsTick = 0
@@ -177,6 +180,21 @@ struct MacWakeMenuView: View {
                 processMonitor.refresh()
             }
             #endif
+        }
+        .alert("Restart MacWake to apply language changes", isPresented: $showLanguageRestartAlert) {
+            Button("Later", role: .cancel) {}
+            Button("Restart Now") {
+                if !AppLanguagePreference.restart() {
+                    DispatchQueue.main.async { showLanguageRestartError = true }
+                }
+            }
+        } message: {
+            Text("MacWake needs to restart before the selected language appears.")
+        }
+        .alert("MacWake couldn't restart", isPresented: $showLanguageRestartError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Quit and reopen MacWake to apply the language change.")
         }
     }
 
@@ -401,12 +419,44 @@ struct MacWakeMenuView: View {
                 set: { v in isLaunchAtLoginEnabled = v; LaunchAgentManager.setEnabled(v) })
     }
 
+    private var appLanguageBinding: Binding<String?> {
+        Binding(
+            get: { selectedAppLanguage },
+            set: { identifier in
+                guard identifier != selectedAppLanguage else { return }
+                selectedAppLanguage = identifier
+                AppLanguagePreference.select(identifier)
+                showLanguageRestartAlert = true
+            }
+        )
+    }
+
+    private var languageRow: some View {
+        HStack(spacing: 11) {
+            iconTile("globe", .cyan)
+            Text("Language").font(.subheadline)
+            Spacer()
+            Picker("", selection: appLanguageBinding) {
+                Text("Follow System").tag(nil as String?)
+                ForEach(AppLanguagePreference.supportedLanguages) { language in
+                    Text(language.displayName).tag(Optional(language.id))
+                }
+            }
+            .pickerStyle(.menu)
+            .labelsHidden()
+            .controlSize(.small)
+        }
+        .padding(.horizontal, 12).padding(.vertical, 8)
+    }
+
     private var settingsTabContent: some View {
         VStack(spacing: 10) {
             notificationPermissionRow
             
             sectionLabel("General")
             settingsCard {
+                languageRow
+                rowDivider()
                 toggleRow("rectangle.on.rectangle", .blue, "Show Desktop Widget", $tracker.showWidget, help: "WIDGET_HELP")
                 if tracker.showWidget {
                     rowDivider()
