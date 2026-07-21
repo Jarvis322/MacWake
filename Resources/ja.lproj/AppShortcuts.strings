@@ -1,0 +1,3 @@
+/* App Shortcut invocation phrases. Keep ${applicationName} intact. */
+"Charge to full with ${applicationName}" = "${applicationName}でバッテリーを100%まで充電";
+"Get battery status with ${applicationName}" = "${applicationName}でバッテリーの状態を取得";
