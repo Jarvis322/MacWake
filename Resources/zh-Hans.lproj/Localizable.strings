@@ -383,3 +383,19 @@
 "MacWake couldn't restart" = "无法重启 MacWake";
 "Quit and reopen MacWake to apply the language change." = "请退出并重新打开 MacWake 以应用语言更改。";
 "OK" = "确定";
+
+/* Onboarding — Widgets & Shortcuts + App Store setup (v1.42) */
+"Now Playing shows your Spotify or Apple Music track in the notch, with controls." = "Now Playing 在刘海中显示你的 Spotify 或 Apple Music 曲目及控制按钮。";
+"Widgets & Shortcuts" = "小组件与快捷指令";
+"Battery info everywhere you look." = "电池信息，随处可见。";
+"A translucent battery gauge you can drag anywhere on the desktop and lock in place." = "半透明电池仪表，可拖到桌面任意位置并锁定。";
+"Notification Center" = "通知中心";
+"Small and medium widgets with level, health and cycle count at a glance." = "小号和中号小组件，一眼查看电量、健康度和循环次数。";
+"Shortcuts" = "快捷指令";
+"A Get Battery Status action, ready to drop into your own automations." = "提供“获取电池状态”操作，可加入你的自动化流程。";
+"Smart Alerts" = "智能提醒";
+"A custom low-battery warning, a high-temperature guard, and a plugged-in-all-day reminder." = "自定义低电量警告、高温保护，以及整天插电提醒。";
+"Private by design" = "隐私优先设计";
+"No account, no cloud, no tracking — ever." = "无账户、无云端、无追踪——永不。";
+"Everything is instant" = "一切即时可用";
+"Monitoring, Dynamic Island, widgets and the menu bar work right away." = "监测、Dynamic Island、小组件和菜单栏立即可用。";

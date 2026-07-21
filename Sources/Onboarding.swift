@@ -63,7 +63,7 @@ struct OnboardingView: View {
     /// Logical page ids in presentation order. The App Store build skips the pages that
     /// tout helper-backed features (charge limit, sailing/calibration, power tools).
     private var pageOrder: [Int] {
-        Distribution.isAppStore ? [0, 3, 4, 6] : [0, 1, 2, 3, 4, 5, 6]
+        Distribution.isAppStore ? [0, 3, 4, 7, 6] : [0, 1, 2, 3, 4, 5, 7, 6]
     }
     private var total: Int { pageOrder.count }
 
@@ -78,7 +78,7 @@ struct OnboardingView: View {
     @State private var mbTemp = false
 
     private var accent: Color {
-        [.green, .green, .teal, .cyan, .blue, .indigo, .orange][pageOrder[page]]
+        [.green, .green, .teal, .cyan, .blue, .indigo, .orange, .pink][pageOrder[page]]
     }
 
     var body: some View {
@@ -91,6 +91,7 @@ struct OnboardingView: View {
                 case 3: dynamicIslandPage
                 case 4: menuBarPage
                 case 5: powerToolsPage
+                case 7: widgetsShortcutsPage
                 default: setupPage
                 }
             }
@@ -154,12 +155,16 @@ struct OnboardingView: View {
             TimelineView(.animation) { tl in
                 let p = (sin(tl.date.timeIntervalSinceReferenceDate * 1.4) + 1) / 2
                 ZStack {
-                    Circle().fill(Color.green.opacity(0.10 + 0.10 * p)).frame(width: 120, height: 120)
-                    Image(systemName: "bolt.heart.fill").font(.system(size: 48, weight: .bold)).foregroundColor(.green)
-                        .scaleEffect(0.95 + 0.08 * p)
+                    Circle().fill(Color.green.opacity(0.14 + 0.12 * p)).frame(width: 138, height: 138).blur(radius: 10)
+                    // The app's own icon (the Power Core), so the welcome mirrors the Dock/Finder icon.
+                    Image(nsImage: NSApp.applicationIconImage)
+                        .resizable().interpolation(.high)
+                        .frame(width: 108, height: 108)
+                        .scaleEffect(0.97 + 0.05 * p)
+                        .shadow(color: .green.opacity(0.25 + 0.2 * p), radius: 22)
                 }
             }
-            .frame(height: 130)
+            .frame(height: 150)
             Text("Welcome to MacWake").font(.system(size: 28, weight: .bold))
             Text("Your Mac's battery, finally visible. Let's take a quick interactive tour — try the controls as you go.")
                 .font(.system(size: 14)).foregroundColor(.secondary)
@@ -220,6 +225,14 @@ struct OnboardingView: View {
             }
             .font(.system(size: 12))
             .padding(.top, 4)
+            #if !APPSTORE
+            HStack(spacing: 6) {
+                Image(systemName: "music.note").foregroundColor(.secondary)
+                Text("Now Playing shows your Spotify or Apple Music track in the notch, with controls.")
+                    .foregroundColor(.secondary)
+            }
+            .font(.system(size: 12))
+            #endif
             Spacer()
         }
     }
@@ -303,8 +316,30 @@ struct OnboardingView: View {
         }
     }
 
+    private var widgetsShortcutsPage: some View {
+        VStack(spacing: 14) {
+            header("square.grid.2x2.fill", "Widgets & Shortcuts", "Battery info everywhere you look.")
+            VStack(spacing: 12) {
+                tourRow("rectangle.on.rectangle", "Desktop Widget", "A translucent battery gauge you can drag anywhere on the desktop and lock in place.")
+                tourRow("square.grid.2x2", "Notification Center", "Small and medium widgets with level, health and cycle count at a glance.")
+                tourRow("bolt.badge.clock", "Shortcuts", "A Get Battery Status action, ready to drop into your own automations.")
+                tourRow("bell.badge", "Smart Alerts", "A custom low-battery warning, a high-temperature guard, and a plugged-in-all-day reminder.")
+            }
+            .frame(maxWidth: 470).padding(.top, 6)
+            Spacer()
+        }
+    }
+
     private var setupPage: some View {
         VStack(spacing: 16) {
+            #if APPSTORE
+            header("lock.shield.fill", "Private by design", "No account, no cloud, no tracking — ever.")
+            VStack(spacing: 12) {
+                tourRow("bolt.fill", "Everything is instant", "Monitoring, Dynamic Island, widgets and the menu bar work right away.")
+                tourRow("lock.fill", "100% private", "No account, no cloud. Your data never leaves your Mac.")
+            }
+            .frame(maxWidth: 460).padding(.top, 6)
+            #else
             header("lock.shield.fill", "One-time setup", "Charge limiting, fan, and energy control use a small background helper.")
             VStack(spacing: 12) {
                 tourRow("checkmark.shield.fill", "Approve once", "The first time you turn on Charge Limiting, macOS asks you to allow it in System Settings — no passwords.")
@@ -312,6 +347,7 @@ struct OnboardingView: View {
                 tourRow("lock.fill", "100% private", "No account, no cloud. Your data never leaves your Mac.")
             }
             .frame(maxWidth: 460).padding(.top, 6)
+            #endif
             Spacer()
         }
     }

@@ -373,3 +373,19 @@
 "MacWake couldn't restart" = "MacWake yeniden başlatılamadı";
 "Quit and reopen MacWake to apply the language change." = "Dil değişikliğini uygulamak için MacWake'ten çıkıp yeniden açın.";
 "OK" = "Tamam";
+
+/* Onboarding — Widgets & Shortcuts + App Store setup (v1.42) */
+"Now Playing shows your Spotify or Apple Music track in the notch, with controls." = "Now Playing, Spotify veya Apple Music parçanı çentikte kontrollerle gösterir.";
+"Widgets & Shortcuts" = "Widget'lar ve Kısayollar";
+"Battery info everywhere you look." = "Pil bilgisi baktığın her yerde.";
+"A translucent battery gauge you can drag anywhere on the desktop and lock in place." = "Masaüstünde istediğin yere sürükleyip sabitleyebileceğin yarı saydam bir pil göstergesi.";
+"Notification Center" = "Bildirim Merkezi";
+"Small and medium widgets with level, health and cycle count at a glance." = "Seviye, sağlık ve döngü sayısını tek bakışta gösteren küçük ve orta widget'lar.";
+"Shortcuts" = "Kısayollar";
+"A Get Battery Status action, ready to drop into your own automations." = "Otomasyonlarına ekleyebileceğin bir Pil Durumu Al eylemi.";
+"Smart Alerts" = "Akıllı Uyarılar";
+"A custom low-battery warning, a high-temperature guard, and a plugged-in-all-day reminder." = "Özel düşük pil uyarısı, yüksek sıcaklık koruması ve tüm gün fişte kalma hatırlatması.";
+"Private by design" = "Tasarımı gereği özel";
+"No account, no cloud, no tracking — ever." = "Hesap yok, bulut yok, takip yok — hiçbir zaman.";
+"Everything is instant" = "Her şey anında";
+"Monitoring, Dynamic Island, widgets and the menu bar work right away." = "İzleme, Dynamic Island, widget'lar ve menü çubuğu hemen çalışır.";
