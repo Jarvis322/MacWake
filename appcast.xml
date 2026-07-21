@@ -6,6 +6,51 @@
         <description>Wake — Battery Health update feed</description>
         <language>en</language>
         <item>
+            <title>Version 1.42</title>
+            <pubDate>Wed, 22 Jul 2026 00:00:00 +0000</pubDate>
+            <sparkle:version>43</sparkle:version>
+            <sparkle:shortVersionString>1.42</sparkle:shortVersionString>
+            <description><![CDATA[
+                <meta charset="utf-8">
+                <style>
+                    :root { color-scheme: light dark; }
+                    body { font: 13px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; margin: 4px 2px; color: #1d1d1f; }
+                    h1 { font-size: 15px; margin: 0 0 2px; }
+                    .date { font-size: 11px; opacity: .5; margin: 0 0 14px; }
+                    .tag { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; opacity: .55; margin: 16px 0 8px; }
+                    .tag:first-of-type { margin-top: 0; }
+                    ul { margin: 0; padding-left: 18px; }
+                    li { margin-bottom: 8px; }
+                    b { font-weight: 600; }
+                    hr { border: 0; border-top: 1px solid rgba(0,0,0,.1); margin: 16px 0 0; }
+                    @media (prefers-color-scheme: dark) { body { color: #f5f5f7; } hr { border-top-color: rgba(255,255,255,.12); } }
+                </style>
+                <h1>Wake 1.42</h1>
+                <p class="date">22 Temmuz 2026 · 22 July 2026</p>
+                <p class="tag">✨ Yenilendi</p>
+                <ul>
+                    <li><b>Yeni uygulama simgesi</b> — parlayan bir "güç çekirdeği" arc-reactor.</li>
+                    <li><b>Yeni Ayarlar</b> — hızlı erişim için kutucuk ızgarası ve kategori sekmeleriyle tamamen yeniden tasarlandı; her ayarın altında kısa açıklama.</li>
+                    <li><b>Tanıtım turu</b> — yeni simge, Now Playing, widget'lar, Kısayollar ve akıllı uyarılar eklendi.</li>
+                </ul>
+                <hr>
+                <p class="tag">✨ Refreshed</p>
+                <ul>
+                    <li><b>New app icon</b> — a glowing "power core" arc reactor.</li>
+                    <li><b>Redesigned Settings</b> — a quick tile grid and category tabs, with a one-line description under every setting.</li>
+                    <li><b>Welcome tour</b> — new icon, plus pages for Now Playing, widgets, Shortcuts and smart alerts.</li>
+                </ul>
+            ]]></description>
+            <enclosure
+                url="https://github.com/Jarvis322/MacWake/releases/download/v1.42/Wake-1.42.dmg"
+                sparkle:version="43"
+                sparkle:shortVersionString="1.42"
+                length="4932593"
+                type="application/octet-stream"
+                sparkle:edSignature="CssyhnpepHfMmKt+wQ3l+28itds+/1uKPjq4ZEjQuTT3WroaAjHUUokeB1rqJFwb27yoJJOe3iE1cWLP6sNMDQ=="
+            />
+        </item>
+        <item>
             <title>Version 1.41</title>
             <pubDate>Tue, 21 Jul 2026 12:00:00 +0000</pubDate>
             <sparkle:version>42</sparkle:version>
