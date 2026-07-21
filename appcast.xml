@@ -6,6 +6,47 @@
         <description>Wake — Battery Health update feed</description>
         <language>en</language>
         <item>
+            <title>Version 1.41</title>
+            <pubDate>Tue, 21 Jul 2026 12:00:00 +0000</pubDate>
+            <sparkle:version>42</sparkle:version>
+            <sparkle:shortVersionString>1.41</sparkle:shortVersionString>
+            <description><![CDATA[
+                <meta charset="utf-8">
+                <style>
+                    :root { color-scheme: light dark; }
+                    body { font: 13px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; margin: 4px 2px; color: #1d1d1f; }
+                    h1 { font-size: 15px; margin: 0 0 2px; }
+                    .date { font-size: 11px; opacity: .5; margin: 0 0 14px; }
+                    .tag { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; opacity: .55; margin: 16px 0 8px; }
+                    .tag:first-of-type { margin-top: 0; }
+                    ul { margin: 0; padding-left: 18px; }
+                    li { margin-bottom: 8px; }
+                    b { font-weight: 600; }
+                    hr { border: 0; border-top: 1px solid rgba(0,0,0,.1); margin: 16px 0 0; }
+                    @media (prefers-color-scheme: dark) { body { color: #f5f5f7; } hr { border-top-color: rgba(255,255,255,.12); } }
+                </style>
+                <h1>Wake 1.41</h1>
+                <p class="date">21 Temmuz 2026 · 21 July 2026</p>
+                <p class="tag">🌐 Yeni</p>
+                <ul>
+                    <li><b>Uygulama içi dil seçici</b> — sistem dilini takip et ya da Ayarlar'dan İngilizce, Türkçe veya Çince seç. Değişikliği uygulamak için yeniden başlatma gerekir. Topluluk katkısıyla (@ssdiwu). 🙏</li>
+                </ul>
+                <hr>
+                <p class="tag">🌐 New</p>
+                <ul>
+                    <li><b>In-app language selector</b> — follow the system language or pick English, Turkish, or Chinese in Settings. A restart applies the change. Community contribution by @ssdiwu. 🙏</li>
+                </ul>
+            ]]></description>
+            <enclosure
+                url="https://github.com/Jarvis322/MacWake/releases/download/v1.41/Wake-1.41.dmg"
+                sparkle:version="42"
+                sparkle:shortVersionString="1.41"
+                length="4803411"
+                type="application/octet-stream"
+                sparkle:edSignature="WjWpLr6iqGN8m6O5BA1hTt8bkXLBhCOgiDz7352AhhgRFGL0LUDk4zaoI8yT0YRfd1CgAo0/CgjRedFL2crlBQ=="
+            />
+        </item>
+        <item>
             <title>Version 1.40</title>
             <pubDate>Tue, 21 Jul 2026 00:00:00 +0000</pubDate>
             <sparkle:version>41</sparkle:version>
