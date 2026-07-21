@@ -59,7 +59,7 @@ clicking it opens the full panel — Session, History, Hardware, and Settings.
     *   A **JARVIS-style arc-reactor HUD** with rotating tick rings and a glowing core that pulses with charging power.
     *   At-a-glance power, battery health, and temperature, plus quick toggles (widget, reset, animations, notifications).
 *   **🌍 Localization:**
-    *   Full English, Turkish, and Simplified Chinese (简体中文) UI, automatically following the macOS system language.
+    *   Full English, Turkish, and Simplified Chinese (简体中文) UI. Follow the macOS system language or choose a language in MacWake Settings; restart to apply the change. The WidgetKit extension continues to use its own system-provided language environment.
 *   **📊 Detailed Session Tracking (Current Session):** 
     *   Tracks screen-on time and sleep duration.
     *   Seamless data integrity with restart/shutdown detection.

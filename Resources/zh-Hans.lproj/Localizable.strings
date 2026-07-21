@@ -369,3 +369,14 @@
 "DYNAMIC_ISLAND_HELP" = "显示刘海样式浮层，其中包含充电状态、提醒和快捷控制。";
 "HAPTICS_HELP" = "Dynamic Island 打开或关闭时，通过触控板提供轻微的点按反馈。";
 "MENUBAR_POWER_HELP" = "接通电源时显示充电功率，使用电池时显示亮屏时间。";
+
+/* App language selector */
+"Language" = "语言";
+"Follow System" = "跟随系统";
+"Restart MacWake to apply language changes" = "重启 MacWake 以应用语言更改";
+"MacWake needs to restart before the selected language appears." = "所选语言将在 MacWake 重启后显示。";
+"Later" = "稍后";
+"Restart Now" = "立即重启";
+"MacWake couldn't restart" = "无法重启 MacWake";
+"Quit and reopen MacWake to apply the language change." = "请退出并重新打开 MacWake 以应用语言更改。";
+"OK" = "确定";

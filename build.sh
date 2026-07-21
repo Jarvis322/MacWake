@@ -51,12 +51,6 @@ cat <<EOF > "${CONTENTS_DIR}/Info.plist"
     <string>Wake</string>
     <key>CFBundleDevelopmentRegion</key>
     <string>en</string>
-    <key>CFBundleLocalizations</key>
-    <array>
-        <string>en</string>
-        <string>tr</string>
-        <string>zh-Hans</string>
-    </array>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
