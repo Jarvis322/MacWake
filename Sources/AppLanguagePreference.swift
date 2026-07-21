@@ -1,3 +1,4 @@
+#if !APPSTORE
 import AppKit
 import Foundation
 
@@ -96,3 +97,4 @@ enum AppLanguagePreference {
         return true
     }
 }
+#endif

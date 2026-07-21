@@ -20,9 +20,13 @@ struct MacWakeMenuView: View {
     @State private var isCLIInstalled = CLIInstaller.isInstalled
     #endif
     @State private var processSortMode: Int = 0 // 0 = CPU, 1 = RAM
+    #if !APPSTORE
+    // In-app language override relaunches the app via a /bin/sh helper (Process), which
+    // the App Store sandbox forbids — so the whole selector is Developer-ID only.
     @State private var selectedAppLanguage = AppLanguagePreference.selectedLanguageIdentifier
     @State private var showLanguageRestartAlert = false
     @State private var showLanguageRestartError = false
+    #endif
     private let timer = Timer.publish(every: 1.0, on: .main, in: .common).autoconnect()
     @State private var timerActive = true
     @State private var secondsTick = 0
@@ -181,6 +185,7 @@ struct MacWakeMenuView: View {
             }
             #endif
         }
+        #if !APPSTORE
         .alert("Restart MacWake to apply language changes", isPresented: $showLanguageRestartAlert) {
             Button("Later", role: .cancel) {}
             Button("Restart Now") {
@@ -196,6 +201,7 @@ struct MacWakeMenuView: View {
         } message: {
             Text("Quit and reopen MacWake to apply the language change.")
         }
+        #endif
     }
 
     // MARK: - Tab Selector Bar
@@ -419,6 +425,7 @@ struct MacWakeMenuView: View {
                 set: { v in isLaunchAtLoginEnabled = v; LaunchAgentManager.setEnabled(v) })
     }
 
+    #if !APPSTORE
     private var appLanguageBinding: Binding<String?> {
         Binding(
             get: { selectedAppLanguage },
@@ -448,6 +455,7 @@ struct MacWakeMenuView: View {
         }
         .padding(.horizontal, 12).padding(.vertical, 8)
     }
+    #endif
 
     private var settingsTabContent: some View {
         VStack(spacing: 10) {
@@ -455,8 +463,10 @@ struct MacWakeMenuView: View {
             
             sectionLabel("General")
             settingsCard {
+                #if !APPSTORE
                 languageRow
                 rowDivider()
+                #endif
                 toggleRow("rectangle.on.rectangle", .blue, "Show Desktop Widget", $tracker.showWidget, help: "WIDGET_HELP")
                 if tracker.showWidget {
                     rowDivider()
