@@ -315,6 +315,7 @@
 /* Settings cards */
 "General" = "Genel";
 "Notifications" = "Bildirimler";
+"Quick" = "Hızlı";
 "Desktop Widget" = "Masaüstü Widget";
 "Actions" = "Eylemler";
 "Quit MacWake" = "MacWake'ten Çık";

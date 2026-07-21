@@ -20,6 +20,7 @@ struct MacWakeMenuView: View {
     @State private var isCLIInstalled = CLIInstaller.isInstalled
     #endif
     @State private var processSortMode: Int = 0 // 0 = CPU, 1 = RAM
+    @State private var settingsCategory: SettingsCategory = .quick
     #if !APPSTORE
     // In-app language override relaunches the app via a /bin/sh helper (Process), which
     // the App Store sandbox forbids — so the whole selector is Developer-ID only.
@@ -471,76 +472,121 @@ struct MacWakeMenuView: View {
     }
     #endif
 
+    /// Settings is organised as a small category switcher over a focused body — a
+    /// "Quick" tile grid for the common on/off toggles, then a page per concern.
+    enum SettingsCategory: Int, CaseIterable, Identifiable {
+        case quick, menuBar, charging, general, actions
+        var id: Int { rawValue }
+        var title: String {
+            switch self {
+            case .quick: return "Quick"
+            case .menuBar: return "Menu Bar"
+            case .charging: return "Charge Limit"
+            case .general: return "General"
+            case .actions: return "Actions"
+            }
+        }
+        var icon: String {
+            switch self {
+            case .quick: return "bolt.fill"
+            case .menuBar: return "menubar.rectangle"
+            case .charging: return "bolt.badge.checkmark"
+            case .general: return "gearshape.fill"
+            case .actions: return "ellipsis.circle.fill"
+            }
+        }
+    }
+
+    private var visibleSettingsCategories: [SettingsCategory] {
+        // Charge control needs the privileged helper, which the App Store build omits.
+        SettingsCategory.allCases.filter { $0 != .charging || !Distribution.isAppStore }
+    }
+
     private var settingsTabContent: some View {
-        VStack(spacing: 16) {
-            // NOTIFICATIONS — permission status + the alerts it drives, together.
-            settingsSection("Notifications", icon: "bell.fill") {
-                notificationPermissionRow
-                    .padding(.horizontal, 12).padding(.vertical, 9)
-                rowDivider()
-                toggleRow("battery.25percent", .orange, "Low Battery Alert", $tracker.lowBatteryAlertEnabled, subtitle: "LOW_BATTERY_HELP")
-                if tracker.lowBatteryAlertEnabled {
-                    rowDivider()
-                    sliderBlock {
-                        HStack {
-                            Text("Warn at").font(.caption).foregroundColor(.secondary)
-                            Spacer()
-                            Text("\(tracker.lowBatteryThreshold)%").font(.caption.bold()).foregroundColor(.orange)
+        VStack(spacing: 14) {
+            settingsCategoryBar
+            settingsCategoryBody
+        }
+    }
+
+    private var settingsCategoryBar: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(visibleSettingsCategories) { cat in
+                    let on = settingsCategory == cat
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.16)) { settingsCategory = cat }
+                    } label: {
+                        VStack(spacing: 5) {
+                            Image(systemName: cat.icon).font(.system(size: 15, weight: .semibold))
+                            Text(LocalizedStringKey(cat.title)).font(.system(size: 9.5, weight: .semibold)).lineLimit(1)
                         }
-                        Slider(value: Binding(get: { Double(tracker.lowBatteryThreshold) }, set: { tracker.lowBatteryThreshold = Int($0) }), in: 5...50, step: 5).tint(.orange)
+                        .frame(width: 64, height: 54)
+                        .foregroundColor(on ? greenColor : .secondary)
+                        .background(RoundedRectangle(cornerRadius: 13, style: .continuous)
+                            .fill(on ? greenColor.opacity(0.14) : Color.primary.opacity(0.05)))
+                        .overlay(RoundedRectangle(cornerRadius: 13, style: .continuous)
+                            .stroke(on ? greenColor.opacity(0.4) : Color.clear, lineWidth: 1))
+                        .shadow(color: on ? greenColor.opacity(0.3) : .clear, radius: 8, y: 1)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 2).padding(.vertical, 2)
+        }
+    }
+
+    @ViewBuilder
+    private var settingsCategoryBody: some View {
+        switch settingsCategory {
+        case .quick:
+            quickGrid
+        case .menuBar:
+            VStack(alignment: .leading, spacing: 7) { menuBarSection }
+        case .charging:
+            #if !APPSTORE
+            VStack(spacing: 16) {
+                VStack(alignment: .leading, spacing: 7) { chargeLimitSection }
+                VStack(alignment: .leading, spacing: 7) { energyModeSection }
+            }
+            #else
+            EmptyView()
+            #endif
+        case .general:
+            VStack(spacing: 16) {
+                settingsSection("Notifications", icon: "bell.fill") {
+                    notificationPermissionRow
+                        .padding(.horizontal, 12).padding(.vertical, 9)
+                    if tracker.lowBatteryAlertEnabled {
+                        rowDivider()
+                        sliderBlock {
+                            HStack {
+                                Text("Warn at").font(.caption).foregroundColor(.secondary)
+                                Spacer()
+                                Text("\(tracker.lowBatteryThreshold)%").font(.caption.bold()).foregroundColor(.orange)
+                            }
+                            Slider(value: Binding(get: { Double(tracker.lowBatteryThreshold) }, set: { tracker.lowBatteryThreshold = Int($0) }), in: 5...50, step: 5).tint(.orange)
+                        }
                     }
                 }
-            }
-
-            // GENERAL — startup, language, motion.
-            settingsSection("General", icon: "gearshape.fill") {
-                #if !APPSTORE
-                languageRow
-                rowDivider()
-                #endif
-                toggleRow("power", .green, "Launch at Login", launchAtLoginBinding, subtitle: "LAUNCH_AT_LOGIN_HELP")
-                rowDivider()
-                toggleRow("sparkles", .purple, "Enable Animations", $tracker.enableAnimations, subtitle: "ANIMATIONS_HELP")
-            }
-
-            // DYNAMIC ISLAND — the overlay and everything nested under it.
-            settingsSection("Dynamic Island", icon: "oval.portrait.tophalf.filled") {
-                toggleRow("oval.portrait.tophalf.filled", .indigo, "Dynamic Island Overlay", $tracker.enableDynamicIsland, subtitle: "DYNAMIC_ISLAND_HELP")
-                if tracker.enableDynamicIsland {
-                    rowDivider()
-                    toggleRow("hand.tap", .pink, "Dynamic Island Haptics", $tracker.enableDynamicIslandHaptics, subtitle: "HAPTICS_HELP")
-                    rowDivider()
-                    toggleRow("tray.and.arrow.down", .teal, "Dynamic Island Shelf", $tracker.enableNotchShelf, subtitle: "NOTCH_SHELF_HELP")
+                settingsSection("General", icon: "gearshape.fill") {
                     #if !APPSTORE
-                    rowDivider()
-                    toggleRow("music.note", .pink, "Now Playing", $nowPlaying.isEnabled, subtitle: "NOW_PLAYING_HELP")
+                    languageRow
                     #endif
+                    if tracker.showWidget {
+                        #if !APPSTORE
+                        rowDivider()
+                        #endif
+                        toggleRow("lock.fill", .gray, "Lock Widget Position", $tracker.isWidgetLocked, subtitle: "WIDGET_LOCK_HELP")
+                    }
                 }
+                #if !APPSTORE
+                VStack(alignment: .leading, spacing: 7) { cliSection }
+                VStack(alignment: .leading, spacing: 7) { cleaningModeSection }
+                #endif
             }
-
-            // DESKTOP WIDGET
-            settingsSection("Desktop Widget", icon: "rectangle.on.rectangle") {
-                toggleRow("rectangle.on.rectangle", .blue, "Show Desktop Widget", $tracker.showWidget, subtitle: "WIDGET_HELP")
-                if tracker.showWidget {
-                    rowDivider()
-                    toggleRow("lock.fill", .gray, "Lock Widget Position", $tracker.isWidgetLocked, subtitle: "WIDGET_LOCK_HELP")
-                }
-            }
-
-            VStack(alignment: .leading, spacing: 7) { menuBarSection }
-
-            // Sandboxed App Store build: no privileged helper, so no charge control /
-            // energy / CLI; no CGEventTap, so no Cleaning Mode; updates come from the store.
-            // Compile-time (#if), not runtime — the backing types are stripped from that build.
-            #if !APPSTORE
-            VStack(alignment: .leading, spacing: 7) { chargeLimitSection }
-            VStack(alignment: .leading, spacing: 7) { energyModeSection }
-            VStack(alignment: .leading, spacing: 7) { cliSection }
-            VStack(alignment: .leading, spacing: 7) { cleaningModeSection }
-            #endif
-
-            // ACTIONS
-            settingsSection("Actions", icon: "bolt.fill") {
+        case .actions:
+            settingsSection("Actions", icon: "ellipsis.circle.fill") {
                 actionRow("sparkles", .pink, "Welcome Tour") { OnboardingManager.shared.show() }
                 rowDivider()
                 actionRow("arrow.clockwise", .orange, "Reset Session") { tracker.resetCurrentSession() }
@@ -554,6 +600,50 @@ struct MacWakeMenuView: View {
                 actionRow("power", .red, "Quit MacWake", destructive: true) { NSApplication.shared.terminate(nil) }
             }
         }
+    }
+
+    /// Control-Center-style grid of the common on/off toggles: filled + glowing when on.
+    private var quickGrid: some View {
+        LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
+            quickTile("power", .green, "Launch at Login", launchAtLoginBinding)
+            quickTile("sparkles", .purple, "Enable Animations", $tracker.enableAnimations)
+            quickTile("rectangle.on.rectangle", .blue, "Show Desktop Widget", $tracker.showWidget)
+            quickTile("oval.portrait.tophalf.filled", .indigo, "Dynamic Island", $tracker.enableDynamicIsland)
+            if tracker.enableDynamicIsland {
+                quickTile("hand.tap", .pink, "Haptics", $tracker.enableDynamicIslandHaptics)
+                quickTile("tray.and.arrow.down", .teal, "Shelf", $tracker.enableNotchShelf)
+                #if !APPSTORE
+                quickTile("music.note", .pink, "Now Playing", $nowPlaying.isEnabled)
+                #endif
+            }
+            quickTile("battery.25percent", .orange, "Low Battery Alert", $tracker.lowBatteryAlertEnabled)
+        }
+    }
+
+    private func quickTile(_ icon: String, _ tint: Color, _ title: String, _ binding: Binding<Bool>) -> some View {
+        let on = binding.wrappedValue
+        return Button {
+            withAnimation(.easeInOut(duration: 0.15)) { binding.wrappedValue.toggle() }
+        } label: {
+            VStack(alignment: .leading, spacing: 0) {
+                iconTile(icon, on ? tint : Color.gray.opacity(0.55))
+                Spacer(minLength: 10)
+                Text(LocalizedStringKey(title))
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(on ? .primary : .secondary)
+                    .lineLimit(2).multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(height: 92, alignment: .topLeading)
+            .padding(12)
+            .background(RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(on ? tint.opacity(0.14) : Color.primary.opacity(0.04)))
+            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(on ? tint.opacity(0.45) : Color.primary.opacity(0.06), lineWidth: 1))
+            .shadow(color: on ? tint.opacity(0.35) : .clear, radius: 10, y: 2)
+        }
+        .buttonStyle(.plain)
     }
 
     /// A titled settings group: an icon + uppercase label tightly coupled to its card.

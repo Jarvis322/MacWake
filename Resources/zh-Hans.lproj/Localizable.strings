@@ -324,6 +324,7 @@
 /* Settings cards */
 "General" = "通用";
 "Notifications" = "通知";
+"Quick" = "快速";
 "Desktop Widget" = "桌面小组件";
 "Actions" = "操作";
 "Quit MacWake" = "退出 MacWake";
