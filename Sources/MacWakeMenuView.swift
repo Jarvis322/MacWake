@@ -1106,6 +1106,7 @@ struct MacWakeMenuView: View {
                 .multilineTextAlignment(.center)
         }
         .padding(.vertical, 8)
+        .frame(maxWidth: .infinity)
     }
 
     private var pluggedInDescription: String {

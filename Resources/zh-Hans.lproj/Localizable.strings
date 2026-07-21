@@ -1,0 +1,371 @@
+/* MacWake — Simplified Chinese localization. Keys are the English source strings. */
+
+/* Tabs */
+"Session" = "当前";
+"History" = "历史";
+"Hardware" = "硬件";
+"Settings" = "设置";
+
+/* Session tab */
+"CURRENT SESSION" = "当前使用情况";
+"Session Timeline" = "使用时间线";
+"Screen On" = "亮屏时间";
+"Active time" = "活跃时间";
+"Total Time" = "总时长";
+"Estimated remaining" = "预计剩余时间";
+"Efficiency" = "续航效率";
+"ON BATTERY" = "电池供电";
+"CHARGING" = "正在充电";
+"Plugged" = "已接通电源";
+"Mac is Plugged In" = "Mac 已接通电源";
+"Charging Connected" = "已连接充电器";
+
+/* History tab */
+"RECENT SESSIONS (LAST 3)" = "最近记录（3 条）";
+"LAST 7 DAYS" = "最近 7 天";
+"1h History" = "1 小时记录";
+"No sessions recorded yet." = "暂无使用记录。";
+"No battery sessions in the last 7 days." = "最近 7 天没有电池供电记录。";
+"Daily" = "每日";
+"Weekly" = "每周";
+"Monthly" = "每月";
+"Screen" = "屏幕";
+
+/* Hardware tab */
+"BATTERY HEALTH & HARDWARE" = "电池健康与硬件";
+"BATTERY HEALTH DECAY LOG" = "电池健康度变化记录";
+"No health changes recorded yet." = "暂无健康度变化记录。";
+"SYSTEM TEMPERATURES" = "系统温度";
+"TEMPERATURES" = "温度";
+"TEMP" = "温度";
+"Temperature" = "温度";
+"FAN STATUS" = "风扇状态";
+"FAN" = "风扇";
+"Fan Speed" = "风扇转速";
+"Fanless Device" = "无风扇设备";
+"Active cooling" = "主动散热";
+"This Mac operates silently without cooling fans." = "这台 Mac 没有散热风扇，可安静运行。";
+"CYCLES" = "循环次数";
+"Cycles" = "循环次数";
+"Health" = "健康度";
+"Max capacity" = "最大容量";
+"Used" = "已使用";
+"Total count" = "总次数";
+"ADAPTER HISTORY" = "电源适配器记录";
+"Apple Original" = "Apple 原装";
+"Slow Charging Alert" = "充电缓慢提醒";
+
+/* Settings tab */
+"Show Desktop Widget" = "显示桌面小组件";
+"Lock Widget Position" = "锁定小组件位置";
+"Launch at Login" = "登录时启动";
+"Enable Animations" = "启用动画";
+"Dynamic Island Overlay" = "Dynamic Island 浮层";
+"Dynamic Island Haptics" = "Dynamic Island 触控反馈";
+"Reset Session" = "重置当前记录";
+"Check for Updates" = "检查更新";
+"Quit" = "退出";
+"Developed by" = "开发者";
+
+/* Charge limit */
+"Charge Limit" = "充电上限";
+"Limit Charging" = "限制充电";
+"Stop at" = "停止于";
+"Enable Charge Limiting" = "启用充电上限";
+"Approval needed" = "需要批准";
+"Open System Settings" = "打开系统设置";
+"Cap charging at a set level to reduce long-term battery wear. Installs a small background helper (one-time approval)." = "将充电限制在设定电量，以减缓电池的长期损耗。需要安装一个小型后台辅助程序（仅需批准一次）。";
+"Enable the MacWake background item in System Settings to allow charge limiting." = "请在系统设置中启用 MacWake 后台项目，以允许限制充电。";
+
+/* Notifications & alerts */
+"High Battery Temperature" = "电池温度过高";
+"Plugged In All Day" = "全天接通电源";
+"Your Mac has been plugged in for 24 hours. Discharge the battery." = "你的 Mac 已接通电源 24 小时。请让电池适当放电。";
+"⚠️ Battery Temperature High" = "⚠️ 电池温度过高";
+"🔌 Always On Power" = "🔌 长时间接通电源";
+"Your Mac has been on AC power for 24 hours. Discharge the battery occasionally to protect battery health." = "你的 Mac 已使用交流电源 24 小时。请偶尔让电池放电，以保护电池健康。";
+"Your Mac has been plugged in and fully charged for 24 hours. Discharge the battery occasionally to protect battery health." = "你的 Mac 已接通电源并保持充满状态 24 小时。请偶尔让电池放电，以保护电池健康。";
+"Wake: Fast Battery Drain" = "Wake：电量快速下降";
+"Wake: Test Notification" = "Wake：测试通知";
+"Wake: Notifications Enabled" = "Wake：通知已启用";
+"Notifications are working." = "通知功能正常。";
+"Fast battery drain alerts are ready." = "电量快速下降提醒已就绪。";
+
+/* Formatted strings */
+"DRAIN_BODY_FMT" = "电池电量在 %2$d 分钟内下降了 %1$d%%。当前电量：%3$d%%。";
+"TEMP_REACHED_FMT" = "电池温度已达到 %.1f°C。";
+"TEMP_HIGH_BODY_FMT" = "电池温度已达到 %.1f°C。建议断开电源，以保护电池健康。";
+"LAST_SEEN_FMT" = "上次使用：%@";
+"SCREEN_FMT" = "亮屏：%@";
+"TOTAL_FMT" = "总计：%@";
+"SINCE_FMT" = "开始于 %@";
+"SLOW_CHARGING_FMT" = "已连接 %dW 适配器，但当前仅输入 %.1fW。请检查线缆、端口或扩展坞。";
+"BATTERY_HEALTH_FMT" = "电池健康度：%lld%%";
+"RECORDED_AT_FMT" = "记录于 %lld 次循环时";
+"CL_HOLD_FMT" = "通过暂停适配器供电，将电池维持在 %lld%% 附近。设备会短暂使用电池，以保持在上限以下。";
+"CL_OPT_WARNING" = "为获得最佳效果，请关闭 macOS 的“优化电池充电”（系统设置 › 电池 › 电池健康），避免两项功能发生冲突。";
+
+/* Status & computed strings */
+"On Battery" = "电池供电";
+"Hot" = "过热";
+"Warm" = "偏热";
+"Normal" = "正常";
+"Unavailable" = "不可用";
+"Fanless" = "无风扇";
+"Notifications On" = "通知已开启";
+"Notifications Off" = "通知已关闭";
+"Notifications Not Set" = "通知尚未设置";
+"Notifications Temporary" = "通知为临时授权";
+"Notifications Unknown" = "通知状态未知";
+"LIMIT_FMT" = "（上限：%d%%）";
+"VIA_FMT" = "，通过 %@";
+"CHARGING_DYN_FMT" = "正在充电：%.1fW / %dW 适配器%@ %@";
+"CHARGING_FIXED_FMT" = "正在充电：%dW 适配器%@ %@";
+"CHARGING_PORT_FMT" = "正在充电%@ %@";
+"CHARGING_DESC_FMT" = "正在使用 %dW 适配器充电。拔下电源线后将自动开始记录。";
+"UNPLUG_DESC_FMT" = "拔下电源线后将自动开始记录（上限：%d%%）。";
+
+/* Dynamic Island Shelf */
+"Dynamic Island Shelf" = "Dynamic Island 置物架";
+"SHELF" = "置物架";
+"NOTCH_SHELF_HELP" = "在展开的 Dynamic Island 中添加置物架栏：预览最近复制的文本，并提供一个可临时拖放文件的小托盘。默认关闭，因为它会轮询剪贴板。";
+"Now Playing" = "正在播放";
+"NOW_PLAYING_HELP" = "在 Dynamic Island 中显示 Spotify 或 Apple Music 当前播放的歌曲，并提供上一首、播放/暂停和下一首控制。macOS 首次使用时会请求控制这些 App 的权限。";
+"Drop files here" = "将文件拖放到这里";
+
+/* Cleaning Mode */
+"Cleaning Mode" = "清洁模式";
+"Lock keyboard & trackpad" = "锁定键盘与触控板";
+"So wiping the screen doesn't type or click anything." = "擦拭屏幕时不会误输入或误点击。";
+"CLEANING_MODE_HELP" = "暂时在系统范围内阻止所有键盘和触控板输入，避免清洁屏幕或键盘时误输入或误点击。需要辅助功能权限。";
+"Duration" = "持续时间";
+"Needs Accessibility permission — click Start, approve it in System Settings, then click Start again." = "需要辅助功能权限——点按“开始”，在系统设置中批准后，再次点按“开始”。";
+"Start Cleaning Mode" = "开始清洁模式";
+"Freezes ALL keyboard/trackpad input, including this app. Hold Escape for 1.5s to unlock early." = "将冻结包括本 App 在内的所有键盘和触控板输入。按住 Escape 键 1.5 秒可提前解锁。";
+"CLEANING_SECONDS_FMT" = "剩余 %d 秒";
+"Keyboard and trackpad input is paused. Hold Escape for 1.5s to unlock early." = "键盘和触控板输入已暂停。按住 Escape 键 1.5 秒可提前解锁。";
+
+/* Top Up + Low Battery Alert */
+"Charge to 100% Once" = "单次充至 100%";
+"TOPUP_HELP" = "本次越过充电上限并充至 100%（例如出行前）。电池充满后会自动恢复充电上限。";
+"TOPUP_ACTIVE_FMT" = "正在充满——当前 %d%%，达到 100%% 后恢复上限";
+"Topping Up" = "正在充满";
+"Charging to 100% this once, then the limit resumes." = "本次将充至 100%，随后恢复充电上限。";
+"Fully Charged" = "已充满";
+"Top Up complete — the charge limit is back on." = "已充满——充电上限已恢复。";
+"Low Battery Alert" = "低电量提醒";
+"LOW_BATTERY_HELP" = "在你选择的电量触发通知和 Dynamic Island 警告，早于 macOS 自带的 10% 提醒。每次放电仅触发一次。";
+"Warn at" = "提醒电量";
+"Low Battery" = "电量不足";
+"LOW_BATTERY_FMT" = "电池电量为 %d%%";
+"🪫 Low Battery" = "🪫 电量不足";
+"LOW_BATTERY_BODY_FMT" = "电池电量已降至 %d%%。请尽快接通电源，以免意外关机。";
+
+/* Heat Guard + CSV export */
+"Heat Guard" = "高温保护";
+"HEATGUARD_HELP" = "电池温度高于 40°C 时暂停充电，降至 37°C 后恢复——充电产生的热量是电池长期损耗的主要原因之一。";
+"HEATGUARD_PAUSED_FMT" = "电池温度为 %.0f°C——已暂停充电，冷却后将恢复。";
+"Paused — battery is hot, charging will resume when it cools." = "已暂停——电池温度过高，冷却后将恢复充电。";
+"Battery cooled down — charging resumed." = "电池已冷却——已恢复充电。";
+"Export Battery Data (CSV)" = "导出电池数据（CSV）";
+
+/* Scheduled full charge */
+"Full Charge by Schedule" = "定时充满";
+"SCHEDULE_HELP" = "夜间保持正常充电上限，并提前开始充电，确保每天在你选择的时间达到 100%。目标时间约两小时后恢复正常上限。";
+"Charging for your scheduled time…" = "正在为设定时间充电…";
+"Scheduled Charge" = "定时充电";
+"Charging to 100% for your scheduled time." = "正在充至 100%，以便在设定时间完成。";
+
+/* WidgetKit widget + App Intents */
+"Open MacWake" = "打开 MacWake";
+"Health %d%%" = "健康度 %d%%";
+"Limit %d%%" = "上限 %d%%";
+"No charge limit" = "未设置充电上限";
+"Open MacWake to refresh" = "打开 MacWake 以刷新";
+"Battery level, health, temperature, and charge limit at a glance." = "快速查看电量、健康度、温度和充电上限。";
+"Advanced Controls aren't set up yet — enable them once in MacWake's settings." = "高级控制尚未设置——请先在 MacWake 设置中启用。";
+"INTENT_LIMIT_SET_FMT" = "充电上限已设为 %d%%。";
+"Topping up to 100% — the limit resumes when full." = "正在充至 100%——充满后恢复充电上限。";
+"Cleaning Mode needs Accessibility permission — approve MacWake in System Settings, then try again." = "清洁模式需要辅助功能权限——请在系统设置中批准 MacWake，然后重试。";
+"Cleaning Mode is on. Hold Escape to unlock early." = "清洁模式已开启。按住 Escape 键可提前解锁。";
+"MacWake is still starting up — try again in a moment." = "MacWake 仍在启动，请稍后重试。";
+"AC Power" = "交流电源";
+"Battery" = "电池";
+"INTENT_STATUS_FMT" = "电池电量 %1$d%%，%2$@，健康度 %3$d%%，温度 %4$.1f°C。";
+"BATTERY" = "电池";
+"MacWake Battery" = "MacWake 电池";
+"Set Charge Limit" = "设置充电上限";
+"Turns on charge limiting and sets the maximum battery percentage." = "开启充电限制并设置电池最高电量。";
+"Limit (%)" = "上限（%）";
+"Overrides the charge limit for a single full charge, then re-applies it automatically." = "单次忽略充电上限并充满，之后自动恢复上限。";
+"Locks the keyboard and trackpad briefly so you can wipe the screen." = "暂时锁定键盘和触控板，方便擦拭屏幕。";
+"Duration (seconds)" = "持续时间（秒）";
+"Get Battery Status" = "获取电池状态";
+"Returns the battery level, power source, health, and temperature." = "返回电量、电源来源、健康度和温度。";
+"Battery Status" = "电池状态";
+
+/* Session detail labels */
+"Sleep Time" = "睡眠时间";
+"Shutdown" = "关机";
+"Restarts" = "重新启动";
+"Start Charge" = "开始电量";
+"Sleep" = "睡眠";
+
+/* Sailing Mode + Calibration */
+"Sailing Mode" = "巡航模式";
+"Recharge at" = "开始充电于";
+"SAILING_DESC_FMT" = "让电量先降至 %1$d%%，再充回 %2$d%%——减少循环与热量。";
+"Battery Calibration" = "电池校准";
+"Every" = "每隔";
+"DAYS_FMT" = "%d 天";
+"CALIBRATION_DESC" = "按设定周期充满至 100%，以重新校准电池电量计。";
+"Calibrate Now" = "立即校准";
+"Calibrating — charging to 100%…" = "正在校准——充电至 100%…";
+"Charging to 100% to recalibrate the battery." = "正在充电至 100%，以重新校准电池。";
+"Calibration Complete" = "校准完成";
+"Battery recalibrated. Charge limit resumed." = "电池已重新校准。充电上限已恢复。";
+"Calibration Stopped" = "校准已停止";
+"Calibration took too long and was stopped. Charging has resumed." = "校准耗时过长，已停止。充电已恢复。";
+"Calibration was stopped because the helper stopped responding. Charging has resumed." = "辅助程序停止响应，校准已终止。充电已恢复。";
+
+/* Fan control */
+"Manual Fan Speed" = "手动风扇转速";
+"Target" = "目标";
+"RPM_FMT" = "%d RPM";
+"FAN_SAFETY_NOTE" = "温度超过 92°C 时会恢复自动控制，以防过热。此功能仍为实验性功能，可能不适用于所有 Mac。";
+"Fan Control Paused" = "风扇控制已暂停";
+"High temperature — fans returned to automatic." = "温度过高——风扇已恢复自动控制。";
+"Enable Advanced Controls in Settings to set a custom fan target." = "请在设置中启用高级控制，以设置自定义风扇目标转速。";
+
+/* Monitor tab — top processes */
+"Monitor" = "监控";
+"TOP APPS" = "高占用 App";
+"RAM" = "RAM";
+"Sampling…" = "正在采样…";
+"Open this tab to sample running apps." = "打开此标签页以采样正在运行的 App。";
+
+/* Menu bar customization + Energy Mode */
+"Menu Bar" = "菜单栏";
+"Icon" = "图标";
+"Battery %" = "电池百分比";
+"Power / Time" = "功率 / 时间";
+"Energy Mode" = "能耗模式";
+"Automatic" = "自动";
+"Low Power" = "低电量模式";
+"High Power" = "高电量模式";
+"Time Remaining" = "剩余时间";
+
+/* Deep calibration */
+"Cancel" = "取消";
+"Discharging, then a full charge to recalibrate the battery." = "先将电池放电，再充满以重新校准。";
+"Calibrating — discharging to 15%…" = "正在校准——放电至 15%…";
+"Calibrating — holding at 100%…" = "正在校准——保持在 100%…";
+
+/* Command line tool */
+"Command Line Tool" = "命令行工具";
+"Installed" = "已安装";
+"Remove" = "移除";
+"Control charging from Terminal: installs the \U2018macwake\U2019 command." = "通过终端控制充电：安装“macwake”命令。";
+"Install Command Line Tool" = "安装命令行工具";
+
+/* Onboarding tour */
+"Welcome to MacWake" = "欢迎使用 MacWake";
+"Your Mac's battery, finally visible. Here's a quick 60-second tour." = "终于可以看清 Mac 的电池状态了。下面用 60 秒快速了解一下。";
+"Protect your battery" = "保护电池";
+"Stop charging at the level you choose and keep the battery cool." = "在你选择的电量停止充电，并让电池保持凉爽。";
+"Cap charging at 50–95% to reduce long-term wear." = "将充电限制在 50–95%，以减缓长期损耗。";
+"Let it drift in a band instead of micro-charging — fewer cycles." = "让电量在区间内变化，避免频繁微充——减少循环次数。";
+"Deep Calibration" = "深度校准";
+"Discharge → full charge → hold, to recalibrate the gauge." = "放电 → 充满 → 保持，以重新校准电量计。";
+"Take control" = "掌控电量";
+"Power tools for when you need them." = "需要时即可使用的高级工具。";
+"Switch macOS Automatic / Low Power / High Power." = "切换 macOS 自动 / 低电量模式 / 高电量模式。";
+"Set a target RPM on Macs with fans (experimental)." = "在配有风扇的 Mac 上设置目标转速（实验性）。";
+"macwake CLI" = "macwake CLI";
+"Control charging from Terminal — install it in Settings." = "从终端控制充电——可在设置中安装。";
+"At a glance" = "一目了然";
+"See everything without opening anything." = "无需打开窗口即可掌握所有状态。";
+"Dynamic Island" = "Dynamic Island";
+"Hover the notch for a JARVIS arc reactor that pulses with power." = "将指针悬停在刘海处，查看随功率脉动的 JARVIS 方舟反应堆。";
+"Custom Menu Bar" = "自定义菜单栏";
+"Pick what shows — %, power, time remaining, temperature." = "选择显示内容——百分比、功率、剩余时间和温度。";
+"Live readings" = "实时读数";
+"Battery, CPU, SSD temps, fan speed, and health decay log." = "电池、CPU、SSD 温度、风扇转速和健康度变化记录。";
+"One-time setup" = "一次设置";
+"Charge limiting, fan, and energy control use a small background helper. The first time you turn on Charge Limiting, macOS asks you to approve it in System Settings — no passwords. Everything else works right away." = "充电上限、风扇和能耗控制需要一个小型后台辅助程序。首次开启充电上限时，macOS 会要求你在系统设置中批准，无需输入密码。其他功能可直接使用。";
+"Back" = "返回";
+"Skip" = "跳过";
+"Next" = "下一步";
+"Get Started" = "开始使用";
+"Welcome Tour" = "欢迎导览";
+
+/* Interactive onboarding */
+"ONB_LIMIT_FMT" = "充电将在 %d%% 停止，并在接通电源时维持在该电量。";
+"Your Mac's battery, finally visible. Let's take a quick interactive tour — try the controls as you go." = "终于可以看清 Mac 的电池状态了。下面通过快速互动导览来试用各项控制。";
+"Stop charging at the level you choose to slow battery wear. Drag it:" = "在你选择的电量停止充电，以减缓电池损耗。拖动试试：";
+"Sailing & Calibration" = "巡航与校准";
+"Smarter than holding a hard ceiling." = "比始终维持固定上限更智能。";
+"On notch Macs, hover the notch — you'll see this live JARVIS arc reactor." = "在带刘海的 Mac 上，将指针悬停在刘海处，即可看到实时 JARVIS 方舟反应堆。";
+"The core pulses faster the more power flows in. Color shifts on low battery or heat." = "输入功率越高，核心脉动越快；低电量或高温时颜色也会变化。";
+"Show exactly what you want. Toggle these — the preview updates:" = "只显示你需要的内容。切换下列选项，预览会实时更新：";
+"Power tools" = "高级工具";
+"For when you need more control." = "在需要更多控制时使用。";
+"Energy Mode — set how hard your Mac runs." = "能耗模式——调整 Mac 的性能与能耗。";
+"Terminal control" = "终端控制";
+"Plus manual fan speed on Macs with fans." = "配有风扇的 Mac 还可手动调节转速。";
+"Approve once" = "仅需批准一次";
+"The first time you turn on Charge Limiting, macOS asks you to allow it in System Settings — no passwords." = "首次开启充电上限时，macOS 会要求你在系统设置中允许此操作，无需输入密码。";
+"Everything else is instant" = "其他功能即刻可用";
+"Monitoring, Dynamic Island, and menu bar work right away." = "监控、Dynamic Island 和菜单栏可直接使用。";
+"100% private" = "完全保护隐私";
+"No account, no cloud. Your data never leaves your Mac." = "无需账户，不使用云端。你的数据始终留在 Mac 上。";
+"Power" = "功率";
+
+/* Settings cards */
+"General" = "通用";
+"Actions" = "操作";
+"Quit MacWake" = "退出 MacWake";
+
+/* Advanced controls reframe + onboarding fan */
+"Advanced Controls" = "高级控制";
+"Enable the MacWake background item in System Settings to unlock these controls." = "请在系统设置中启用 MacWake 后台项目，以解锁这些控制。";
+"Charge Limit, Fan & Energy" = "充电上限、风扇与能耗";
+"Cap charging, control fan speed, and set the energy mode. These use a small background helper — approve it once in System Settings, no passwords. You don't have to turn the charge limit on." = "限制充电、控制风扇转速并设置能耗模式。这些功能使用一个小型后台辅助程序，只需在系统设置中批准一次，无需密码。你无需开启充电上限也可使用其他控制。";
+"Enable Advanced Controls" = "启用高级控制";
+"Control charging from Terminal." = "从终端控制充电。";
+"On Macs with fans — auto-reverts above 92°C." = "适用于配有风扇的 Mac——超过 92°C 时自动恢复系统控制。";
+"Turn on the Shelf in Settings for a last-copied-text peek and a file drop tray." = "在设置中开启置物架，即可预览最近复制的文本并使用文件拖放托盘。";
+"Lives in the Monitor tab, next to Top Apps by CPU/RAM." = "位于“监控”标签页中，紧邻按 CPU/RAM 排序的高占用 App。";
+"Cleaning Mode locks the keyboard/trackpad while you wipe the screen." = "清洁模式会在擦拭屏幕时锁定键盘和触控板。";
+
+/* Translation audit — source strings */
+"Install" = "安装";
+"Enable" = "启用";
+"Charging" = "正在充电";
+"Power Source" = "电源";
+"Recheck battery health now" = "立即重新检查电池健康度";
+"Charge limiting, fan, and energy control use a small background helper." = "充电上限、风扇和能耗控制需要一个小型后台辅助程序。";
+"Discharge → full charge → hold 1 hour, to recalibrate the gauge." = "放电 → 充满 → 保持 1 小时，以重新校准电量计。";
+"Let it drift in a band instead of micro-charging — fewer cycles, less heat." = "让电量在区间内变化，避免频繁微充——减少循环与热量。";
+"Plus a macwake command line tool — install it in Settings." = "还可使用 macwake 命令行工具——可在设置中安装。";
+"status · charging · adapter · energy · fan" = "状态 · 充电 · 适配器 · 能耗 · 风扇";
+"CHARGED_FMT" = "已充电 %d%%";
+"EFF_SCREEN_FMT" = "每消耗 1%% 电量可亮屏 %@ 分钟";
+"USED_FMT" = "已使用 %d%%";
+"EFF_SHORT_FMT" = "每 1%% %@ 分钟";
+"RAW_CAPACITY_NOTE_FMT" = "电池控制器原始容量：%d%%";
+"Test" = "测试";
+
+/* Settings hover tooltips */
+"CL_HELP" = "自动在下方设定的电量停止充电，而不是始终充至 100%，从而减缓电池的长期损耗。";
+"SAILING_HELP" = "让电池在一定区间内放电和充电，而不是维持固定电量——减少停留在高电量状态的时间。";
+"CALIBRATION_HELP" = "定期将电池放电至约 15%，充满并在 100% 保持一小时，使电池电量读数保持准确。";
+"ENERGY_MODE_HELP" = "切换 macOS 能耗模式——自动模式平衡性能与电池续航，低电量模式延长续航，高电量模式优先保障性能（仅限支持的 Mac）。";
+"FAN_CONTROL_HELP" = "以固定目标转速取代自动风扇控制。此功能仍为实验性功能；Mac 温度过高时会自动恢复系统控制。";
+"WIDGET_HELP" = "在桌面上显示一个始终可见的小型电池仪表，与菜单栏分开显示。";
+"WIDGET_LOCK_HELP" = "防止桌面小组件被拖动或意外移动。";
+"LAUNCH_AT_LOGIN_HELP" = "登录时自动启动 MacWake。";
+"ANIMATIONS_HELP" = "启用充电动画和菜单栏图标动画。";
+"DYNAMIC_ISLAND_HELP" = "显示刘海样式浮层，其中包含充电状态、提醒和快捷控制。";
+"HAPTICS_HELP" = "Dynamic Island 打开或关闭时，通过触控板提供轻微的点按反馈。";
+"MENUBAR_POWER_HELP" = "接通电源时显示充电功率，使用电池时显示亮屏时间。";

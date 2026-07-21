@@ -1,0 +1,2 @@
+/* Privacy usage descriptions */
+"NSAppleEventsUsageDescription" = "MacWake 会读取 Spotify 和 Apple Music 当前播放的歌曲并控制播放，以便在 Dynamic Island 中显示“正在播放”。";
