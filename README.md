@@ -1,5 +1,7 @@
 # 🔋 MacWake
 
+[English](README.md) | [简体中文](README.zh-Hans.md) | [Türkçe](README.tr.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
+
 **MacWake** is an elegant menu bar and desktop widget application designed for macOS to track detailed battery health, usage analytics, and charging habits. Built with Swift and SwiftUI, it faithfully embraces modern macOS design guidelines (glassmorphism, vibrant effects).
 
 <p align="center">
@@ -59,8 +61,8 @@ clicking it opens the full panel — Session, History, Hardware, and Settings.
     *   A **JARVIS-style arc-reactor HUD** with rotating tick rings and a glowing core that pulses with charging power.
     *   At-a-glance power, battery health, and temperature, plus quick toggles (widget, reset, animations, notifications).
 *   **🌍 Localization:**
-    *   Full English, Turkish, and Simplified Chinese (简体中文) UI. Follow the macOS system language or choose a language in MacWake Settings; restart to apply the change. The WidgetKit extension continues to use its own system-provided language environment.
-*   **📊 Detailed Session Tracking (Current Session):** 
+    *   Full English, Turkish, Simplified Chinese (简体中文), Japanese (日本語), and Korean (한국어) UI. Follow the macOS system language or choose a language in MacWake Settings; restart to apply the change. The WidgetKit extension continues to use its own system-provided language environment.
+*   **📊 Detailed Session Tracking (Current Session):**
     *   Tracks screen-on time and sleep duration.
     *   Seamless data integrity with restart/shutdown detection.
     *   Efficiency calculation showing average screen time per 1% battery drop.
@@ -141,7 +143,7 @@ MacWake is free and developed in my spare time. If it helps your battery, consid
 
 ## 🔒 Security & Permissions
 
-The application does not require any administrator (root) privileges to monitor battery status and charging adapters; it relies entirely on standard macOS IOKit APIs. 
+The application does not require any administrator (root) privileges to monitor battery status and charging adapters; it relies entirely on standard macOS IOKit APIs.
 *   **Notifications:** To receive fast discharge alerts, it is recommended to grant notification permissions when the app first launches (this can be managed via the "Enable/Settings" button under the Menu).
 
 ---
