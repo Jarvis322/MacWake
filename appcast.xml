@@ -6,6 +6,47 @@
         <description>Wake — Battery Health update feed</description>
         <language>en</language>
         <item>
+            <title>Version 1.44</title>
+            <pubDate>Thu, 23 Jul 2026 00:00:00 +0000</pubDate>
+            <sparkle:version>45</sparkle:version>
+            <sparkle:shortVersionString>1.44</sparkle:shortVersionString>
+            <description><![CDATA[
+                <meta charset="utf-8">
+                <style>
+                    :root { color-scheme: light dark; }
+                    body { font: 13px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; margin: 4px 2px; color: #1d1d1f; }
+                    h1 { font-size: 15px; margin: 0 0 2px; }
+                    .date { font-size: 11px; opacity: .5; margin: 0 0 14px; }
+                    .tag { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; opacity: .55; margin: 16px 0 8px; }
+                    .tag:first-of-type { margin-top: 0; }
+                    ul { margin: 0; padding-left: 18px; }
+                    li { margin-bottom: 8px; }
+                    b { font-weight: 600; }
+                    hr { border: 0; border-top: 1px solid rgba(0,0,0,.1); margin: 16px 0 0; }
+                    @media (prefers-color-scheme: dark) { body { color: #f5f5f7; } hr { border-top-color: rgba(255,255,255,.12); } }
+                </style>
+                <h1>Wake 1.44</h1>
+                <p class="date">23 Temmuz 2026 · 23 July 2026</p>
+                <p class="tag">🌍 Yeni</p>
+                <ul>
+                    <li><b>Japonca (日本語) ve Korece (한국어)</b> — Wake artık 5 dilde: İngilizce, Türkçe, Çince, Japonca, Korece. Sistem dilini takip eder ya da Ayarlar'dan seçilir. Topluluk katkısıyla (@ssdiwu). 🙏</li>
+                </ul>
+                <hr>
+                <p class="tag">🌍 New</p>
+                <ul>
+                    <li><b>Japanese (日本語) and Korean (한국어)</b> — Wake now speaks 5 languages: English, Turkish, Chinese, Japanese, Korean. Follows your system language, or pick one in Settings. Community contribution by @ssdiwu. 🙏</li>
+                </ul>
+            ]]></description>
+            <enclosure
+                url="https://github.com/Jarvis322/MacWake/releases/download/v1.44/Wake-1.44.dmg"
+                sparkle:version="45"
+                sparkle:shortVersionString="1.44"
+                length="4987335"
+                type="application/octet-stream"
+                sparkle:edSignature="zlnsF1tC+jT3tA5U/seTIxS0Kl1weJTWRR6ebuYSYDG/2fz8fq9i4SwP8O75JxhN4FhEUioRHaDM5UJZFn1xBg=="
+            />
+        </item>
+        <item>
             <title>Version 1.43</title>
             <pubDate>Wed, 22 Jul 2026 12:00:00 +0000</pubDate>
             <sparkle:version>44</sparkle:version>
