@@ -169,6 +169,14 @@ struct OnboardingView: View {
             Text("Your Mac's battery, finally visible. Let's take a quick interactive tour — try the controls as you go.")
                 .font(.system(size: 14)).foregroundColor(.secondary)
                 .multilineTextAlignment(.center).frame(maxWidth: 440)
+            // Native language names — universal, so no localization lookup (verbatim).
+            HStack(spacing: 6) {
+                Image(systemName: "globe").font(.system(size: 11, weight: .semibold))
+                Text(verbatim: "English · Türkçe · 简体中文 · 日本語 · 한국어")
+                    .font(.system(size: 11, weight: .medium))
+            }
+            .foregroundColor(.secondary.opacity(0.8))
+            .padding(.top, 6)
             Spacer()
         }
     }
