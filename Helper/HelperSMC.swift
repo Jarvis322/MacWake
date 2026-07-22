@@ -102,8 +102,8 @@ enum HelperSMC {
         defer { IOServiceClose(conn) }
         let count = Int(read(conn, "FNum"))
         guard count > 0 else { return (0, 0, 0) }
-        let minRPM = Int(readFPE2(conn, "F0Mn"))
-        let maxRPM = Int(readFPE2(conn, "F0Mx"))
+        let minRPM = readFanRPM(conn, "F0Mn")
+        let maxRPM = readFanRPM(conn, "F0Mx")
         return (count, minRPM, maxRPM)
     }
 
@@ -112,42 +112,66 @@ enum HelperSMC {
     static func setFanManual(_ manual: Bool, rpm: Int) -> Bool {
         guard let conn = open() else { return false }
         defer { IOServiceClose(conn) }
-        if manual {
-            let minRPM = Int(readFPE2(conn, "F0Mn"))
-            let maxReported = Int(readFPE2(conn, "F0Mx"))
-            // Fall back to a sane ceiling if the chip didn't report a usable max.
-            let maxRPM = maxReported > minRPM ? maxReported : max(minRPM, 8000)
-            let clamped = min(max(rpm, minRPM), maxRPM)
-            let okTarget = writeFPE2(conn, "F0Tg", clamped)
-            let okMode = write(conn, "F0Md", 1)   // forced
-            return okTarget && okMode
-        } else {
-            return write(conn, "F0Md", 0)          // auto
+        // Apply to every fan — 14"/16" MacBook Pros have two; forcing only F0 left
+        // the second on automatic and made manual mode look like it did nothing.
+        let count = max(1, Int(read(conn, "FNum")))
+        var ok = true
+        for i in 0..<count {
+            if manual {
+                let minRPM = readFanRPM(conn, "F\(i)Mn")
+                let maxReported = readFanRPM(conn, "F\(i)Mx")
+                // Fall back to a sane ceiling if the chip didn't report a usable max.
+                let maxRPM = maxReported > minRPM ? maxReported : max(minRPM, 8000)
+                let clamped = min(max(rpm, minRPM), maxRPM)
+                ok = writeFanRPM(conn, "F\(i)Tg", clamped) && write(conn, "F\(i)Md", 1) && ok
+            } else {
+                ok = write(conn, "F\(i)Md", 0) && ok
+            }
         }
+        return ok
     }
 
-    /// fpe2: unsigned fixed-point, value = raw / 4, big-endian 2 bytes.
-    private static func readFPE2(_ conn: io_connect_t, _ key: String) -> Int {
+    /// Fan keys are `fpe2` (2-byte big-endian fixed-point, raw/4) on Intel but `flt `
+    /// (4-byte little-endian Float32) on Apple Silicon. Decode per the key's reported
+    /// type — an fpe2-only read returns garbage min/max on M-series Macs.
+    private static func readFanRPM(_ conn: io_connect_t, _ key: String) -> Int {
         guard let info = keyInfo(conn, key) else { return 0 }
         var inp = SMCParamStruct()
         inp.key = fourCC(key); inp.keyInfo.dataSize = info.dataSize; inp.data8 = 5
         var out = SMCParamStruct(); var sz = MemoryLayout<SMCParamStruct>.stride
         let r = IOConnectCallStructMethod(conn, 2, &inp, MemoryLayout<SMCParamStruct>.stride, &out, &sz)
         guard r == kIOReturnSuccess && out.result == 0 else { return 0 }
+        if info.dataType == fourCC("flt ") {
+            var f: Float32 = 0
+            withUnsafeMutableBytes(of: &f) { p in
+                p[0] = out.bytes.0; p[1] = out.bytes.1; p[2] = out.bytes.2; p[3] = out.bytes.3
+            }
+            return f.isFinite && f >= 0 ? Int(f) : 0
+        }
         let raw = (UInt32(out.bytes.0) << 8) | UInt32(out.bytes.1)
         return Int(raw / 4)
     }
 
-    private static func writeFPE2(_ conn: io_connect_t, _ key: String, _ rpm: Int) -> Bool {
+    /// Encode the target RPM in the key's own type: Float32 LE on Apple Silicon
+    /// (`flt `), fpe2 on Intel. Writing fpe2 bytes into an `flt ` key silently sets a
+    /// garbage target — the reason manual fan control never engaged on M-series.
+    private static func writeFanRPM(_ conn: io_connect_t, _ key: String, _ rpm: Int) -> Bool {
         guard let info = keyInfo(conn, key) else { return false }
-        let raw = UInt32(max(0, rpm) * 4)
         var inp = SMCParamStruct()
         inp.key = fourCC(key)
         inp.keyInfo.dataSize = info.dataSize
         inp.keyInfo.dataType = info.dataType
         inp.data8 = 6
-        inp.bytes.0 = UInt8((raw >> 8) & 0xFF)
-        inp.bytes.1 = UInt8(raw & 0xFF)
+        if info.dataType == fourCC("flt ") {
+            let f = Float32(max(0, rpm))
+            withUnsafeBytes(of: f) { p in
+                inp.bytes.0 = p[0]; inp.bytes.1 = p[1]; inp.bytes.2 = p[2]; inp.bytes.3 = p[3]
+            }
+        } else {
+            let raw = UInt32(max(0, rpm) * 4)
+            inp.bytes.0 = UInt8((raw >> 8) & 0xFF)
+            inp.bytes.1 = UInt8(raw & 0xFF)
+        }
         var out = SMCParamStruct(); var sz = MemoryLayout<SMCParamStruct>.stride
         let r = IOConnectCallStructMethod(conn, 2, &inp, MemoryLayout<SMCParamStruct>.stride, &out, &sz)
         return r == kIOReturnSuccess && out.result == 0
@@ -204,7 +228,16 @@ enum HelperSMC {
         inp.keyInfo.dataSize = info.dataSize
         inp.keyInfo.dataType = info.dataType
         inp.data8 = 6 // kSMCWriteKey
-        inp.bytes.0 = value
+        if info.dataType == fourCC("flt ") {
+            // Some Apple Silicon keys (e.g. F0Md on certain models) are Float32 — a raw
+            // byte write would encode a denormal ≈ 0 and silently no-op.
+            let f = Float32(value)
+            withUnsafeBytes(of: f) { p in
+                inp.bytes.0 = p[0]; inp.bytes.1 = p[1]; inp.bytes.2 = p[2]; inp.bytes.3 = p[3]
+            }
+        } else {
+            inp.bytes.0 = value
+        }
         var out = SMCParamStruct(); var sz = MemoryLayout<SMCParamStruct>.stride
         let r = IOConnectCallStructMethod(conn, 2, &inp, MemoryLayout<SMCParamStruct>.stride, &out, &sz)
         return r == kIOReturnSuccess && out.result == 0
