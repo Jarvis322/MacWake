@@ -6,6 +6,49 @@
         <description>Wake — Battery Health update feed</description>
         <language>en</language>
         <item>
+            <title>Version 1.43</title>
+            <pubDate>Wed, 22 Jul 2026 12:00:00 +0000</pubDate>
+            <sparkle:version>44</sparkle:version>
+            <sparkle:shortVersionString>1.43</sparkle:shortVersionString>
+            <description><![CDATA[
+                <meta charset="utf-8">
+                <style>
+                    :root { color-scheme: light dark; }
+                    body { font: 13px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; margin: 4px 2px; color: #1d1d1f; }
+                    h1 { font-size: 15px; margin: 0 0 2px; }
+                    .date { font-size: 11px; opacity: .5; margin: 0 0 14px; }
+                    .tag { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; opacity: .55; margin: 16px 0 8px; }
+                    .tag:first-of-type { margin-top: 0; }
+                    ul { margin: 0; padding-left: 18px; }
+                    li { margin-bottom: 8px; }
+                    b { font-weight: 600; }
+                    hr { border: 0; border-top: 1px solid rgba(0,0,0,.1); margin: 16px 0 0; }
+                    @media (prefers-color-scheme: dark) { body { color: #f5f5f7; } hr { border-top-color: rgba(255,255,255,.12); } }
+                </style>
+                <h1>Wake 1.43</h1>
+                <p class="date">22 Temmuz 2026 · 22 July 2026</p>
+                <p class="tag">🐛 Hata düzeltmeleri</p>
+                <ul>
+                    <li><b>Manuel fan kontrolü (Apple Silicon)</b> — M serisi Mac'lerde manuel fan hızı artık gerçekten devreye giriyor; hedef RPM yanlış formatta yazılıyordu. Bildiren kullanıcıya teşekkürler! 🙏</li>
+                    <li><b>İki fanlı MacBook Pro'lar</b> — manuel mod artık her iki fanı da sürüyor, öncekinde ikinci fan otomatikte kalıyordu.</li>
+                </ul>
+                <hr>
+                <p class="tag">🐛 Bug fixes</p>
+                <ul>
+                    <li><b>Manual fan control (Apple Silicon)</b> — manual fan speed now actually engages on M-series Macs; the target RPM was being written in the wrong format. Thanks to the user who reported it! 🙏</li>
+                    <li><b>Two-fan MacBook Pros</b> — manual mode now drives both fans; previously the second fan stayed on automatic.</li>
+                </ul>
+            ]]></description>
+            <enclosure
+                url="https://github.com/Jarvis322/MacWake/releases/download/v1.43/Wake-1.43.dmg"
+                sparkle:version="44"
+                sparkle:shortVersionString="1.43"
+                length="4933347"
+                type="application/octet-stream"
+                sparkle:edSignature="YRDhdDshOrkd+zBbGzvdYFZ7cHu3znOPVSg/oBVBnwyBYeQcP14OTBXnO2ReCDrGzuugODTIVPWta0DXOohFBA=="
+            />
+        </item>
+        <item>
             <title>Version 1.42</title>
             <pubDate>Wed, 22 Jul 2026 00:00:00 +0000</pubDate>
             <sparkle:version>43</sparkle:version>
