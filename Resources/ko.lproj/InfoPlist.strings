@@ -1,0 +1,2 @@
+/* Privacy usage descriptions */
+"NSAppleEventsUsageDescription" = "MacWake는 Dynamic Island에 ‘지금 재생 중’을 표시하기 위해 Spotify와 Apple Music의 현재 재생 정보를 읽고 재생을 제어합니다.";

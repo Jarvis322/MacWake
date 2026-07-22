@@ -1,0 +1,3 @@
+/* App Shortcut invocation phrases. Keep ${applicationName} intact. */
+"Charge to full with ${applicationName}" = "${applicationName}에서 배터리를 완전히 충전";
+"Get battery status with ${applicationName}" = "${applicationName}에서 배터리 상태 확인";

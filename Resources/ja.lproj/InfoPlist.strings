@@ -1,0 +1,2 @@
+/* Privacy usage descriptions */
+"NSAppleEventsUsageDescription" = "MacWakeは、Dynamic Islandに「再生中」を表示するため、SpotifyとApple Musicで再生中の曲を読み取り、再生を操作します。";
