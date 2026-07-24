@@ -96,36 +96,65 @@ enum HelperSMC {
 
     // MARK: - Fan control (fan 0)
 
+    /// The true hardware minimum per fan, captured before we ever raise F0*Mn to force a
+    /// speed. Lets us restore it, and keep reporting the real min while an override is live.
+    /// The helper is a long-lived daemon, so this survives across XPC calls.
+    private static var hardwareMin: [Int: Int] = [:]
+
+    private static func fanLog(_ msg: String) { NSLog("[macwake.fan] %@", msg) }
+
+    /// UInt32 four-char-code → readable string (e.g. 0x666C7420 → "flt ").
+    private static func typeString(_ code: UInt32) -> String {
+        let b = [UInt8((code >> 24) & 0xFF), UInt8((code >> 16) & 0xFF),
+                 UInt8((code >> 8) & 0xFF), UInt8(code & 0xFF)]
+        return String(bytes: b, encoding: .ascii) ?? "?"
+    }
+
     /// (fanCount, minRPM, maxRPM). Returns (0,0,0) on fanless Macs.
     static func getFanInfo() -> (count: Int, min: Int, max: Int) {
         guard let conn = open() else { return (0, 0, 0) }
         defer { IOServiceClose(conn) }
         let count = Int(read(conn, "FNum"))
         guard count > 0 else { return (0, 0, 0) }
-        let minRPM = readFanRPM(conn, "F0Mn")
+        // Report the saved hardware min if we've overridden F0Mn, else read it live.
+        let minRPM = hardwareMin[0] ?? readFanRPM(conn, "F0Mn")
         let maxRPM = readFanRPM(conn, "F0Mx")
         return (count, minRPM, maxRPM)
     }
 
-    /// Force fan 0 to `rpm` (manual, clamped to the fan's reported min/max) or restore
-    /// automatic control.
+    /// Force every fan to `rpm`, or restore automatic control.
+    ///
+    /// Apple Silicon has no working "forced target mode" (F0Md/F0Tg, the Intel path) —
+    /// the SMC ignores it. The mechanism that actually works there, and what Macs Fan
+    /// Control uses, is to raise the fan's MINIMUM (F0Mn): the system controller then
+    /// keeps the fan at least that fast. We do both so Intel and Apple Silicon are covered,
+    /// and log the full picture so a tester's Console reveals exactly what engaged.
     static func setFanManual(_ manual: Bool, rpm: Int) -> Bool {
-        guard let conn = open() else { return false }
+        guard let conn = open() else { fanLog("open() failed"); return false }
         defer { IOServiceClose(conn) }
-        // Apply to every fan — 14"/16" MacBook Pros have two; forcing only F0 left
-        // the second on automatic and made manual mode look like it did nothing.
         let count = max(1, Int(read(conn, "FNum")))
+        fanLog("setFanManual(manual=\(manual), rpm=\(rpm)) fans=\(count)")
         var ok = true
         for i in 0..<count {
+            let mnType = keyInfo(conn, "F\(i)Mn").map { typeString($0.dataType) } ?? "none"
+            let mdType = keyInfo(conn, "F\(i)Md").map { typeString($0.dataType) } ?? "none"
+            let tgType = keyInfo(conn, "F\(i)Tg").map { typeString($0.dataType) } ?? "none"
+            let before = readFanRPM(conn, "F\(i)Ac")
             if manual {
-                let minRPM = readFanRPM(conn, "F\(i)Mn")
+                if hardwareMin[i] == nil { hardwareMin[i] = readFanRPM(conn, "F\(i)Mn") }
+                let hwMin = hardwareMin[i] ?? 0
                 let maxReported = readFanRPM(conn, "F\(i)Mx")
-                // Fall back to a sane ceiling if the chip didn't report a usable max.
-                let maxRPM = maxReported > minRPM ? maxReported : max(minRPM, 8000)
-                let clamped = min(max(rpm, minRPM), maxRPM)
-                ok = writeFanRPM(conn, "F\(i)Tg", clamped) && write(conn, "F\(i)Md", 1) && ok
+                let maxRPM = maxReported > hwMin ? maxReported : max(hwMin, 8000)
+                let clamped = min(max(rpm, hwMin), maxRPM)
+                let okMin = writeFanRPM(conn, "F\(i)Mn", clamped)   // Apple Silicon path
+                let okTg  = writeFanRPM(conn, "F\(i)Tg", clamped)   // Intel path
+                let okMd  = write(conn, "F\(i)Md", 1)
+                fanLog("F\(i) types[Mn=\(mnType) Md=\(mdType) Tg=\(tgType)] hwMin=\(hwMin) max=\(maxRPM) target=\(clamped) writeMn=\(okMin) writeTg=\(okTg) writeMd=\(okMd) actualBefore=\(before)")
+                ok = okMin && ok
             } else {
-                ok = write(conn, "F\(i)Md", 0) && ok
+                if let hwMin = hardwareMin[i] { _ = writeFanRPM(conn, "F\(i)Mn", hwMin) }
+                _ = write(conn, "F\(i)Md", 0)
+                fanLog("F\(i) restore -> F\(i)Mn=\(hardwareMin[i] ?? -1), F\(i)Md=0")
             }
         }
         return ok
