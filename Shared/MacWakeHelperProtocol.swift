@@ -46,6 +46,12 @@ public let kMacWakeCodeSigningRequirement =
 
     /// Unregisters and removes the helper (best-effort) before the app uninstalls it.
     func uninstall(reply: @escaping (Bool) -> Void)
+
+    /// Human-readable fan report straight from the running daemon: its own version, every
+    /// fan key with its SMC type and value, and the result of a probe write. Console logs
+    /// proved unreliable for remote debugging (nothing tells you whether the daemon even
+    /// reloaded), so the app surfaces this text directly for a tester to copy.
+    func fanDiagnostics(reply: @escaping (String) -> Void)
 }
 
 /// Bumped whenever the helper's XPC surface or SMC logic changes, so the app can
@@ -56,4 +62,4 @@ public let kMacWakeCodeSigningRequirement =
 /// without bumping means users keep executing the previous code. That silently
 /// swallowed two Apple Silicon fan fixes (1.43, 1.45) before it was caught; build.sh
 /// now warns when Helper/ changes without a bump.
-public let kMacWakeHelperVersion = "5"
+public let kMacWakeHelperVersion = "6"

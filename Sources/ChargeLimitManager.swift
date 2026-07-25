@@ -1,4 +1,5 @@
 import Foundation
+import AppKit
 import ServiceManagement
 import MacWakeShared
 
@@ -721,6 +722,61 @@ final class ChargeLimitManager: ObservableObject {
     func restoreFanAuto() {
         guard let proxy = remoteProxy() else { return }
         proxy.setFanManual(false, rpm: 0) { _ in }
+    }
+
+    /// Builds a copyable fan report and puts it on the pasteboard. Console logging proved
+    /// useless for remote debugging — it can't tell you whether the daemon even reloaded —
+    /// so this asks the running daemon directly and shows its answer, including the helper
+    /// version actually serving XPC versus the one this app expects.
+    func copyFanDiagnostics() async -> String {
+        var report = """
+        MacWake fan diagnostics
+        app \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?") \
+        (build \(Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "?"))
+        expects helper v\(kMacWakeHelperVersion)
+        helperStatus=\(helperStatus)
+        fanCount=\(fanCount) min=\(fanMinRPM) max=\(fanMaxRPM)
+        manualEnabled=\(fanControlEnabled) target=\(fanTargetRPM)
+
+        """
+        guard let proxy = remoteProxy() else {
+            report += "XPC: no connection to the daemon"
+            copyToPasteboard(report)
+            return report
+        }
+        let daemonReport: String = await withCheckedContinuation { cont in
+            var resumed = false
+            proxy.fanDiagnostics { text in
+                guard !resumed else { return }; resumed = true
+                cont.resume(returning: text)
+            }
+            // An old daemon has no fanDiagnostics selector: the call fails via the
+            // connection's error handler, so don't hang the button forever.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                guard !resumed else { return }; resumed = true
+                cont.resume(returning: "XPC: no reply in 3s — the running daemon is OLD (no fanDiagnostics). It did not reload.")
+            }
+        }
+        report += daemonReport
+        copyToPasteboard(report)
+        return report
+    }
+
+    private func copyToPasteboard(_ text: String) {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+    }
+
+    /// Forces the daemon to be torn down and re-registered, regardless of version. The
+    /// automatic path only fires once per launch and silently swallows failures.
+    func forceReloadHelper() async -> Bool {
+        try? await service.unregister()
+        connection?.invalidate()
+        connection = nil
+        do { try service.register() } catch { return false }
+        fanCount = 0
+        loadFanInfo()
+        return true
     }
 
     /// Failsafe: called with the hottest sensor reading. If fan control is forcing a

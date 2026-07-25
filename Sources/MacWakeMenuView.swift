@@ -21,6 +21,7 @@ struct MacWakeMenuView: View {
     #endif
     @State private var processSortMode: Int = 0 // 0 = CPU, 1 = RAM
     @State private var settingsCategory: SettingsCategory = .quick
+    @State private var fanDiagnosticsCopied = false
     #if !APPSTORE
     // In-app language override relaunches the app via a /bin/sh helper (Process), which
     // the App Store sandbox forbids — so the whole selector is Developer-ID only.
@@ -874,6 +875,32 @@ struct MacWakeMenuView: View {
                     }
                     .padding(.horizontal, 12).padding(.vertical, 8)
                 }
+
+                // Manual fan is BETA and hardware-dependent; these give a tester (or me)
+                // the daemon's own account of what happened, without needing Console.
+                rowDivider()
+                HStack(spacing: 8) {
+                    Button {
+                        Task {
+                            _ = await chargeLimit.copyFanDiagnostics()
+                            fanDiagnosticsCopied = true
+                        }
+                    } label: {
+                        Label(fanDiagnosticsCopied ? "Copied" : "Copy Diagnostics",
+                              systemImage: fanDiagnosticsCopied ? "checkmark" : "doc.on.doc")
+                            .font(.caption)
+                    }
+                    .buttonStyle(.bordered).controlSize(.small)
+
+                    Button {
+                        Task { _ = await chargeLimit.forceReloadHelper() }
+                    } label: {
+                        Label("Reload Helper", systemImage: "arrow.clockwise").font(.caption)
+                    }
+                    .buttonStyle(.bordered).controlSize(.small)
+                    Spacer()
+                }
+                .padding(.horizontal, 12).padding(.vertical, 8)
             }
         }
     }

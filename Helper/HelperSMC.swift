@@ -110,6 +110,43 @@ enum HelperSMC {
         return String(bytes: b, encoding: .ascii) ?? "?"
     }
 
+    /// Dumps every fan key with its SMC type and current value, then probes a write to the
+    /// keys manual control depends on. Read by the app's "Copy fan diagnostics" button —
+    /// the only reliable way to see what a remote tester's daemon is actually doing.
+    static func fanDiagnostics() -> String {
+        guard let conn = open() else { return "SMC open() FAILED" }
+        defer { IOServiceClose(conn) }
+        var out = ""
+        let count = Int(read(conn, "FNum"))
+        out += "FNum=\(count)\n"
+        for i in 0..<max(count, 1) {
+            for suffix in ["Ac", "Mn", "Mx", "Tg", "Md", "Sf"] {
+                let key = "F\(i)\(suffix)"
+                if let info = keyInfo(conn, key) {
+                    let type = typeString(info.dataType)
+                    let value = type == "flt " || type == "fpe2" ? "\(readFanRPM(conn, key))" : "\(read(conn, key))"
+                    out += "\(key) type=\(type) size=\(info.dataSize) value=\(value)\n"
+                } else {
+                    out += "\(key) ABSENT\n"
+                }
+            }
+            // Probe: can we write the keys manual mode relies on?
+            let hwMin = hardwareMin[i] ?? readFanRPM(conn, "F\(i)Mn")
+            let probe = min(max(hwMin + 500, hwMin), 6000)
+            let wMn = writeFanRPM(conn, "F\(i)Mn", probe)
+            let wTg = writeFanRPM(conn, "F\(i)Tg", probe)
+            let wMd = write(conn, "F\(i)Md", 1)
+            out += "probe F\(i): target=\(probe) writeMn=\(wMn) writeTg=\(wTg) writeMd=\(wMd)\n"
+            // Leave the machine as we found it unless a manual override is active.
+            if hardwareMin[i] == nil {
+                _ = writeFanRPM(conn, "F\(i)Mn", hwMin)
+                _ = write(conn, "F\(i)Md", 0)
+                out += "probe F\(i): reverted to auto (min=\(hwMin))\n"
+            }
+        }
+        return out
+    }
+
     /// (fanCount, minRPM, maxRPM). Returns (0,0,0) on fanless Macs.
     static func getFanInfo() -> (count: Int, min: Int, max: Int) {
         guard let conn = open() else { return (0, 0, 0) }
