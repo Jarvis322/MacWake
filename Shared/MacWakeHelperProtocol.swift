@@ -50,4 +50,10 @@ public let kMacWakeCodeSigningRequirement =
 
 /// Bumped whenever the helper's XPC surface or SMC logic changes, so the app can
 /// re-register a newer daemon.
-public let kMacWakeHelperVersion = "4"
+///
+/// ⚠️ MUST be bumped in the SAME commit as ANY change under Helper/ — the running
+/// daemon is the old binary until this value differs, so shipping helper changes
+/// without bumping means users keep executing the previous code. That silently
+/// swallowed two Apple Silicon fan fixes (1.43, 1.45) before it was caught; build.sh
+/// now warns when Helper/ changes without a bump.
+public let kMacWakeHelperVersion = "5"

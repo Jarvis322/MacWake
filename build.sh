@@ -56,7 +56,7 @@ cat <<EOF > "${CONTENTS_DIR}/Info.plist"
     <key>CFBundleShortVersionString</key>
     <string>1.45</string>
     <key>CFBundleVersion</key>
-    <string>46</string>
+    <string>47</string>
     <key>LSMinimumSystemVersion</key>
     <string>14.0</string>
     <key>LSApplicationCategoryType</key>
@@ -88,6 +88,18 @@ for lproj in Resources/*.lproj; do
     [ -d "$lproj" ] || continue
     cp -R "$lproj" "${RESOURCES_DIR}/"
 done
+
+# The running daemon is the OLD binary until kMacWakeHelperVersion changes, so helper
+# changes shipped without a bump never execute on users' machines (this silently ate two
+# fan fixes). Warn if Helper/ moved since the last tag but the constant didn't.
+LAST_TAG="$(git describe --tags --abbrev=0 2>/dev/null || true)"
+if [ -n "${LAST_TAG}" ]; then
+    CHANGED="$(git diff --name-only "${LAST_TAG}"..HEAD 2>/dev/null || true)"
+    if echo "${CHANGED}" | grep -q '^Helper/' && ! echo "${CHANGED}" | grep -q 'MacWakeHelperProtocol.swift'; then
+        echo "WARNING: Helper/ changed since ${LAST_TAG} but kMacWakeHelperVersion was not bumped —"
+        echo "         users will keep running the OLD daemon. Bump it in Shared/MacWakeHelperProtocol.swift."
+    fi
+fi
 
 echo "=== Compiling using Swift Package Manager ==="
 XCODE_DIR="$(ls -d /Applications/Xcode*.app 2>/dev/null | head -1)/Contents/Developer"
