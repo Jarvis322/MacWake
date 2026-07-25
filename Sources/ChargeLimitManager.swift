@@ -744,7 +744,26 @@ final class ChargeLimitManager: ObservableObject {
             copyToPasteboard(report)
             return report
         }
-        let daemonReport: String = await withCheckedContinuation { cont in
+        report += processStalenessReport() + "\n"
+        var daemonReport = await askDaemonForDiagnostics(proxy)
+        // A stale daemon can't answer, and asking the tester to press Reload first proved
+        // unreliable — so remediate here and report both attempts.
+        if daemonReport.hasPrefix("XPC:") {
+            report += daemonReport + "\n\nforcing reload…\n"
+            report += await forceReloadHelper() + "\n\n"
+            if let fresh = remoteProxy() {
+                daemonReport = await askDaemonForDiagnostics(fresh)
+            } else {
+                daemonReport = "XPC: no connection after reload"
+            }
+        }
+        report += daemonReport
+        copyToPasteboard(report)
+        return report
+    }
+
+    private func askDaemonForDiagnostics(_ proxy: MacWakeHelperProtocol) async -> String {
+        await withCheckedContinuation { cont in
             var resumed = false
             proxy.fanDiagnostics { text in
                 guard !resumed else { return }; resumed = true
@@ -754,12 +773,38 @@ final class ChargeLimitManager: ObservableObject {
             // connection's error handler, so don't hang the button forever.
             DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
                 guard !resumed else { return }; resumed = true
-                cont.resume(returning: "XPC: no reply in 3s — the running daemon is OLD (no fanDiagnostics). It did not reload.")
+                cont.resume(returning: "XPC: no reply in 3s — the running daemon is OLD (no fanDiagnostics).")
             }
         }
-        report += daemonReport
-        copyToPasteboard(report)
-        return report
+    }
+
+    /// Compares when the running daemon process started against when the on-disk helper
+    /// binary was last written. A process older than the binary is proof it's stale — the
+    /// question no XPC call can answer once the daemon is too old to respond.
+    private func processStalenessReport() -> String {
+        #if !APPSTORE
+        let helperPath = Bundle.main.bundlePath + "/Contents/MacOS/MacWakeHelper"
+        let mtime = (try? FileManager.default.attributesOfItem(atPath: helperPath)[.modificationDate] as? Date) ?? nil
+
+        let p = Process()
+        p.executableURL = URL(fileURLWithPath: "/bin/ps")
+        p.arguments = ["-axo", "pid,lstart,comm"]
+        let pipe = Pipe()
+        p.standardOutput = pipe
+        var line = "(daemon process not found)"
+        if (try? p.run()) != nil {
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            p.waitUntilExit()
+            let out = String(data: data, encoding: .utf8) ?? ""
+            if let match = out.split(separator: "\n").first(where: { $0.contains("MacWakeHelper") }) {
+                line = match.trimmingCharacters(in: .whitespaces)
+            }
+        }
+        let mtimeText = mtime.map { ISO8601DateFormatter().string(from: $0) } ?? "?"
+        return "on-disk helper mtime: \(mtimeText)\nrunning daemon: \(line)"
+        #else
+        return ""
+        #endif
     }
 
     private func copyToPasteboard(_ text: String) {
@@ -767,16 +812,37 @@ final class ChargeLimitManager: ObservableObject {
         NSPasteboard.general.setString(text, forType: .string)
     }
 
-    /// Forces the daemon to be torn down and re-registered, regardless of version. The
-    /// automatic path only fires once per launch and silently swallows failures.
-    func forceReloadHelper() async -> Bool {
-        try? await service.unregister()
+    /// Forces the daemon to be torn down and re-registered, regardless of version, and
+    /// reports each step. Order matters: our live XPC connection keeps the old process
+    /// alive, so it must be invalidated BEFORE unregistering, and launchd needs a moment
+    /// to actually reap the job before a re-register loads the new binary. The previous
+    /// version unregistered first and swallowed every error with `try?`, which is why a
+    /// tester's daemon silently stayed on the original binary.
+    @discardableResult
+    func forceReloadHelper() async -> String {
+        var log = ""
         connection?.invalidate()
         connection = nil
-        do { try service.register() } catch { return false }
+        log += "connection invalidated\n"
+
+        do { try await service.unregister(); log += "unregister ok\n" }
+        catch { log += "unregister FAILED: \(error.localizedDescription)\n" }
+
+        // Wait for launchd to drop the job rather than assuming it's instant.
+        for _ in 0..<20 {
+            if service.status != .enabled { break }
+            try? await Task.sleep(nanoseconds: 100_000_000)
+        }
+        log += "status after unregister: \(service.status.rawValue)\n"
+
+        do { try service.register(); log += "register ok\n" }
+        catch { log += "register FAILED: \(error.localizedDescription)\n" }
+
+        log += "status after register: \(service.status.rawValue)"
+        refreshStatus()
         fanCount = 0
         loadFanInfo()
-        return true
+        return log
     }
 
     /// Failsafe: called with the hottest sensor reading. If fan control is forcing a
