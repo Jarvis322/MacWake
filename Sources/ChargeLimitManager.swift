@@ -771,9 +771,9 @@ final class ChargeLimitManager: ObservableObject {
             }
             // An old daemon has no fanDiagnostics selector: the call fails via the
             // connection's error handler, so don't hang the button forever.
-            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 20) {
                 guard !resumed else { return }; resumed = true
-                cont.resume(returning: "XPC: no reply in 3s — the running daemon is OLD (no fanDiagnostics).")
+                cont.resume(returning: "XPC: no reply in 20s — the running daemon is OLD (no fanDiagnostics).")
             }
         }
     }

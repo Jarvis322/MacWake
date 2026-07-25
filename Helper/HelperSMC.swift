@@ -130,18 +130,27 @@ enum HelperSMC {
                     out += "\(key) ABSENT\n"
                 }
             }
-            // Probe: can we write the keys manual mode relies on?
+            // Live probe: a successful write proves nothing — only the fan's own RPM
+            // afterwards shows whether the SMC honoured it. Drive it well above idle,
+            // give the fan time to spin up, then measure.
             let hwMin = hardwareMin[i] ?? readFanRPM(conn, "F\(i)Mn")
-            let probe = min(max(hwMin + 500, hwMin), 6000)
-            let wMn = writeFanRPM(conn, "F\(i)Mn", probe)
+            let maxRPM = readFanRPM(conn, "F\(i)Mx")
+            let probe = min(hwMin + 1800, maxRPM > hwMin ? maxRPM : 6000)
             let wTg = writeFanRPM(conn, "F\(i)Tg", probe)
+            let wMn = writeFanRPM(conn, "F\(i)Mn", probe)
             let wMd = write(conn, "F\(i)Md", 1)
-            out += "probe F\(i): target=\(probe) writeMn=\(wMn) writeTg=\(wTg) writeMd=\(wMd)\n"
+            out += "probe F\(i): target=\(probe) writeTg=\(wTg) writeMn=\(wMn) writeMd=\(wMd)\n"
+            let rpmBefore = readFanRPM(conn, "F\(i)Ac")
+            Thread.sleep(forTimeInterval: 4.0)
+            let rpmAfter = readFanRPM(conn, "F\(i)Ac")
+            out += "probe F\(i): RPM \(rpmBefore) -> \(rpmAfter) after 4s, Tg reads back \(readFanRPM(conn, "F\(i)Tg"))"
+            out += rpmAfter > rpmBefore + 200 ? "  >>> FAN RESPONDED\n" : "  >>> no change\n"
             // Leave the machine as we found it unless a manual override is active.
             if hardwareMin[i] == nil {
+                _ = writeFanRPM(conn, "F\(i)Tg", 0)
                 _ = writeFanRPM(conn, "F\(i)Mn", hwMin)
                 _ = write(conn, "F\(i)Md", 0)
-                out += "probe F\(i): reverted to auto (min=\(hwMin))\n"
+                out += "probe F\(i): reverted to auto\n"
             }
         }
         return out
@@ -171,11 +180,8 @@ enum HelperSMC {
         defer { IOServiceClose(conn) }
         let count = max(1, Int(read(conn, "FNum")))
         fanLog("setFanManual(manual=\(manual), rpm=\(rpm)) fans=\(count)")
-        var ok = true
+        var ok = false
         for i in 0..<count {
-            let mnType = keyInfo(conn, "F\(i)Mn").map { typeString($0.dataType) } ?? "none"
-            let mdType = keyInfo(conn, "F\(i)Md").map { typeString($0.dataType) } ?? "none"
-            let tgType = keyInfo(conn, "F\(i)Tg").map { typeString($0.dataType) } ?? "none"
             let before = readFanRPM(conn, "F\(i)Ac")
             if manual {
                 if hardwareMin[i] == nil { hardwareMin[i] = readFanRPM(conn, "F\(i)Mn") }
@@ -183,15 +189,23 @@ enum HelperSMC {
                 let maxReported = readFanRPM(conn, "F\(i)Mx")
                 let maxRPM = maxReported > hwMin ? maxReported : max(hwMin, 8000)
                 let clamped = min(max(rpm, hwMin), maxRPM)
-                let okMin = writeFanRPM(conn, "F\(i)Mn", clamped)   // Apple Silicon path
-                let okTg  = writeFanRPM(conn, "F\(i)Tg", clamped)   // Intel path
+                // F0Tg is the one key that accepts writes on Apple Silicon (F0Mn and F0Md
+                // are read-only there); the others are best-effort for Intel, where forced
+                // mode is what matters. Succeed if EITHER path took — gating on F0Mn made
+                // every Apple Silicon call report failure even when the target was set.
+                let okTg  = writeFanRPM(conn, "F\(i)Tg", clamped)
+                let okMin = writeFanRPM(conn, "F\(i)Mn", clamped)
                 let okMd  = write(conn, "F\(i)Md", 1)
-                fanLog("F\(i) types[Mn=\(mnType) Md=\(mdType) Tg=\(tgType)] hwMin=\(hwMin) max=\(maxRPM) target=\(clamped) writeMn=\(okMin) writeTg=\(okTg) writeMd=\(okMd) actualBefore=\(before)")
-                ok = okMin && ok
+                fanLog("F\(i) target=\(clamped) writeTg=\(okTg) writeMn=\(okMin) writeMd=\(okMd) actualBefore=\(before)")
+                ok = okTg || okMin || ok
             } else {
+                // A zero target is what these keys hold when the system owns the fan, so
+                // that — not the unwritable mode key — is how auto control is handed back.
+                let okTg = writeFanRPM(conn, "F\(i)Tg", 0)
                 if let hwMin = hardwareMin[i] { _ = writeFanRPM(conn, "F\(i)Mn", hwMin) }
                 _ = write(conn, "F\(i)Md", 0)
-                fanLog("F\(i) restore -> F\(i)Mn=\(hardwareMin[i] ?? -1), F\(i)Md=0")
+                fanLog("F\(i) restore -> Tg=0 (\(okTg)), Mn=\(hardwareMin[i] ?? -1)")
+                ok = okTg || ok
             }
         }
         return ok
