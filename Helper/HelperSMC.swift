@@ -116,9 +116,12 @@ enum HelperSMC {
     static func fanDiagnostics() -> String {
         guard let conn = open() else { return "SMC open() FAILED" }
         defer { IOServiceClose(conn) }
-        var out = ""
+        var out = "uid=\(getuid()) euid=\(geteuid())\n"
         let count = Int(read(conn, "FNum"))
         out += "FNum=\(count)\n"
+        // Enumerate every F* key the SMC exposes. If another tool drives these fans through
+        // a key we don't know about, a diff of this dump before/after it runs reveals it.
+        out += "--- all F* keys ---\n" + enumerateFanKeys(conn) + "--- end ---\n"
         for i in 0..<max(count, 1) {
             for suffix in ["Ac", "Mn", "Mx", "Tg", "Md", "Sf"] {
                 let key = "F\(i)\(suffix)"
@@ -154,6 +157,38 @@ enum HelperSMC {
             }
         }
         return out
+    }
+
+    /// Walks the SMC's key table and reports every key whose name starts with "F", with its
+    /// type, write attribute and current value. Guessing key names only finds keys we already
+    /// know; this shows what the machine actually has.
+    private static func enumerateFanKeys(_ conn: io_connect_t) -> String {
+        var inp = SMCParamStruct()
+        inp.key = fourCC("#KEY"); inp.data8 = 5
+        if let info = keyInfo(conn, "#KEY") { inp.keyInfo.dataSize = info.dataSize }
+        var out = SMCParamStruct(); var sz = MemoryLayout<SMCParamStruct>.stride
+        guard IOConnectCallStructMethod(conn, 2, &inp, MemoryLayout<SMCParamStruct>.stride, &out, &sz) == kIOReturnSuccess else {
+            return "(key enumeration unavailable)\n"
+        }
+        let total = (UInt32(out.bytes.0) << 24) | (UInt32(out.bytes.1) << 16)
+                  | (UInt32(out.bytes.2) << 8) | UInt32(out.bytes.3)
+        var text = ""
+        for index in 0..<Int(total) {
+            var q = SMCParamStruct()
+            q.data8 = 8               // read key by index
+            q.data32 = UInt32(index)
+            var r = SMCParamStruct(); var rs = MemoryLayout<SMCParamStruct>.stride
+            guard IOConnectCallStructMethod(conn, 2, &q, MemoryLayout<SMCParamStruct>.stride, &r, &rs) == kIOReturnSuccess else { continue }
+            let name = typeString(r.key)
+            guard name.hasPrefix("F") else { continue }
+            guard let info = keyInfo(conn, name) else { continue }
+            let type = typeString(info.dataType)
+            let value = (type == "flt " || type == "fpe2") ? "\(readFanRPM(conn, name))" : "\(read(conn, name))"
+            // bit 0x02 of dataAttributes marks a writable key on this interface.
+            let writable = (info.dataAttributes & 0x02) != 0 ? "w" : "r"
+            text += "\(name) \(type) size=\(info.dataSize) attr=0x\(String(info.dataAttributes, radix: 16))\(writable) value=\(value)\n"
+        }
+        return text.isEmpty ? "(no F* keys found)\n" : text
     }
 
     /// (fanCount, minRPM, maxRPM). Returns (0,0,0) on fanless Macs.
