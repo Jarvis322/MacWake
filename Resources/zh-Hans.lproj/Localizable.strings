@@ -216,9 +216,6 @@
 "Recharge at" = "开始充电于";
 "SAILING_DESC_FMT" = "让电量先降至 %1$d%%，再充回 %2$d%%——减少循环与热量。";
 "Battery Calibration" = "电池校准";
-"Every" = "每隔";
-"DAYS_FMT" = "%d 天";
-"CALIBRATION_DESC" = "按设定周期充满至 100%，以重新校准电池电量计。";
 "Calibrate Now" = "立即校准";
 "Calibrating — charging to 100%…" = "正在校准——充电至 100%…";
 "Charging to 100% to recalibrate the battery." = "正在充电至 100%，以重新校准电池。";
@@ -362,7 +359,7 @@
 /* Settings hover tooltips */
 "CL_HELP" = "自动在下方设定的电量停止充电，而不是始终充至 100%，从而减缓电池的长期损耗。";
 "SAILING_HELP" = "让电池在一定区间内放电和充电，而不是维持固定电量——减少停留在高电量状态的时间。";
-"CALIBRATION_HELP" = "定期将电池放电至约 15%，充满并在 100% 保持一小时，使电池电量读数保持准确。";
+"CALIBRATION_HELP" = "手动将电池放电至约 15%，充满并在 100% 保持一小时，使电量读数保持准确。"
 "ENERGY_MODE_HELP" = "切换 macOS 能耗模式——自动模式平衡性能与电池续航，低电量模式延长续航，高电量模式优先保障性能（仅限支持的 Mac）。";
 "FAN_CONTROL_HELP" = "以固定目标转速取代自动风扇控制。此功能仍为实验性功能；Mac 温度过高时会自动恢复系统控制。";
 "WIDGET_HELP" = "在桌面上显示一个始终可见的小型电池仪表，与菜单栏分开显示。";

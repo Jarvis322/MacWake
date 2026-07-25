@@ -35,7 +35,8 @@ let package = Package(
         .executableTarget(
             name: "MacWake",
             dependencies: macwakeDeps,
-            path: "Sources"
+            path: "Sources",
+            exclude: ["README.md"]
         ),
         .executableTarget(
             name: "MacWakeHelper",
@@ -60,6 +61,12 @@ let package = Package(
             linkerSettings: [
                 .unsafeFlags(["-Xlinker", "-e", "-Xlinker", "_NSExtensionMain"])
             ]
+        ),
+        .testTarget(
+            name: "MacWakeTests",
+            dependencies: ["MacWake"],
+            path: "Tests/MacWakeTests",
+            exclude: ["README.md"]
         )
     ]
 )

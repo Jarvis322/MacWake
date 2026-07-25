@@ -3,6 +3,21 @@ import AppKit
 import ServiceManagement
 import MacWakeShared
 
+/// Pure safety rules shared by the calibration state machine and its regression tests.
+enum CalibrationRecovery {
+    static func shouldRestoreImmediately(batteryLevel: Int, dischargeFloor: Int) -> Bool {
+        batteryLevel <= dischargeFloor
+    }
+
+    static func shouldForceDischarge(batteryLevel: Int, dischargeFloor: Int, adapterEnabled: Bool?) -> Bool {
+        batteryLevel > dischargeFloor && adapterEnabled != false
+    }
+
+    static func restoreSucceeded(forceDischargeCleared: Bool, chargingEnabled: Bool) -> Bool {
+        forceDischargeCleared && chargingEnabled
+    }
+}
+
 /// Manages the privileged helper daemon and drives charge limiting by toggling
 /// the power adapter (SMC key CHIE) through the helper.
 ///
@@ -215,23 +230,6 @@ final class ChargeLimitManager: ObservableObject {
         }
     }
 
-    /// Monthly Calibration: periodically let the battery charge fully to 100% to
-    /// recalibrate its fuel gauge, then resume limiting.
-    @Published var calibrationEnabled: Bool {
-        didSet {
-            UserDefaults.standard.set(calibrationEnabled, forKey: "calibrationEnabled")
-            // Turning the schedule off should also stop any calibration in progress.
-            if !calibrationEnabled && calibrationActive { cancelCalibration() }
-        }
-    }
-
-    @Published var calibrationIntervalDays: Int {
-        didSet {
-            let clamped = min(90, max(7, calibrationIntervalDays))
-            if clamped != calibrationIntervalDays { calibrationIntervalDays = clamped; return }
-            UserDefaults.standard.set(calibrationIntervalDays, forKey: "calibrationIntervalDays")
-        }
-    }
 
     enum CalibrationPhase { case discharge, charge, hold }
     @Published private(set) var calibrationActive = false
@@ -245,7 +243,6 @@ final class ChargeLimitManager: ObservableObject {
     // that the self-induced-discharge heuristic can't distinguish from our own cutoff —
     // abort rather than leave the battery parked low or charging paused indefinitely.
     private let calibrationMaxDuration: TimeInterval = 8 * 3600
-    private(set) var lastCalibration: Date?
     // If the helper is unreachable (mid-restart, stuck, connection dropped), forceDischarge
     // retries every evaluate() tick with no bound otherwise — surface a stop instead of
     // silently retrying forever with no diagnostic.
@@ -319,11 +316,6 @@ final class ChargeLimitManager: ObservableObject {
         self.sailingEnabled = d.bool(forKey: "sailingEnabled")
         let savedLower = d.integer(forKey: "sailingLower")
         self.sailingLower = savedLower == 0 ? max(40, lim - 10) : min(lim - 5, max(40, savedLower))
-        self.calibrationEnabled = d.bool(forKey: "calibrationEnabled")
-        let savedInterval = d.integer(forKey: "calibrationIntervalDays")
-        self.calibrationIntervalDays = savedInterval == 0 ? 30 : min(90, max(7, savedInterval))
-        let savedCal = d.double(forKey: "lastCalibration")
-        self.lastCalibration = savedCal == 0 ? nil : Date(timeIntervalSince1970: savedCal)
         self.fanControlEnabled = d.bool(forKey: "fanControlEnabled")
         self.fanTargetRPM = d.integer(forKey: "fanTargetRPM")
         self.heatGuardEnabled = d.bool(forKey: "heatGuardEnabled")
@@ -492,7 +484,10 @@ final class ChargeLimitManager: ObservableObject {
         let chargingAllowed = await xpcBool { reply in
             proxy.setAdapterEnabled(true, reply: reply)
         }
-        guard dischargeCleared, chargingAllowed else { return false }
+        guard CalibrationRecovery.restoreSucceeded(
+            forceDischargeCleared: dischargeCleared,
+            chargingEnabled: chargingAllowed
+        ) else { return false }
         lastAdapterEnabled = true
         lastToggleAt = Date()
         return true
@@ -555,13 +550,20 @@ final class ChargeLimitManager: ObservableObject {
             }
             switch calibrationPhase {
             case .discharge:
-                if batteryLevel <= calibrationDischargeFloor {
+                if CalibrationRecovery.shouldRestoreImmediately(
+                    batteryLevel: batteryLevel,
+                    dischargeFloor: calibrationDischargeFloor
+                ) {
                     // Restore power in THIS evaluation. Only flipping the phase here left
                     // the adapter cut until the next 30-second tick, and the battery kept
                     // draining through that window — reported reaching 8–9% on a 15% floor.
                     calibrationPhase = .charge
                     Task { await restoreCharging() }
-                } else if lastAdapterEnabled != false {
+                } else if CalibrationRecovery.shouldForceDischarge(
+                    batteryLevel: batteryLevel,
+                    dischargeFloor: calibrationDischargeFloor,
+                    adapterEnabled: lastAdapterEnabled
+                ) {
                     Task {
                         let ok = await forceDischarge(true)   // actively drain on AC
                         if ok {
@@ -596,9 +598,6 @@ final class ChargeLimitManager: ObservableObject {
                     return
                 }
             }
-        } else if calibrationEnabled, isCalibrationDue() {
-            startCalibration(batteryLevel: batteryLevel)
-            return
         }
 
         // Heat Guard outranks Top Up and normal limiting (never outranks calibration —
@@ -670,11 +669,6 @@ final class ChargeLimitManager: ObservableObject {
 
     // MARK: - Calibration
 
-    private func isCalibrationDue() -> Bool {
-        guard let last = lastCalibration else { return true }
-        let days = Date().timeIntervalSince(last) / 86400
-        return days >= Double(calibrationIntervalDays)
-    }
 
     /// Manually start a calibration cycle now (from the Settings button).
     func calibrateNow(batteryLevel: Int) {
@@ -718,15 +712,48 @@ final class ChargeLimitManager: ObservableObject {
         ))
     }
 
-    /// Cancel an in-progress calibration and resume normal charging/limiting.
-    func cancelCalibration() {
-        guard calibrationActive else { return }
+    private func endCalibration() {
         calibrationActive = false
         calibrationHoldStart = nil
         calibrationStartedAt = nil
         calibrationXPCFailureCount = 0
-        DynamicIslandManager.shared.dismiss()   // clear the calibration alert immediately
+        DynamicIslandManager.shared.dismiss()
+    }
+
+    /// Cancel an in-progress calibration and resume normal charging/limiting.
+    func cancelCalibration() {
+        guard calibrationActive else { return }
+        endCalibration()
         Task { await restoreCharging() }
+    }
+
+    /// Sleep suspends the app-side control loop, so release forced discharge before
+    /// the system can sleep past the calibration floor.
+    func cancelCalibrationBeforeSleep() {
+        guard calibrationActive else { return }
+        endCalibration()
+        restoreChargingSynchronously()
+    }
+
+    private func restoreChargingSynchronously() {
+        guard let proxy = remoteProxy() else { return }
+        let semaphore = DispatchSemaphore(value: 0)
+        var forceDischargeCleared = false
+        var chargingEnabled = false
+        proxy.setForceDischarge(false) { cleared in
+            forceDischargeCleared = cleared
+            proxy.setAdapterEnabled(true) { enabled in
+                chargingEnabled = enabled
+                semaphore.signal()
+            }
+        }
+        guard semaphore.wait(timeout: .now() + 2) == .success,
+              CalibrationRecovery.restoreSucceeded(
+                forceDischargeCleared: forceDischargeCleared,
+                chargingEnabled: chargingEnabled
+              ) else { return }
+        lastAdapterEnabled = true
+        lastToggleAt = Date()
     }
 
     private enum CalibrationAbortReason { case timeout, helperUnreachable }
@@ -760,8 +787,6 @@ final class ChargeLimitManager: ObservableObject {
         calibrationHoldStart = nil
         calibrationStartedAt = nil
         calibrationXPCFailureCount = 0
-        lastCalibration = Date()
-        UserDefaults.standard.set(lastCalibration!.timeIntervalSince1970, forKey: "lastCalibration")
         DynamicIslandManager.shared.trigger(.alert(
             title: String(localized: "Calibration Complete"),
             message: String(localized: "Battery recalibrated. Charge limit resumed."),

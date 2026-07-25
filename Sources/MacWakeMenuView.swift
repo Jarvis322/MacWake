@@ -16,6 +16,7 @@ struct MacWakeMenuView: View {
     @State private var isLaunchAtLoginEnabled: Bool = LaunchAgentManager.isEnabled
     @State private var selectedTab: Int = 0
     @State private var isScrolledToBottom = false
+    @State private var showCalibrationConfirmation = false
     #if !APPSTORE
     @State private var isCLIInstalled = CLIInstaller.isInstalled
     #endif
@@ -1107,28 +1108,17 @@ struct MacWakeMenuView: View {
                     }
 
                     rowDivider()
-                    HStack(spacing: 11) {
-                        iconTile("gauge.with.needle", .purple)
-                        Text("Battery Calibration").font(.subheadline)
-                        Spacer()
-                        Toggle("", isOn: $chargeLimit.calibrationEnabled).labelsHidden().toggleStyle(.switch).controlSize(.small)
-                    }
-                    .padding(.horizontal, 12).padding(.vertical, 8)
-                    .help("CALIBRATION_HELP")
-                    if chargeLimit.calibrationEnabled {
-                        sliderBlock {
-                            HStack {
-                                Text("Every").font(.caption).foregroundColor(.secondary)
-                                Spacer()
-                                Text(String(format: String(localized: "DAYS_FMT"), chargeLimit.calibrationIntervalDays)).font(.caption.bold()).foregroundColor(.purple)
-                            }
-                            Slider(value: Binding(get: { Double(chargeLimit.calibrationIntervalDays) }, set: { chargeLimit.calibrationIntervalDays = Int($0) }), in: 7...90, step: 1).tint(.purple)
-                            Text(String(localized: "CALIBRATION_DESC")).font(.system(size: 10)).foregroundColor(.secondary)
-                        }
-                    }
-
-                    rowDivider()
                     sliderBlock {
+                        HStack(spacing: 11) {
+                            iconTile("gauge.with.needle", .purple)
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text("Battery Calibration").font(.subheadline)
+                                Text(String(localized: "CALIBRATION_HELP"))
+                                    .font(.system(size: 10)).foregroundColor(.secondary)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
+
                         if chargeLimit.calibrationActive {
                             HStack(spacing: 5) {
                                 ProgressView().controlSize(.mini)
@@ -1138,10 +1128,20 @@ struct MacWakeMenuView: View {
                             Button(action: { chargeLimit.cancelCalibration() }) { Text("Cancel").frame(maxWidth: .infinity) }
                                 .buttonStyle(.bordered).controlSize(.small)
                         } else {
-                            Button(action: { chargeLimit.calibrateNow(batteryLevel: tracker.currentBatteryLevel) }) {
+                            Button(action: { showCalibrationConfirmation = true }) {
                                 HStack { Image(systemName: "gauge.with.needle"); Text("Calibrate Now") }.frame(maxWidth: .infinity)
                             }
                             .buttonStyle(.bordered).controlSize(.small)
+                            .confirmationDialog(
+                                "Battery Calibration",
+                                isPresented: $showCalibrationConfirmation,
+                                titleVisibility: .visible
+                            ) {
+                                Button("Calibrate Now", role: .destructive) { chargeLimit.calibrateNow(batteryLevel: tracker.currentBatteryLevel) }
+                                Button("Cancel", role: .cancel) {}
+                            } message: {
+                                Text(String(localized: "CALIBRATION_HELP"))
+                            }
                         }
                     }
                 }
