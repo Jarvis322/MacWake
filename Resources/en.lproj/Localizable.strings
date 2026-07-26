@@ -38,7 +38,7 @@
 /* Settings hover tooltips */
 "CL_HELP" = "Stops charging automatically at the percentage below, instead of always charging to 100%. Reduces long-term battery wear.";
 "SAILING_HELP" = "Lets the battery drift down and recharge within a range instead of holding a fixed level — less time parked at a high charge.";
-"CALIBRATION_HELP" = "Manually discharges the battery to about 15%, fully recharges it, and holds at 100% for one hour to keep the battery's charge readout accurate."
+"CALIBRATION_HELP" = "Manually discharges the battery to about 15%, fully recharges it, and holds at 100% for one hour to keep the battery's charge readout accurate.";
 "ENERGY_MODE_HELP" = "Switches the macOS Energy Mode — Automatic balances performance and battery, Low Power extends battery life, High Power favors performance (on Macs that support it).";
 "FAN_CONTROL_HELP" = "Overrides automatic fan control with a fixed target speed. Experimental — automatically reverts to automatic if the Mac gets too hot.";
 "WIDGET_HELP" = "Shows a small always-visible battery gauge on the desktop, separate from the menu bar.";

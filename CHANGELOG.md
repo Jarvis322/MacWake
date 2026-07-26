@@ -8,3 +8,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0
 
 ### Fixed
 - 电池校准改为仅手动确认后启动；到达安全下限时立即恢复外接供电，并在恢复失败时保留重试状态。
+- 修复本地化资源的语法错误，避免选择非英文界面后整张翻译表回退为英文。
