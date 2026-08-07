@@ -510,7 +510,7 @@ class BatteryTracker: ObservableObject {
             self.adapterHistory = persisted.adapterHistory ?? []
             self.lastRapidDrainAlert = persisted.lastRapidDrainAlert
             self.fanSpeedHistory = persisted.fanSpeedHistory ?? []
-            self.healthHistory = persisted.healthHistory ?? []
+            self.healthHistory = Self.pruneNormalisedHealthEntries(persisted.healthHistory ?? [])
             self.acPowerStartTime = persisted.acPowerStartTime
 
             // Recovery Check: If there is an active session, check if we rebooted
@@ -801,10 +801,32 @@ class BatteryTracker: ObservableObject {
         updateWidgetSnapshot()
     }
 
+    /// Drops the bogus 100% rows the old MaxCapacity reading wrote into the decay log.
+    /// Capacity doesn't recover, so a jump UP to exactly 100 from a materially lower
+    /// reading was the normalised value, not a real measurement — one user's log ran
+    /// 84% → 100% at an unchanged cycle count. Small upward wobble (recalibration) is
+    /// left alone.
+    private static func pruneNormalisedHealthEntries(_ records: [HealthRecord]) -> [HealthRecord] {
+        var cleaned: [HealthRecord] = []
+        for record in records {
+            if record.health == 100, let previous = cleaned.last, previous.health < 95 { continue }
+            cleaned.append(record)
+        }
+        return cleaned
+    }
+
     private func updateBatteryHealth(from dict: [String: Any]) {
-        let design = dict["DesignCapacity"] as? Int
-        let nominalMax = dict["NominalChargeCapacity"] as? Int
-        let rawMax = dict["AppleRawMaxCapacity"] as? Int
+        // Where the real capacities live moved on Apple Silicon: some Macs still expose
+        // them at the top level, others (M4 on macOS 26) only inside BatteryData, while
+        // the top-level MaxCapacity is a normalised 100 on both. Look in both places or
+        // the ratio silently goes missing and the normalised value takes over.
+        let nested = dict["BatteryData"] as? [String: Any]
+        func capacity(_ key: String) -> Int? {
+            (dict[key] as? Int) ?? (nested?[key] as? Int)
+        }
+        let design = capacity("DesignCapacity")
+        let nominalMax = capacity("NominalChargeCapacity")
+        let rawMax = capacity("AppleRawMaxCapacity") ?? capacity("FullChargeCapacity")
 
         let rawHealth: Int?
         if let nominalMax, let design, design > 0 {
@@ -817,11 +839,16 @@ class BatteryTracker: ObservableObject {
 
         rawBatteryHealth = rawHealth
 
-        if let reportedMaxCapacity = dict["MaxCapacity"] as? Int,
-           (0...100).contains(reportedMaxCapacity) {
-            batteryHealth = reportedMaxCapacity
-        } else if let rawHealth {
+        // Capacity ratio first. On Apple Silicon AppleSmartBattery's MaxCapacity is a
+        // normalised value macOS pins at 100 regardless of wear — trusting it reported
+        // 100% health on an 82%-worn battery while the raw ratio right below it was
+        // correct. Keep MaxCapacity only as a last resort for Macs that expose no
+        // capacity pair (older Intel models report it as a real percentage there).
+        if let rawHealth {
             batteryHealth = rawHealth
+        } else if let reportedMaxCapacity = dict["MaxCapacity"] as? Int,
+                  (0...100).contains(reportedMaxCapacity) {
+            batteryHealth = reportedMaxCapacity
         }
     }
 
