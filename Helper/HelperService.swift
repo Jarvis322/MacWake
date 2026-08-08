@@ -40,6 +40,18 @@ final class HelperService: NSObject, MacWakeHelperProtocol {
         reply(HelperSMC.chargeControlMethod())
     }
 
+    func exitForUpdate(reply: @escaping (Bool) -> Void) {
+        reply(true)
+        // Answer first, then step aside: launchd owns this job and will start the newer
+        // binary when the app reconnects. Restore charging on the way out so a limit that
+        // was holding the adapter off can never outlive the process.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            _ = HelperSMC.setForceDischarge(false)
+            _ = HelperSMC.setAdapterEnabled(true)
+            exit(0)
+        }
+    }
+
     func uninstall(reply: @escaping (Bool) -> Void) {
         // Always restore charging before the app tears the helper down,
         // so we never leave the machine discharging on AC.

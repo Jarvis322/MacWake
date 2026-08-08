@@ -59,6 +59,14 @@ public let kMacWakeCodeSigningRequirement =
     /// limit. `"none"` when the SMC exposes neither. Reported per machine because it is
     /// detected from key availability, not from the chip model.
     func chargeControlMethod(reply: @escaping (String) -> Void)
+
+    /// Ask the daemon to exit so launchd starts the *current* binary on the next connection.
+    ///
+    /// This is how a stale daemon is replaced. Unregistering and re-registering cannot do it:
+    /// macOS refuses `SMAppService.register()` right after `unregister()` in the same session
+    /// with "Operation not permitted", which left the machine with no daemon at all. The job
+    /// stays registered here; only the process is recycled.
+    func exitForUpdate(reply: @escaping (Bool) -> Void)
 }
 
 /// Bumped whenever the helper's XPC surface or SMC logic changes, so the app can
@@ -69,4 +77,4 @@ public let kMacWakeCodeSigningRequirement =
 /// without bumping means users keep executing the previous code. That silently
 /// swallowed two Apple Silicon fan fixes (1.43, 1.45) before it was caught; build.sh
 /// now warns when Helper/ changes without a bump.
-public let kMacWakeHelperVersion = "11"
+public let kMacWakeHelperVersion = "12"

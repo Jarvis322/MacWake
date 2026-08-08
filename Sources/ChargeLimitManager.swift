@@ -1055,31 +1055,75 @@ final class ChargeLimitManager: ObservableObject {
     /// version unregistered first and swallowed every error with `try?`, which is why a
     /// tester's daemon silently stayed on the original binary.
     @discardableResult
+    /// Replace a stale daemon by recycling the process, not the registration.
+    ///
+    /// The obvious sequence — unregister, then register — cannot work: macOS refuses
+    /// `register()` immediately after `unregister()` in the same session with "Operation not
+    /// permitted", so the old code tore the daemon down and left the Mac with none at all.
+    /// The job is already registered and points into the app bundle, so asking the running
+    /// process to exit is enough; launchd starts the current binary on the next connection.
+    ///
+    /// `register()` is attempted only when the job genuinely isn't registered — the one case
+    /// where it is both necessary and permitted.
     func forceReloadHelper() async -> String {
-        var log = ""
+        var log = "status: \(service.status.rawValue)\n"
+
+        guard service.status == .enabled else {
+            do { try service.register(); log += "register ok\n" }
+            catch { log += "register FAILED: \(error.localizedDescription)\n" }
+            log += "final status: \(service.status.rawValue)"
+            helperVersion = nil
+            refreshStatus()
+            return log
+        }
+
+        let exited = await xpcBool(timeout: 5) { [weak self] reply in
+            guard let proxy = self?.remoteProxy() else { return reply(false) }
+            proxy.exitForUpdate(reply: reply)
+        }
+        log += exited ? "daemon asked to exit\n" : "daemon did not answer the exit request\n"
         connection?.invalidate()
         connection = nil
-        log += "connection invalidated\n"
 
-        do { try await service.unregister(); log += "unregister ok\n" }
-        catch { log += "unregister FAILED: \(error.localizedDescription)\n" }
-
-        // Wait for launchd to drop the job rather than assuming it's instant.
-        for _ in 0..<20 {
-            if service.status != .enabled { break }
-            try? await Task.sleep(nanoseconds: 100_000_000)
+        // launchd starts the replacement on demand, so reconnect and read the version back
+        // instead of assuming the swap happened.
+        var reported = ""
+        for _ in 0..<15 {
+            try? await Task.sleep(nanoseconds: 200_000_000)
+            reported = await xpcString(timeout: 2) { [weak self] reply in
+                guard let proxy = self?.remoteProxy() else { return reply("") }
+                proxy.getVersion(reply: reply)
+            }
+            if reported == kMacWakeHelperVersion { break }
+            connection?.invalidate()
+            connection = nil
         }
-        log += "status after unregister: \(service.status.rawValue)\n"
+        log += "daemon now reports \(reported.isEmpty ? "nothing" : reported)"
+        log += reported == kMacWakeHelperVersion ? " — up to date\n" : " — still not current\n"
 
-        do { try service.register(); log += "register ok\n" }
-        catch { log += "register FAILED: \(error.localizedDescription)\n" }
-
-        log += "status after register: \(service.status.rawValue)"
+        log += "final status: \(service.status.rawValue)"
         helperVersion = nil
         refreshStatus()
         fanCount = 0
         loadFanInfo()
         return log
+    }
+
+    /// String-reply counterpart of `xpcBool`, with the same never-hang guarantee: a stale
+    /// daemon missing a newly added method would otherwise leave the caller waiting forever.
+    private func xpcString(timeout: TimeInterval = 3,
+                           _ call: @escaping (@escaping (String) -> Void) -> Void) async -> String {
+        await withCheckedContinuation { (cont: CheckedContinuation<String, Never>) in
+            let lock = NSLock()
+            var done = false
+            func finish(_ value: String) {
+                lock.lock(); defer { lock.unlock() }
+                if done { return }; done = true
+                cont.resume(returning: value)
+            }
+            call { finish($0) }
+            DispatchQueue.main.asyncAfter(deadline: .now() + timeout) { finish("") }
+        }
     }
 
     /// Failsafe: called with the hottest sensor reading. If fan control is forcing a
