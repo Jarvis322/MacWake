@@ -6,6 +6,61 @@
         <description>Wake — Battery Health update feed</description>
         <language>en</language>
         <item>
+            <title>Version 1.48</title>
+            <pubDate>Sat, 08 Aug 2026 10:00:00 +0000</pubDate>
+            <sparkle:version>54</sparkle:version>
+            <sparkle:shortVersionString>1.48</sparkle:shortVersionString>
+            <description><![CDATA[
+                <meta charset="utf-8">
+                <style>
+                    :root { color-scheme: light dark; }
+                    body { font: 13px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; margin: 4px 2px; color: #1d1d1f; }
+                    h1 { font-size: 15px; margin: 0 0 2px; }
+                    .date { font-size: 11px; opacity: .5; margin: 0 0 14px; }
+                    .tag { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; opacity: .55; margin: 16px 0 8px; }
+                    .tag:first-of-type { margin-top: 0; }
+                    ul { margin: 0; padding-left: 18px; }
+                    li { margin-bottom: 8px; }
+                    b { font-weight: 600; }
+                    hr { border: 0; border-top: 1px solid rgba(0,0,0,.1); margin: 16px 0 0; }
+                    @media (prefers-color-scheme: dark) { body { color: #f5f5f7; } hr { border-top-color: rgba(255,255,255,.12); } }
+                </style>
+                <h1>Wake 1.48</h1>
+                <p class="date">8 Ağustos 2026 · 8 August 2026</p>
+                <p class="tag">✨ Yeni</p>
+                <ul>
+                    <li><b>Manuel boşaltma</b> — fişteyken pili seçtiğin seviyeye indir, sonra şarj kaldığı yerden devam etsin. Ayarlar › Şarj.</li>
+                    <li><b>Dynamic Island'da Raf</b> — ark reaktörünün yerini dosya bırakma alanı ve son kopyalanan metin aldı. Artık varsayılan olarak açık.</li>
+                    <li><b>Yeniden tasarlanan Ayarlar</b> — Şarj, Görünüm, Uyarılar, Genel ve Diğer olarak yeniden düzenlendi; her ayarın tek bir yeri var.</li>
+                </ul>
+                <p class="tag">🐛 Düzeltmeler</p>
+                <ul>
+                    <li><b>Temizlik Modu</b> artık ses, parlaklık ve müzik tuşlarını da engelliyor — ekranı silerken ses açılmıyor.</li>
+                    <li>Dynamic Island'daki boşluk giderildi ve ekran süresi satırı çevrildi.</li>
+                </ul>
+                <hr>
+                <p class="tag">✨ New</p>
+                <ul>
+                    <li><b>Manual discharge</b> — drain to a level you pick while plugged in, then charging resumes. Settings › Charging.</li>
+                    <li><b>The Shelf in the Dynamic Island</b> — the arc reactor makes way for a file drop tray and your last copied text. On by default now.</li>
+                    <li><b>Redesigned Settings</b> — reorganised into Charging, Display, Alerts, General and More, with one home per setting.</li>
+                </ul>
+                <p class="tag">🐛 Fixes</p>
+                <ul>
+                    <li><b>Cleaning Mode</b> now blocks the volume, brightness and playback keys too — wiping the screen no longer changes the volume.</li>
+                    <li>Closed a gap in the Dynamic Island and localised the screen-time line.</li>
+                </ul>
+            ]]></description>
+            <enclosure
+                url="https://github.com/Jarvis322/MacWake/releases/download/v1.48/Wake-1.48.dmg"
+                sparkle:version="54"
+                sparkle:shortVersionString="1.48"
+                length="5046046"
+                type="application/octet-stream"
+                sparkle:edSignature="YDEq2xKZvekh0YjBZGOliBHpk4615QoWW0LxEh9XNwTJORXyihY0PHf3mLuNvyV885ni+IZiuE3yqIeJGtNLCQ=="
+            />
+        </item>
+        <item>
             <title>Version 1.47</title>
             <pubDate>Sat, 25 Jul 2026 22:00:00 +0000</pubDate>
             <sparkle:version>53</sparkle:version>
