@@ -439,3 +439,8 @@
 "HELPER_UNREACHABLE" = "응답이 없습니다. 다시 불러와 재시작하세요.";
 
 "INSTALL_FAILED_FMT" = "macOS가 도우미 등록을 거부했습니다: %@\n\n‘로그인 항목 및 확장 프로그램 → 백그라운드에서 허용’에서 MacWake를 허용한 뒤 다시 시도하세요.";
+
+"MACOS_LIMIT_FMT" = "(macOS 한도: %d%%)";
+"UNPLUG_DESC" = "전원 케이블을 분리하면 자동으로 기록을 시작합니다.";
+"UNPLUG_DESC_LIMIT_FMT" = "전원 케이블을 분리하면 자동으로 기록을 시작합니다(한도: %d%%).";
+"UNPLUG_DESC_MACOS_LIMIT_FMT" = "전원 케이블을 분리하면 자동으로 기록을 시작합니다(macOS 한도: %d%%).";

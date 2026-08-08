@@ -429,3 +429,8 @@
 "HELPER_UNREACHABLE" = "Yanıt vermiyor. Yeniden başlatmak için yeniden yükleyin.";
 
 "INSTALL_FAILED_FMT" = "macOS yardımcıyı kaydetmeyi reddetti: %@\n\nGiriş Öğeleri ve Uzantılar → Arka Planda İzin Ver altında MacWake'e izin verip tekrar deneyin.";
+
+"MACOS_LIMIT_FMT" = "(macOS limiti: %%%d)";
+"UNPLUG_DESC" = "Güç kablosunu çıkardığında takip otomatik başlar.";
+"UNPLUG_DESC_LIMIT_FMT" = "Güç kablosunu çıkardığında takip otomatik başlar (limit: %%%d).";
+"UNPLUG_DESC_MACOS_LIMIT_FMT" = "Güç kablosunu çıkardığında takip otomatik başlar (macOS limiti: %%%d).";

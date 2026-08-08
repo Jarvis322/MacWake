@@ -106,3 +106,8 @@
 "HELPER_UNREACHABLE" = "Not responding. Reload to restart it.";
 
 "INSTALL_FAILED_FMT" = "macOS refused to register the helper: %@\n\nAllow MacWake under Login Items & Extensions → Allow in the Background, then try again.";
+
+"MACOS_LIMIT_FMT" = "(macOS limit: %d%%)";
+"UNPLUG_DESC" = "Tracking will start automatically when you unplug the power cable.";
+"UNPLUG_DESC_LIMIT_FMT" = "Tracking will start automatically when you unplug the power cable (limit: %d%%).";
+"UNPLUG_DESC_MACOS_LIMIT_FMT" = "Tracking will start automatically when you unplug the power cable (macOS limit: %d%%).";

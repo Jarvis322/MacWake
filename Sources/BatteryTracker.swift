@@ -1950,3 +1950,82 @@ enum MenuBarLabel {
         parts.joined(separator: compact ? " " : "  ")
     }
 }
+
+/// Which charge limit is actually in effect, and where it comes from — kept pure so the
+/// two sources can be regression-tested without a running charge-limit manager.
+///
+/// Two independent limits exist and were being shown as one unlabeled figure: MacWake's own
+/// helper-enforced limit (`ChargeLimitManager.limit`, from `chargeLimitValue`), and the
+/// macOS-native policy MacWake merely *reads* (`BatteryTracker.chargeLimit`, from
+/// `com.apple.batteryui.charging.mac` / powerd). The native reader defaults to 100 when its
+/// policy is inactive, so "MacWake limiting at 80%, native inactive" rendered as "Limit: 100%"
+/// right next to a settings card reading "Stop at 80%" — an unlabeled contradiction on the
+/// same screen, not a wrong number.
+enum ChargeLimitSource: Equatable {
+    /// MacWake's own limit, enforced by the helper. Wins whenever it is actually active.
+    case macWake(Int)
+    /// The macOS-native policy, shown only when MacWake's own limit isn't the one holding —
+    /// otherwise the two would describe the same charge as if they were one setting.
+    case macOSNative(Int)
+    /// Neither is enforcing anything below 100%.
+    case none
+
+    static func resolve(macWakeEnabled: Bool, macWakeReady: Bool, macWakeLimit: Int,
+                        nativeLimit: Int) -> ChargeLimitSource {
+        if macWakeEnabled, macWakeReady { return .macWake(macWakeLimit) }
+        if nativeLimit < 100 { return .macOSNative(nativeLimit) }
+        return .none
+    }
+}
+
+/// State for a button that runs a slow async call (an XPC round trip that can take
+/// 20–40 seconds through a timeout-and-retry path) and needs to show progress, refuse
+/// overlapping requests, and become reusable again afterwards.
+enum AsyncCopyState: Equatable {
+    case idle, running, copied
+
+    /// Whether tapping the button in this state should start new work. `running` refuses a
+    /// second request; `copied` allows a fresh cycle without waiting out the display window.
+    var canStart: Bool { self != .running }
+}
+
+/// Drives one `AsyncCopyState` button: run the call, hand the result to the caller to place
+/// on the clipboard, show success briefly, then revert to idle so the action can be repeated.
+///
+/// Both diagnostic-copy buttons in Settings (fan diagnostics, helper reload) used to set a
+/// `Bool` to true and never back — reusing them meant the label stayed on "Copied" forever,
+/// and neither showed any feedback during collection, which on a stale helper's timeout path
+/// can take tens of seconds and looks exactly like a frozen button.
+@MainActor
+final class AsyncCopyController: ObservableObject {
+    @Published private(set) var state: AsyncCopyState = .idle
+
+    private let revertDelayNanoseconds: UInt64
+    private var revertTask: Task<Void, Never>?
+
+    init(revertDelayNanoseconds: UInt64 = 2_000_000_000) {
+        self.revertDelayNanoseconds = revertDelayNanoseconds
+    }
+
+    /// Runs `work`, passes its result to `onSuccess` (e.g. writing the clipboard) while still
+    /// showing progress, then reverts to idle after a brief success display. A tap that
+    /// arrives while already running is a no-op rather than a second, overlapping request.
+    ///
+    /// Returns as soon as `state` becomes `.copied` — the revert to idle runs in a detached
+    /// timer rather than being awaited here, so a caller (or a test) observing the result of
+    /// `run()` sees the success state deterministically rather than racing a sleep.
+    func run(_ work: () async -> String, onSuccess: (String) -> Void = { _ in }) async {
+        guard state.canStart else { return }
+        revertTask?.cancel()
+        state = .running
+        let result = await work()
+        onSuccess(result)
+        state = .copied
+        revertTask = Task { [weak self] in
+            guard let self else { return }
+            try? await Task.sleep(nanoseconds: self.revertDelayNanoseconds)
+            guard !Task.isCancelled else { return }
+            if self.state == .copied { self.state = .idle }
+        }
+    }
+}

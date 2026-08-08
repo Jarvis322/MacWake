@@ -439,3 +439,8 @@
 "HELPER_UNREACHABLE" = "応答がありません。再読み込みして起動し直してください。";
 
 "INSTALL_FAILED_FMT" = "macOS がヘルパーの登録を拒否しました：%@\n\n「ログイン項目と機能拡張 → バックグラウンドでの実行を許可」で MacWake を許可してから、もう一度お試しください。";
+
+"MACOS_LIMIT_FMT" = "（macOS 上限：%d%%）";
+"UNPLUG_DESC" = "電源ケーブルを外すと、自動的に記録を開始します。";
+"UNPLUG_DESC_LIMIT_FMT" = "電源ケーブルを外すと、自動的に記録を開始します（上限：%d%%）。";
+"UNPLUG_DESC_MACOS_LIMIT_FMT" = "電源ケーブルを外すと、自動的に記録を開始します（macOS 上限：%d%%）。";

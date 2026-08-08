@@ -24,8 +24,27 @@ struct MacWakeMenuView: View {
     // Charging is hidden in the App Store build, so it can't be the default there —
     // the picker would open on a category with nothing behind it.
     @State private var settingsCategory: SettingsCategory = Distribution.isAppStore ? .display : .charging
-    @State private var fanDiagnosticsCopied = false
-    @State private var helperReloadCopied = false
+    @StateObject private var fanDiagnosticsCopy = AsyncCopyController()
+    @StateObject private var helperReloadCopy = AsyncCopyController()
+
+    private func copyButtonLabel(_ state: AsyncCopyState, idleText: String,
+                                 idleIcon: String = "doc.on.doc") -> some View {
+        Group {
+            switch state {
+            case .idle:
+                Label(idleText, systemImage: idleIcon)
+            case .running:
+                Label {
+                    Text(idleText)
+                } icon: {
+                    ProgressView().controlSize(.mini)
+                }
+            case .copied:
+                Label("Copied", systemImage: "checkmark")
+            }
+        }
+        .font(.caption)
+    }
     #if !APPSTORE
     // In-app language override relaunches the app via a /bin/sh helper (Process), which
     // the App Store sandbox forbids — so the whole selector is Developer-ID only.
@@ -958,15 +977,18 @@ struct MacWakeMenuView: View {
                 HStack(spacing: 8) {
                     Button {
                         Task {
-                            _ = await chargeLimit.copyFanDiagnostics()
-                            fanDiagnosticsCopied = true
+                            await fanDiagnosticsCopy.run {
+                                await chargeLimit.copyFanDiagnostics()
+                            } onSuccess: { report in
+                                NSPasteboard.general.clearContents()
+                                NSPasteboard.general.setString(report, forType: .string)
+                            }
                         }
                     } label: {
-                        Label(fanDiagnosticsCopied ? "Copied" : "Copy Diagnostics",
-                              systemImage: fanDiagnosticsCopied ? "checkmark" : "doc.on.doc")
-                            .font(.caption)
+                        copyButtonLabel(fanDiagnosticsCopy.state, idleText: "Copy Diagnostics")
                     }
                     .buttonStyle(.bordered).controlSize(.small)
+                    .disabled(fanDiagnosticsCopy.state == .running)
 
                     Spacer()
                 }
@@ -1188,17 +1210,18 @@ struct MacWakeMenuView: View {
                         // Each step and its error, on the clipboard: this report was being
                         // discarded, leaving no way to see why a reload did nothing.
                         Task {
-                            let report = await chargeLimit.forceReloadHelper()
-                            NSPasteboard.general.clearContents()
-                            NSPasteboard.general.setString(report, forType: .string)
-                            helperReloadCopied = true
+                            await helperReloadCopy.run {
+                                await chargeLimit.forceReloadHelper()
+                            } onSuccess: { report in
+                                NSPasteboard.general.clearContents()
+                                NSPasteboard.general.setString(report, forType: .string)
+                            }
                         }
                     } label: {
-                        Label(helperReloadCopied ? "Copied" : "Reload",
-                              systemImage: helperReloadCopied ? "checkmark" : "arrow.clockwise")
-                            .font(.caption)
+                        copyButtonLabel(helperReloadCopy.state, idleText: "Reload", idleIcon: "arrow.clockwise")
                     }
                     .buttonStyle(.bordered).controlSize(.small)
+                    .disabled(helperReloadCopy.state == .running)
                 }
                 .padding(.horizontal, 12).padding(.vertical, 8)
             }
@@ -1306,19 +1329,50 @@ struct MacWakeMenuView: View {
         }
     }
 
+    /// Resolves which limit is actually in effect and who owns it, so the header never
+    /// shows the macOS-native figure (which defaults to 100 when its own policy is inactive)
+    /// beside MacWake's own limit as though they were the same unlabeled number.
+    private var chargeLimitSource: ChargeLimitSource {
+        ChargeLimitSource.resolve(
+            macWakeEnabled: chargeLimit.isEnabled,
+            macWakeReady: chargeLimit.helperStatus == .ready,
+            macWakeLimit: chargeLimit.limit,
+            nativeLimit: tracker.chargeLimit
+        )
+    }
+
+    /// `""` when no limit is in effect, else a parenthetical naming the source — trimmed at
+    /// the call site since the surrounding format strings carry the leading space.
+    private var limitStatusFragment: String {
+        switch chargeLimitSource {
+        case .macWake(let value):
+            return String(format: String(localized: "LIMIT_FMT"), value)
+        case .macOSNative(let value):
+            return String(format: String(localized: "MACOS_LIMIT_FMT"), value)
+        case .none:
+            return ""
+        }
+    }
+
     private var statusText: String {
         if tracker.isPluggedIn {
-            let limitStr = String(format: String(localized: "LIMIT_FMT"), tracker.chargeLimit)
+            let limitStr = limitStatusFragment
             var portStr = ""
             if let port = tracker.usbPortInfo {
                 portStr = String(format: String(localized: "VIA_FMT"), port)
             }
+            let result: String
             if let dyn = tracker.dynamicWatts, let maxWatts = tracker.powerAdapterWatts {
-                return String(format: String(localized: "CHARGING_DYN_FMT"), dyn, maxWatts, portStr, limitStr)
+                result = String(format: String(localized: "CHARGING_DYN_FMT"), dyn, maxWatts, portStr, limitStr)
             } else if let watts = tracker.powerAdapterWatts {
-                return String(format: String(localized: "CHARGING_FIXED_FMT"), watts, portStr, limitStr)
+                result = String(format: String(localized: "CHARGING_FIXED_FMT"), watts, portStr, limitStr)
+            } else {
+                result = String(format: String(localized: "CHARGING_PORT_FMT"), portStr, limitStr)
             }
-            return String(format: String(localized: "CHARGING_PORT_FMT"), portStr, limitStr)
+            // limitStr can be empty when no limit is in effect; the format strings still
+            // carry their literal separating space, so trim rather than touch five locales
+            // of CJK-sensitive spacing to make that space conditional.
+            return result.trimmingCharacters(in: .whitespaces)
         }
 
         return String(localized: "On Battery")
@@ -1442,7 +1496,16 @@ struct MacWakeMenuView: View {
         if let watts = tracker.powerAdapterWatts {
             return String(format: String(localized: "CHARGING_DESC_FMT"), watts)
         }
-        return String(format: String(localized: "UNPLUG_DESC_FMT"), tracker.chargeLimit)
+        // Same conflated-source bug as statusText: this used to print the raw macOS-native
+        // reading regardless of whether MacWake's own limit was the one actually active.
+        switch chargeLimitSource {
+        case .macWake(let value):
+            return String(format: String(localized: "UNPLUG_DESC_LIMIT_FMT"), value)
+        case .macOSNative(let value):
+            return String(format: String(localized: "UNPLUG_DESC_MACOS_LIMIT_FMT"), value)
+        case .none:
+            return String(localized: "UNPLUG_DESC")
+        }
     }
 
     // MARK: - Weekly Summary
