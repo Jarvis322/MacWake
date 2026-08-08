@@ -54,9 +54,9 @@ cat <<EOF > "${CONTENTS_DIR}/Info.plist"
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.57</string>
+    <string>1.58</string>
     <key>CFBundleVersion</key>
-    <string>63</string>
+    <string>64</string>
     <key>LSMinimumSystemVersion</key>
     <string>14.0</string>
     <key>LSApplicationCategoryType</key>
@@ -288,6 +288,16 @@ codesign --force --options runtime --timestamp --entitlements "${ENTITLEMENTS}" 
 echo "=== Verifying signature ==="
 codesign --verify --deep --strict "${APP_DIR}" && echo "Signature OK" || echo "Signature FAILED"
 spctl --assess --type exec "${APP_DIR}" 2>&1 || true
+
+# A local install that skips notarization cannot register the privileged daemon:
+# SMAppService.register() returns "Operation not permitted" for an app that fails Gatekeeper
+# assessment, and the refusal says nothing about notarization. That cost hours to work out —
+# so say it here, every time.
+if ! spctl --assess "${APP_DIR}" >/dev/null 2>&1; then
+    echo "NOTE: this build is not notarized, so SMAppService.register() will fail with"
+    echo "      'Operation not permitted' and the privileged helper cannot be (re)installed."
+    echo "      Notarize and staple before testing anything that touches the helper."
+fi
 
 echo "=== Copying to /Applications ==="
 cp -R "${APP_DIR}" /Applications/
