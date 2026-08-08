@@ -102,7 +102,8 @@ struct NotchShelfView: View {
 
             fileDropZone
         }
-        .frame(width: 168)
+        // Shared with the panel's width maths so the two can't drift apart.
+        .frame(width: DynamicIslandManager.shelfColumnWidth)
     }
 
     private var fileDropZone: some View {

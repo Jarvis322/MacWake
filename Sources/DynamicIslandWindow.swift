@@ -197,8 +197,9 @@ struct DynamicIslandPanelView: View {
 
     // MARK: - Expanded Content (Power | Thermals, plus an optional Shelf column)
     private var expandedContent: some View {
-        HStack(spacing: 18) {
+        HStack(spacing: DynamicIslandManager.columnSpacing) {
             leftWidget
+                .frame(width: DynamicIslandManager.powerColumnWidth, alignment: .leading)
 
             // Temperatures/fan need SMC access — dead inside the App Store sandbox,
             // so the whole column is dropped there rather than showing zeros.
@@ -209,7 +210,7 @@ struct DynamicIslandPanelView: View {
                     .padding(.vertical, 8)
 
                 rightWidget
-                    .fixedSize(horizontal: true, vertical: false)
+                    .frame(width: DynamicIslandManager.tempColumnWidth, alignment: .leading)
             }
 
             #if !APPSTORE
@@ -477,12 +478,24 @@ class DynamicIslandManager {
     /// Single source of truth for the expanded panel size, shared with the SwiftUI view.
     /// The App Store build drops the temperatures column (sandbox), so it's narrower.
     /// Grows for the optional Shelf and Now Playing columns when they're active.
+    // Column widths are explicit and the panel is the sum of the ones actually shown.
+    // Deriving the window from the columns is what keeps the two in step: a hand-tuned
+    // panel width leaves dead space at the edges when a column is removed, and squeezes
+    // the cells (truncating "Fanless") when it's too small.
+    static let columnSpacing: CGFloat = 18
+    static let panelSidePadding: CGFloat = 26
+    static let powerColumnWidth: CGFloat = 168
+    static let tempColumnWidth: CGFloat = 236
+    static let shelfColumnWidth: CGFloat = 168
+    static let musicColumnWidth: CGFloat = 190
+    /// A divider plus the spacing on each side of it.
+    private static var separatorSpan: CGFloat { 1 + columnSpacing * 2 }
+
     static func openedSize(shelfEnabled: Bool, musicShown: Bool) -> CGSize {
-        // Narrower since the arc reactor left the power column: the old width was sized
-        // around it, and keeping it opened a dead gap before the temperatures.
-        var width: CGFloat = Distribution.isAppStore ? 400 : 520
-        if shelfEnabled { width += 187 }
-        if musicShown { width += 210 }
+        var width = panelSidePadding * 2 + powerColumnWidth
+        if !Distribution.isAppStore { width += separatorSpan + tempColumnWidth }
+        if musicShown { width += separatorSpan + musicColumnWidth }
+        if shelfEnabled { width += separatorSpan + shelfColumnWidth }
         return CGSize(width: width, height: 188)
     }
     private let hoverInset: CGFloat = -4   // expands the notch hover target a touch

@@ -273,7 +273,7 @@ struct NowPlayingView: View {
             }
             .padding(.top, 1)
         }
-        .frame(width: 190, alignment: .leading)
+        .frame(width: DynamicIslandManager.musicColumnWidth, alignment: .leading)
     }
 
     @ViewBuilder
