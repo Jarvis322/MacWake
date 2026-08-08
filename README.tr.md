@@ -24,6 +24,10 @@
   <img src="Screenshots/menubar-item.png" alt="MacWake menü çubuğu öğesi" height="26">
 </p>
 
+<p align="center">
+  <img src="Screenshots/settings.png" alt="MacWake Settings" width="380">
+</p>
+
 ---
 
 ## ✨ Özellikler
@@ -32,6 +36,7 @@
     *   Uzun vadeli pil aşınmasını azaltmak için şarjı %50 ile %95 arasındaki herhangi bir düzeyde sınırlar.
     *   Her çip için en iyi yöntemi seçer: M1/M2/M3'te temiz şarj engelleme (CHTE/CH0C), M4'te adaptör denetimi (CHIE) — notarizasyonu yapılmış küçük bir arka plan yardımcısı aracılığıyla (bir defalık onay, parola istemi yok).
     *   **⛵ Yelken Modu:** Üst sınırda mikro şarj yapmak yerine, yeniden şarj etmeden önce pilin alt sınıra kadar düşmesine izin verir — daha az döngü, daha az ısı.
+    *   **🪫 Manuel Boşaltma:** fişteyken pili seçtiğiniz seviyeye indirin — limit yalnızca şarjı *durdurabilir*, bu ise %95'te takılı kalmış bir Mac'i aşağı çeker — sonra şarj kendiliğinden devam eder.
     *   **🧪 Derin Pil Kalibrasyonu:** Yakıt göstergesini yeniden kalibre etmek için tam bir döngü uygular — yaklaşık %15'e kadar boşaltır, %100'e kadar şarj eder ve bir saat bekletir — işlem bir programa göre veya “Şimdi Kalibre Et” seçeneğiyle başlatılabilir (canlı aşama durumu ve İptal düğmesiyle).
 *   **⌨️ Komut satırı aracı:**
     *   Ayarlar'dan `macwake` CLI aracını yükleyin ve şarjı Terminal üzerinden denetleyin: `macwake status`, `charging on|off`, `adapter on|off`, `energy auto|low|high`, `fan auto|<rpm>`.
@@ -48,6 +53,8 @@
     *   Shortcuts uygulaması eylemleri: Şarj Sınırını Ayarla, Bu Kez %100'e Şarj Et, Temizlik Modunu Başlat, Pil Durumunu Al.
     *   Pil halkası, pil sağlığı, sıcaklık ve sınır durumunu gösteren yerel macOS araç takımı (küçük ve orta).
     *   Pil sağlığı/döngü geçmişinizi, oturumları ve adaptör günlüğünü CSV olarak dışa aktarın.
+*   **⚙️ Düzenlenmiş Ayarlar:**
+    *   Şarj, Görünüm, Uyarılar, Genel ve Diğer — her ayarın tam olarak tek bir yeri var, her birinin altında tek satır açıklama.
 *   **🎛️ Özelleştirilebilir Menü Çubuğu:**
     *   Menü çubuğu öğesinde tam olarak ne gösterileceğini seçin — simge, pil yüzdesi, güç/zaman, tahmini kalan süre ve sıcaklık — canlı önizlemeyle.
 *   **🏝️ Dynamic Island (Çentik UI):**
@@ -99,7 +106,7 @@ brew install --cask macwake
 
 ### Seçenek 2 — Doğrudan İndirme
 
-En yeni `Wake-1.0.dmg` dosyasını [GitHub Releases](https://github.com/Jarvis322/MacWake/releases) sayfasından indirin, DMG'yi açın ve **MacWake.app** uygulamasını Applications klasörünüze sürükleyin.
+En yeni en son DMG dosyasını [GitHub Releases](https://github.com/Jarvis322/MacWake/releases/latest) sayfasından indirin, DMG'yi açın ve **MacWake.app** uygulamasını Applications klasörünüze sürükleyin.
 
 ### Gereksinimler
 *   **macOS 14.0 (Sonoma)** veya daha yenisi

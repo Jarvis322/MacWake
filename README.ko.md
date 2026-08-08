@@ -24,6 +24,10 @@
   <img src="Screenshots/menubar-item.png" alt="MacWake 메뉴 막대 항목" height="26">
 </p>
 
+<p align="center">
+  <img src="Screenshots/settings.png" alt="MacWake Settings" width="380">
+</p>
+
 ---
 
 ## ✨ 기능
@@ -32,6 +36,7 @@
     *   장기적인 배터리 마모를 줄이도록 50%에서 95% 사이의 원하는 수준으로 충전을 제한합니다.
     *   칩마다 가장 적합한 방식을 선택합니다. M1/M2/M3에서는 깔끔한 충전 억제(CHTE/CH0C), M4에서는 어댑터 제어(CHIE)를 사용하며, 공증된 소형 백그라운드 도우미를 통해 작동합니다(한 번만 승인하며 암호를 요구하지 않음).
     *   **⛵ 세일링 모드:** 상한에서 미세 충전을 반복하는 대신, 배터리가 하한까지 내려간 후 다시 충전되도록 하여 사이클과 발열을 줄입니다.
+    *   **🪫 수동 방전:** 전원에 연결된 상태에서 원하는 수준까지 방전합니다 — 충전 제한은 충전을 *멈추는* 것만 가능하지만, 이것은 95%에 멈춰 있는 Mac을 내려줍니다 — 이후 자동으로 충전을 재개합니다.
     *   **🧪 심층 배터리 보정:** 약 15%까지 방전하고 100%까지 충전한 다음 한 시간 유지하는 전체 사이클로 연료 게이지를 다시 보정합니다. 일정에 따라 실행하거나 “지금 보정”으로 시작할 수 있으며, 실시간 단계 상태와 취소 버튼을 제공합니다.
 *   **⌨️ 명령줄 도구:**
     *   설정에서 `macwake` CLI를 설치하고 Terminal에서 충전을 제어하십시오: `macwake status`, `charging on|off`, `adapter on|off`, `energy auto|low|high`, `fan auto|<rpm>`.
@@ -48,6 +53,8 @@
     *   Shortcuts 앱 동작: 충전 제한 설정, 이번에만 100%까지 충전, 청소 모드 시작, 배터리 상태 가져오기.
     *   배터리 링, 성능 상태, 온도 및 제한 상태를 보여 주는 네이티브 macOS 위젯(소형 및 중형).
     *   성능 상태/사이클 기록, 세션 및 어댑터 로그를 CSV로 내보냅니다.
+*   **⚙️ 정리된 설정:**
+    *   충전, 표시, 알림, 일반, 더 보기 — 모든 설정에 단 하나의 자리가 있고 각 항목에 한 줄 설명이 있습니다.
 *   **🎛️ 사용자 지정 가능한 메뉴 막대:**
     *   메뉴 막대 항목에 표시할 내용(아이콘, 배터리 %, 전력/시간, 예상 잔여 시간 및 온도)을 실시간 미리보기와 함께 정확히 선택할 수 있습니다.
 *   **🏝️ Dynamic Island(노치 UI):**
@@ -99,7 +106,7 @@ brew install --cask macwake
 
 ### 옵션 2 — 직접 다운로드
 
-[GitHub Releases](https://github.com/Jarvis322/MacWake/releases)에서 최신 `Wake-1.0.dmg`를 다운로드하고 DMG를 연 다음 **MacWake.app**을 Applications 폴더로 드래그하십시오.
+[GitHub Releases](https://github.com/Jarvis322/MacWake/releases/latest)에서 최신 최신 DMG를 다운로드하고 DMG를 연 다음 **MacWake.app**을 Applications 폴더로 드래그하십시오.
 
 ### 요구 사항
 *   **macOS 14.0 (Sonoma)** 이상

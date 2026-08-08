@@ -24,6 +24,10 @@
   <img src="Screenshots/menubar-item.png" alt="MacWake 菜单栏项目" height="26">
 </p>
 
+<p align="center">
+  <img src="Screenshots/settings.png" alt="MacWake Settings" width="380">
+</p>
+
 ---
 
 ## ✨ 功能
@@ -32,6 +36,7 @@
     *   可将充电上限设置为 50% 至 95% 之间的任意值，减少电池的长期损耗。
     *   根据芯片选择最佳方式：M1/M2/M3 使用简洁的充电抑制（CHTE/CH0C），M4 使用适配器控制（CHIE）——通过一个经过公证的小型后台辅助程序实现（仅需批准一次，无需输入密码）。
     *   **⛵ 航行模式：** 让电量先下降到下限再补充充电，而不是在上限处频繁微充——循环次数更少，发热更低。
+    *   **🪫 手动放电：**插电时把电量降到你设定的水平 — 充电限制只能*停止*充电，而这能让停在 95% 的 Mac 降下来 — 之后自动恢复充电。
     *   **🧪 深度电池校准：** 完成一次完整循环——放电至约 15%、充电至 100%、保持一小时——以重新校准电量计；可按计划执行，也可通过“立即校准”触发（提供实时阶段状态和取消按钮）。
 *   **⌨️ 命令行工具：**
     *   从设置中安装 `macwake` CLI，并在 Terminal 中控制充电：`macwake status`、`charging on|off`、`adapter on|off`、`energy auto|low|high`、`fan auto|<rpm>`。
@@ -48,6 +53,8 @@
     *   Shortcuts App 操作：设置充电上限、仅本次充至 100%、启动清洁模式、获取电池状态。
     *   原生 macOS 小组件（小号和中号），显示电池环、健康状况、温度和上限状态。
     *   将健康状况/循环历史记录、会话和适配器日志导出为 CSV。
+*   **⚙️ 重新整理的设置：**
+    *   充电、显示、提醒、通用与更多 — 每项设置都只有一个归属，并配有一行说明。
 *   **🎛️ 可自定义菜单栏：**
     *   精确选择菜单栏项目显示的内容——图标、电池百分比、功率/时间、预计剩余时间和温度，并可实时预览。
 *   **🏝️ Dynamic Island（刘海 UI）：**
@@ -99,7 +106,7 @@ brew install --cask macwake
 
 ### 选项 2 — 直接下载
 
-从 [GitHub Releases](https://github.com/Jarvis322/MacWake/releases) 下载最新的 `Wake-1.0.dmg`，打开 DMG，然后将 **MacWake.app** 拖到“应用程序”文件夹。
+从 [GitHub Releases](https://github.com/Jarvis322/MacWake/releases/latest) 下载最新的 最新 DMG，打开 DMG，然后将 **MacWake.app** 拖到“应用程序”文件夹。
 
 ### 系统要求
 *   **macOS 14.0 (Sonoma)** 或更高版本

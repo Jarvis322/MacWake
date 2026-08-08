@@ -29,6 +29,10 @@ clicking it opens the full panel — Session, History, Hardware, and Settings.
   <img src="Screenshots/menubar-item.png" alt="MacWake menu bar item" height="26">
 </p>
 
+<p align="center">
+  <img src="Screenshots/settings.png" alt="MacWake Settings" width="380">
+</p>
+
 ---
 
 ## ✨ Features
@@ -37,6 +41,7 @@ clicking it opens the full panel — Session, History, Hardware, and Settings.
     *   Cap charging at any level from 50% to 95% to reduce long-term battery wear.
     *   Picks the best method per chip: clean charge-inhibit (CHTE/CH0C) on M1/M2/M3, adapter control (CHIE) on M4 — via a small notarized background helper (one-time approval, no password prompts).
     *   **⛵ Sailing Mode:** let the battery drift down to a lower bound before topping back up, instead of micro-charging at the ceiling — fewer cycles, less heat.
+    *   **🪫 Manual Discharge:** drain the battery to a level you pick while plugged in — the limit can only *stop* charging, this brings a Mac sitting at 95% back down — then charging resumes on its own.
     *   **🧪 Deep Battery Calibration:** a full cycle — discharge to ~15%, charge to 100%, hold for one hour — to recalibrate the fuel gauge, on a schedule or via "Calibrate Now" (with live phase status and a Cancel button).
 *   **⌨️ Command-line tool:**
     *   Install the `macwake` CLI from Settings and control charging from Terminal: `macwake status`, `charging on|off`, `adapter on|off`, `energy auto|low|high`, `fan auto|<rpm>`.
@@ -53,6 +58,8 @@ clicking it opens the full panel — Session, History, Hardware, and Settings.
     *   Shortcuts app actions: Set Charge Limit, Charge to 100% Once, Start Cleaning Mode, Get Battery Status.
     *   Native macOS widget (small & medium) with battery ring, health, temperature, and limit status.
     *   Export your health/cycle history, sessions, and adapter log as CSV.
+*   **⚙️ Settings, organised:**
+    *   Charging, Display, Alerts, General and More — every setting has exactly one home, each with a one-line description.
 *   **🎛️ Customizable Menu Bar:**
     *   Choose exactly what the menu-bar item shows — icon, battery %, power/time, estimated time remaining, and temperature — with a live preview.
 *   **🏝️ Dynamic Island (Notch UI):**
@@ -104,7 +111,7 @@ brew install --cask macwake
 
 ### Option 2 — Direct Download
 
-Download the latest `Wake-1.0.dmg` from [GitHub Releases](https://github.com/Jarvis322/MacWake/releases), open the DMG, and drag **MacWake.app** to your Applications folder.
+Download the latest DMG from [GitHub Releases](https://github.com/Jarvis322/MacWake/releases/latest), open it, and drag **MacWake.app** to your Applications folder.
 
 ### Requirements
 *   **macOS 14.0 (Sonoma)** or later
