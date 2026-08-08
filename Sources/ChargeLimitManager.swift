@@ -692,7 +692,10 @@ final class ChargeLimitManager: ObservableObject {
     /// the discharge phase is skipped and the cycle starts by charging to 100%.
     private func startCalibration(batteryLevel: Int) {
         guard !calibrationActive else { return }
-        let alreadyAtFloor = batteryLevel <= calibrationDischargeFloor
+        let alreadyAtFloor = CalibrationRecovery.shouldRestoreImmediately(
+            batteryLevel: batteryLevel,
+            dischargeFloor: calibrationDischargeFloor
+        )
         calibrationActive = true
         calibrationPhase = alreadyAtFloor ? .charge : .discharge
         calibrationHoldStart = nil
