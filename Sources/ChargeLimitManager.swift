@@ -358,26 +358,39 @@ final class ChargeLimitManager: ObservableObject {
     private var didReconcile = false
 
     func refreshStatus() {
-        switch service.status {
+        let status = service.status
+        switch status {
         case .enabled:
             helperStatus = .ready
             if lastAdapterEnabled == nil { syncAdapterState() }
             if holdCutsAdapter == nil { loadChargeControlMethod() }
             if fanCount == 0 { loadFanInfo() }
             readEnergyMode()
-            if !didReconcile { didReconcile = true; reloadHelperIfOutdated() }
         case .requiresApproval:
             helperStatus = .requiresApproval
         default:
             helperStatus = .notInstalled
+        }
+
+        // Reconcile on reachability, not on registration state. Replacing the app bundle can
+        // drop the registration out of `.enabled` while launchd keeps the OLD daemon running
+        // and answering XPC — and with this check inside the `.enabled` branch the app could
+        // never repair itself. A daemon that replies to getVersion can be reloaded whatever
+        // SMAppService reports about it.
+        if !didReconcile {
+            didReconcile = true
+            reloadHelperIfOutdated(observedStatus: status)
         }
     }
 
     /// After an app update the on-disk helper is new but the running daemon may still
     /// be the old binary (missing new XPC methods). Compare versions and re-register to
     /// load the current helper. Approval persists, so this is silent.
-    private func reloadHelperIfOutdated() {
-        guard let proxy = remoteProxy() else { return }
+    private func reloadHelperIfOutdated(observedStatus: SMAppService.Status) {
+        guard let proxy = remoteProxy() else {
+            appendHelperReloadLog(from: "unreachable", report: "no XPC proxy")
+            return
+        }
         proxy.getVersion { [weak self] version in
             guard version != kMacWakeHelperVersion else { return }
             Task { @MainActor in
@@ -388,8 +401,34 @@ final class ChargeLimitManager: ObservableObject {
                 // automatic reconcile silently did nothing. A machine could sit on an
                 // outdated daemon indefinitely — which is exactly what the version constant
                 // exists to prevent.
-                _ = await self.forceReloadHelper()
+                let report = await self.forceReloadHelper()
+                self.appendHelperReloadLog(
+                    from: version,
+                    report: "status before reload: \(observedStatus.rawValue)\n" + report
+                )
             }
+        }
+    }
+
+    /// Record what the automatic reconcile did. It runs unattended at launch, so a failure
+    /// here is invisible — which is how a machine sat on an outdated daemon for hours without
+    /// anything to look at. The manual button's report goes to the clipboard; this one goes to
+    /// a file so the last attempt can always be read after the fact.
+    private func appendHelperReloadLog(from oldVersion: String, report: String) {
+        guard let logs = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask).first?
+            .appendingPathComponent("Logs/MacWake", isDirectory: true) else { return }
+        try? FileManager.default.createDirectory(at: logs, withIntermediateDirectories: true)
+        let file = logs.appendingPathComponent("helper-reload.log")
+        let stamp = ISO8601DateFormatter().string(from: Date())
+        let entry = "[\(stamp)] daemon reported \(oldVersion), app expects \(kMacWakeHelperVersion)\n"
+            + report + "\nfinal status: \(service.status.rawValue)\n\n"
+        guard let data = entry.data(using: .utf8) else { return }
+        if let handle = try? FileHandle(forWritingTo: file) {
+            defer { try? handle.close() }
+            _ = try? handle.seekToEnd()
+            try? handle.write(contentsOf: data)
+        } else {
+            try? data.write(to: file)
         }
     }
 

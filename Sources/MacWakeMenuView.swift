@@ -25,6 +25,7 @@ struct MacWakeMenuView: View {
     // the picker would open on a category with nothing behind it.
     @State private var settingsCategory: SettingsCategory = Distribution.isAppStore ? .display : .charging
     @State private var fanDiagnosticsCopied = false
+    @State private var helperReloadCopied = false
     #if !APPSTORE
     // In-app language override relaunches the app via a /bin/sh helper (Process), which
     // the App Store sandbox forbids — so the whole selector is Developer-ID only.
@@ -968,9 +969,19 @@ struct MacWakeMenuView: View {
                     .buttonStyle(.bordered).controlSize(.small)
 
                     Button {
-                        Task { _ = await chargeLimit.forceReloadHelper() }
+                        // The reload reports each step and its error, and that report was
+                        // being thrown away — leaving the one tool for diagnosing a stale
+                        // daemon with no visible output at all. Put it on the clipboard.
+                        Task {
+                            let report = await chargeLimit.forceReloadHelper()
+                            NSPasteboard.general.clearContents()
+                            NSPasteboard.general.setString(report, forType: .string)
+                            helperReloadCopied = true
+                        }
                     } label: {
-                        Label("Reload Helper", systemImage: "arrow.clockwise").font(.caption)
+                        Label(helperReloadCopied ? "Copied" : "Reload Helper",
+                              systemImage: helperReloadCopied ? "checkmark" : "arrow.clockwise")
+                            .font(.caption)
                     }
                     .buttonStyle(.bordered).controlSize(.small)
                     Spacer()

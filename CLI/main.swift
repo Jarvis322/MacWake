@@ -75,6 +75,17 @@ case "status":
     let src = s.plugged ? "AC power" : "Battery"
     let chg = s.charging ? "charging" : (s.plugged ? "not charging" : "discharging")
     print("\(s.level)%  ·  \(src)  ·  \(chg)")
+    // Report the daemon's own version. A machine running an outdated helper behaves in ways
+    // that make no sense against the current source, and there was no way to see it from
+    // outside the app — which cost real time to work out.
+    if let p = helper() {
+        let sem = DispatchSemaphore(value: 0)
+        var reported = "unreachable"
+        p.getVersion { version in reported = version; sem.signal() }
+        _ = sem.wait(timeout: .now() + 3)
+        let suffix = reported == kMacWakeHelperVersion ? "" : "  ⚠️ app expects \(kMacWakeHelperVersion)"
+        print("helper v\(reported)\(suffix)")
+    }
 
 case "charging" where args.count == 2 && (args[1] == "on" || args[1] == "off"):
     guard let p = helper() else { exit(1) }
