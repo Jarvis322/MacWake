@@ -382,14 +382,13 @@ final class ChargeLimitManager: ObservableObject {
             guard version != kMacWakeHelperVersion else { return }
             Task { @MainActor in
                 guard let self else { return }
-                try? await self.service.unregister()
-                try? self.service.register()
-                self.connection?.invalidate()
-                self.connection = nil
-                // Re-query fan info against the freshly loaded daemon (older daemons
-                // didn't implement getFanInfo, so fan control stayed hidden).
-                self.fanCount = 0
-                self.loadFanInfo()
+                // Reuse the manual path rather than repeating the sequence: unregistering
+                // while our XPC connection still holds the daemon leaves launchd with the
+                // old job, and this copy had the invalidate *after* the re-register, so the
+                // automatic reconcile silently did nothing. A machine could sit on an
+                // outdated daemon indefinitely — which is exactly what the version constant
+                // exists to prevent.
+                _ = await self.forceReloadHelper()
             }
         }
     }
