@@ -412,3 +412,5 @@
 "Discharge cancelled. Charging resumed." = "Boşaltma iptal edildi. Şarj devam ediyor.";
 "SHELF_TOUR_POWER" = "GÜÇ · SAĞLIK · SICAKLIK";
 "SHELF_TOUR_DROP" = "Dosyaları buraya bırak\nSon kopyalanan metin";
+"SCREEN_ON_HM_FMT" = "%1$dsa %2$ddk ekran açık";
+"SCREEN_ON_M_FMT" = "%ddk ekran açık";

@@ -422,3 +422,5 @@
 "Discharge cancelled. Charging resumed." = "放電をキャンセルしました。充電を再開しました。";
 "SHELF_TOUR_POWER" = "電力 · 状態 · 温度";
 "SHELF_TOUR_DROP" = "ここにファイルをドロップ\n最後にコピーしたテキスト";
+"SCREEN_ON_HM_FMT" = "画面オン %1$d時間%2$d分";
+"SCREEN_ON_M_FMT" = "画面オン %d分";

@@ -90,3 +90,5 @@
 "DISCHARGE_PROGRESS_FMT" = "%d%% → target %d%%";
 "SHELF_TOUR_POWER" = "POWER · HEALTH · TEMP";
 "SHELF_TOUR_DROP" = "Drop files here\nLast copied text";
+"SCREEN_ON_HM_FMT" = "%dh %dm on screen";
+"SCREEN_ON_M_FMT" = "%dm on screen";

@@ -422,3 +422,5 @@
 "Discharge cancelled. Charging resumed." = "방전이 취소되었습니다. 충전을 재개했습니다.";
 "SHELF_TOUR_POWER" = "전력 · 성능 · 온도";
 "SHELF_TOUR_DROP" = "여기에 파일을 놓으세요\n마지막으로 복사한 텍스트";
+"SCREEN_ON_HM_FMT" = "화면 켜짐 %1$d시간 %2$d분";
+"SCREEN_ON_M_FMT" = "화면 켜짐 %d분";

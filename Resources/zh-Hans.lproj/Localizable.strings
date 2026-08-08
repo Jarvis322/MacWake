@@ -422,3 +422,5 @@
 "Discharge cancelled. Charging resumed." = "放电已取消，充电已恢复。";
 "SHELF_TOUR_POWER" = "电量 · 健康度 · 温度";
 "SHELF_TOUR_DROP" = "把文件拖到这里\n最近复制的文本";
+"SCREEN_ON_HM_FMT" = "亮屏 %1$d 小时 %2$d 分";
+"SCREEN_ON_M_FMT" = "亮屏 %d 分";

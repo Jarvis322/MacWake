@@ -199,7 +199,6 @@ struct DynamicIslandPanelView: View {
     private var expandedContent: some View {
         HStack(spacing: 18) {
             leftWidget
-                .frame(maxWidth: .infinity, alignment: .leading)
 
             // Temperatures/fan need SMC access — dead inside the App Store sandbox,
             // so the whole column is dropped there rather than showing zeros.
@@ -210,7 +209,7 @@ struct DynamicIslandPanelView: View {
                     .padding(.vertical, 8)
 
                 rightWidget
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .fixedSize(horizontal: true, vertical: false)
             }
 
             #if !APPSTORE
@@ -239,11 +238,8 @@ struct DynamicIslandPanelView: View {
 
     // MARK: - Left Widget (Power) — battery ring gauge and readouts
     private var leftWidget: some View {
-        HStack(spacing: 10) {
-            batteryInfoColumn
-                .fixedSize(horizontal: true, vertical: false)
-            Spacer(minLength: 4)
-        }
+        batteryInfoColumn
+            .fixedSize(horizontal: true, vertical: false)
     }
 
     private var batteryInfoColumn: some View {
@@ -277,7 +273,9 @@ struct DynamicIslandPanelView: View {
                     } else if !tracker.isPluggedIn {
                         let secs = Int(tracker.currentScreenOnSeconds)
                         let h = secs / 3600, m = (secs % 3600) / 60
-                        Text(h > 0 ? "\(h)h \(m)m on screen" : "\(m)m on screen")
+                        Text(h > 0
+                             ? String(format: String(localized: "SCREEN_ON_HM_FMT"), h, m)
+                             : String(format: String(localized: "SCREEN_ON_M_FMT"), m))
                             .font(.system(size: 11))
                             .foregroundColor(.white.opacity(0.45))
                     }
@@ -480,7 +478,9 @@ class DynamicIslandManager {
     /// The App Store build drops the temperatures column (sandbox), so it's narrower.
     /// Grows for the optional Shelf and Now Playing columns when they're active.
     static func openedSize(shelfEnabled: Bool, musicShown: Bool) -> CGSize {
-        var width: CGFloat = Distribution.isAppStore ? 470 : 660
+        // Narrower since the arc reactor left the power column: the old width was sized
+        // around it, and keeping it opened a dead gap before the temperatures.
+        var width: CGFloat = Distribution.isAppStore ? 400 : 520
         if shelfEnabled { width += 187 }
         if musicShown { width += 210 }
         return CGSize(width: width, height: 188)
