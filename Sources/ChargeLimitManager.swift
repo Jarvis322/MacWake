@@ -49,6 +49,49 @@ final class ChargeLimitManager: ObservableObject {
     /// persisted so a forgotten override can't outlive a relaunch.
     @Published var topUpActive = false
 
+    // MARK: - Manual discharge
+
+    /// Actively drain the battery on AC down to a chosen level. The limit alone can only
+    /// stop charging, so a Mac that has sat plugged in at 95% has no way down without
+    /// unplugging — this runs the adapter cut (CHIE) until the target is reached, then
+    /// hands control straight back to the normal limit.
+    @Published private(set) var dischargeActive = false
+    @Published var dischargeTarget: Int {
+        didSet {
+            let clamped = min(95, max(dischargeFloor, dischargeTarget))
+            if clamped != dischargeTarget { dischargeTarget = clamped; return }
+            UserDefaults.standard.set(dischargeTarget, forKey: "dischargeTarget")
+        }
+    }
+    /// Never drain below this, however low the user drags the slider.
+    private let dischargeFloor = 20
+
+    func startDischarge() {
+        guard helperStatus == .ready, !dischargeActive else { return }
+        dischargeActive = true
+        DynamicIslandManager.shared.trigger(.alert(
+            title: String(localized: "Discharging"),
+            message: String(format: String(localized: "DISCHARGE_STARTED_FMT"), dischargeTarget),
+            isWarning: false
+        ))
+        Task { _ = await forceDischarge(true) }
+    }
+
+    func cancelDischarge() { finishDischarge(reachedTarget: false) }
+
+    private func finishDischarge(reachedTarget: Bool) {
+        guard dischargeActive else { return }
+        dischargeActive = false
+        Task { await restoreCharging() }
+        DynamicIslandManager.shared.trigger(.alert(
+            title: String(localized: "Discharging"),
+            message: reachedTarget
+                ? String(format: String(localized: "DISCHARGE_DONE_FMT"), dischargeTarget)
+                : String(localized: "Discharge cancelled. Charging resumed."),
+            isWarning: false
+        ))
+    }
+
     /// Start/cancel the one-shot full charge.
     func topUp(_ on: Bool) {
         guard helperStatus == .ready else { return }
@@ -287,6 +330,8 @@ final class ChargeLimitManager: ObservableObject {
         self.scheduledChargeEnabled = d.bool(forKey: "scheduledChargeEnabled")
         let savedSchedule = d.object(forKey: "scheduledChargeMinutes") as? Int
         self.scheduledChargeMinutes = savedSchedule.map { min(1439, max(0, $0)) } ?? 540   // default 09:00
+        let savedDischarge = d.object(forKey: "dischargeTarget") as? Int
+        self.dischargeTarget = savedDischarge.map { min(95, max(20, $0)) } ?? 60
         refreshStatus()
     }
 
@@ -484,6 +529,17 @@ final class ChargeLimitManager: ObservableObject {
         }
 
         // Deep calibration takes priority: drain to ~15%, charge to 100%, hold 1 hour.
+        // Manual discharge outranks everything below: the user asked for a specific level
+        // right now, so neither the standing limit nor Sailing Mode should fight it.
+        if dischargeActive {
+            if batteryLevel <= dischargeTarget {
+                finishDischarge(reachedTarget: true)
+            } else if lastAdapterEnabled != false {
+                Task { _ = await forceDischarge(true) }
+            }
+            return
+        }
+
         if calibrationActive {
             if let started = calibrationStartedAt, Date().timeIntervalSince(started) > calibrationMaxDuration {
                 abortCalibration(reason: .timeout)

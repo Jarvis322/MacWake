@@ -82,3 +82,9 @@
 
 /* Fan control support note (v1.47) */
 "FAN_UNSUPPORTED_NOTE" = "This Mac's controller refuses manual fan speeds — macOS keeps the fans on automatic. Fan readings still work.";
+
+/* Manual discharge + redesigned Settings (v1.48) */
+"DISCHARGE_HELP" = "Run on battery while plugged in until the level you pick, then charging resumes.";
+"DISCHARGE_STARTED_FMT" = "Discharging to %d%%. Charging resumes automatically.";
+"DISCHARGE_DONE_FMT" = "Reached %d%%. Charging resumed.";
+"DISCHARGE_PROGRESS_FMT" = "%d%% → target %d%%";

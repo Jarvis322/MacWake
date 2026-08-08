@@ -405,3 +405,18 @@
 "Reload Helper" = "ヘルパーを再読み込み";
 "Copied" = "コピーしました";
 "FAN_UNSUPPORTED_NOTE" = "この Mac のコントローラは手動ファン速度を受け付けません — macOS がファンを自動制御のままにします。ファンの数値表示は引き続き利用できます。";
+
+/* 手動放電 + 刷新した設定 (v1.48) */
+"Charging" = "充電";
+"Display" = "表示";
+"Alerts" = "通知";
+"More" = "その他";
+"Discharge" = "放電";
+"Discharge to" = "放電先";
+"Discharging" = "放電中";
+"Stop" = "停止";
+"DISCHARGE_HELP" = "電源接続中もバッテリーで動作し、指定した残量になると充電を再開します。";
+"DISCHARGE_STARTED_FMT" = "%d%% まで放電します。その後、充電を自動で再開します。";
+"DISCHARGE_DONE_FMT" = "%d%% に到達しました。充電を再開しました。";
+"DISCHARGE_PROGRESS_FMT" = "%d%% → 目標 %d%%";
+"Discharge cancelled. Charging resumed." = "放電をキャンセルしました。充電を再開しました。";

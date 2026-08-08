@@ -405,3 +405,18 @@
 "Reload Helper" = "헬퍼 다시 로드";
 "Copied" = "복사됨";
 "FAN_UNSUPPORTED_NOTE" = "이 Mac의 컨트롤러가 수동 팬 속도를 거부합니다 — macOS가 팬을 자동으로 유지합니다. 팬 수치 표시는 계속 작동합니다.";
+
+/* 수동 방전 + 새로워진 설정 (v1.48) */
+"Charging" = "충전";
+"Display" = "표시";
+"Alerts" = "알림";
+"More" = "더 보기";
+"Discharge" = "방전";
+"Discharge to" = "방전 목표";
+"Discharging" = "방전 중";
+"Stop" = "중지";
+"DISCHARGE_HELP" = "전원에 연결된 상태에서도 배터리로 작동하다가, 선택한 수준에 도달하면 충전을 재개합니다.";
+"DISCHARGE_STARTED_FMT" = "%d%%까지 방전합니다. 이후 자동으로 충전을 재개합니다.";
+"DISCHARGE_DONE_FMT" = "%d%%에 도달했습니다. 충전을 재개했습니다.";
+"DISCHARGE_PROGRESS_FMT" = "%d%% → 목표 %d%%";
+"Discharge cancelled. Charging resumed." = "방전이 취소되었습니다. 충전을 재개했습니다.";

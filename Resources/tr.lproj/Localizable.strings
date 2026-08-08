@@ -395,3 +395,18 @@
 "Reload Helper" = "Yardımcıyı Yenile";
 "Copied" = "Kopyalandı";
 "FAN_UNSUPPORTED_NOTE" = "Bu Mac'in denetleyicisi manuel fan hızını kabul etmiyor — macOS fanları otomatik tutuyor. Fan okumaları çalışmaya devam eder.";
+
+/* Manuel deşarj + yenilenen Ayarlar (v1.48) */
+"Charging" = "Şarj";
+"Display" = "Görünüm";
+"Alerts" = "Uyarılar";
+"More" = "Diğer";
+"Discharge" = "Boşalt";
+"Discharge to" = "Şuraya boşalt";
+"Discharging" = "Boşaltılıyor";
+"Stop" = "Durdur";
+"DISCHARGE_HELP" = "Fişteyken pil gücüyle çalışır, seçtiğin seviyeye inince şarj devam eder.";
+"DISCHARGE_STARTED_FMT" = "%%%d seviyesine boşaltılıyor. Şarj otomatik devam edecek.";
+"DISCHARGE_DONE_FMT" = "%%%d seviyesine ulaşıldı. Şarj devam ediyor.";
+"DISCHARGE_PROGRESS_FMT" = "%%%d → hedef %%%d";
+"Discharge cancelled. Charging resumed." = "Boşaltma iptal edildi. Şarj devam ediyor.";

@@ -20,7 +20,9 @@ struct MacWakeMenuView: View {
     @State private var isCLIInstalled = CLIInstaller.isInstalled
     #endif
     @State private var processSortMode: Int = 0 // 0 = CPU, 1 = RAM
-    @State private var settingsCategory: SettingsCategory = .quick
+    // Charging is hidden in the App Store build, so it can't be the default there —
+    // the picker would open on a category with nothing behind it.
+    @State private var settingsCategory: SettingsCategory = Distribution.isAppStore ? .display : .charging
     @State private var fanDiagnosticsCopied = false
     #if !APPSTORE
     // In-app language override relaunches the app via a /bin/sh helper (Process), which
@@ -473,27 +475,29 @@ struct MacWakeMenuView: View {
     }
     #endif
 
-    /// Settings is organised as a small category switcher over a focused body — a
-    /// "Quick" tile grid for the common on/off toggles, then a page per concern.
+    /// Settings pages, grouped by WHAT a setting controls. Every setting lives on exactly
+    /// one page: the previous layout had a "Quick" grid that repeated toggles which also
+    /// appeared under a category, while Dynamic Island and widget switches existed ONLY in
+    /// that grid — two mental models for the same thing, and options with no findable home.
     enum SettingsCategory: Int, CaseIterable, Identifiable {
-        case quick, menuBar, charging, general, actions
+        case charging, display, alerts, general, more
         var id: Int { rawValue }
         var title: String {
             switch self {
-            case .quick: return "Quick"
-            case .menuBar: return "Menu Bar"
-            case .charging: return "Charge Limit"
+            case .charging: return "Charging"
+            case .display: return "Display"
+            case .alerts: return "Alerts"
             case .general: return "General"
-            case .actions: return "Actions"
+            case .more: return "More"
             }
         }
         var icon: String {
             switch self {
-            case .quick: return "bolt.fill"
-            case .menuBar: return "menubar.rectangle"
-            case .charging: return "bolt.badge.checkmark"
+            case .charging: return "bolt.fill"
+            case .display: return "macwindow"
+            case .alerts: return "bell.fill"
             case .general: return "gearshape.fill"
-            case .actions: return "ellipsis.circle.fill"
+            case .more: return "ellipsis.circle.fill"
             }
         }
     }
@@ -540,53 +544,86 @@ struct MacWakeMenuView: View {
     @ViewBuilder
     private var settingsCategoryBody: some View {
         switch settingsCategory {
-        case .quick:
-            quickGrid
-        case .menuBar:
-            VStack(alignment: .leading, spacing: 7) { menuBarSection }
+
+        // ⚡ Everything that decides how the battery charges.
         case .charging:
             #if !APPSTORE
             VStack(spacing: 16) {
                 VStack(alignment: .leading, spacing: 7) { chargeLimitSection }
+                VStack(alignment: .leading, spacing: 7) { dischargeSection }
                 VStack(alignment: .leading, spacing: 7) { energyModeSection }
             }
             #else
             EmptyView()
             #endif
-        case .general:
+
+        // 🖥 Every surface MacWake draws itself on.
+        case .display:
             VStack(spacing: 16) {
-                settingsSection("Notifications", icon: "bell.fill") {
-                    notificationPermissionRow
-                        .padding(.horizontal, 12).padding(.vertical, 9)
-                    if tracker.lowBatteryAlertEnabled {
+                VStack(alignment: .leading, spacing: 7) { menuBarSection }
+
+                settingsSection("Dynamic Island", icon: "oval.portrait.tophalf.filled") {
+                    toggleRow("oval.portrait.tophalf.filled", .indigo, "Dynamic Island Overlay", $tracker.enableDynamicIsland, subtitle: "DYNAMIC_ISLAND_HELP")
+                    if tracker.enableDynamicIsland {
                         rowDivider()
-                        sliderBlock {
-                            HStack {
-                                Text("Warn at").font(.caption).foregroundColor(.secondary)
-                                Spacer()
-                                Text("\(tracker.lowBatteryThreshold)%").font(.caption.bold()).foregroundColor(.orange)
-                            }
-                            Slider(value: Binding(get: { Double(tracker.lowBatteryThreshold) }, set: { tracker.lowBatteryThreshold = Int($0) }), in: 5...50, step: 5).tint(.orange)
-                        }
+                        toggleRow("hand.tap", .pink, "Dynamic Island Haptics", $tracker.enableDynamicIslandHaptics, subtitle: "HAPTICS_HELP")
+                        rowDivider()
+                        toggleRow("tray.and.arrow.down", .teal, "Dynamic Island Shelf", $tracker.enableNotchShelf, subtitle: "NOTCH_SHELF_HELP")
+                        #if !APPSTORE
+                        rowDivider()
+                        toggleRow("music.note", .pink, "Now Playing", $nowPlaying.isEnabled, subtitle: "NOW_PLAYING_HELP")
+                        #endif
                     }
                 }
+
+                settingsSection("Desktop Widget", icon: "rectangle.on.rectangle") {
+                    toggleRow("rectangle.on.rectangle", .blue, "Show Desktop Widget", $tracker.showWidget, subtitle: "WIDGET_HELP")
+                    if tracker.showWidget {
+                        rowDivider()
+                        toggleRow("lock.fill", .gray, "Lock Widget Position", $tracker.isWidgetLocked, subtitle: "WIDGET_LOCK_HELP")
+                    }
+                }
+            }
+
+        // 🔔 Permission plus the alerts it drives, in one place.
+        case .alerts:
+            settingsSection("Notifications", icon: "bell.fill") {
+                notificationPermissionRow
+                    .padding(.horizontal, 12).padding(.vertical, 9)
+                rowDivider()
+                toggleRow("battery.25percent", .orange, "Low Battery Alert", $tracker.lowBatteryAlertEnabled, subtitle: "LOW_BATTERY_HELP")
+                if tracker.lowBatteryAlertEnabled {
+                    rowDivider()
+                    sliderBlock {
+                        HStack {
+                            Text("Warn at").font(.caption).foregroundColor(.secondary)
+                            Spacer()
+                            Text("\(tracker.lowBatteryThreshold)%").font(.caption.bold()).foregroundColor(.orange)
+                        }
+                        Slider(value: Binding(get: { Double(tracker.lowBatteryThreshold) }, set: { tracker.lowBatteryThreshold = Int($0) }), in: 5...50, step: 5).tint(.orange)
+                    }
+                }
+            }
+
+        // ⚙️ How the app itself behaves, plus the extra tools.
+        case .general:
+            VStack(spacing: 16) {
                 settingsSection("General", icon: "gearshape.fill") {
                     #if !APPSTORE
                     languageRow
+                    rowDivider()
                     #endif
-                    if tracker.showWidget {
-                        #if !APPSTORE
-                        rowDivider()
-                        #endif
-                        toggleRow("lock.fill", .gray, "Lock Widget Position", $tracker.isWidgetLocked, subtitle: "WIDGET_LOCK_HELP")
-                    }
+                    toggleRow("power", .green, "Launch at Login", launchAtLoginBinding, subtitle: "LAUNCH_AT_LOGIN_HELP")
+                    rowDivider()
+                    toggleRow("sparkles", .purple, "Enable Animations", $tracker.enableAnimations, subtitle: "ANIMATIONS_HELP")
                 }
                 #if !APPSTORE
                 VStack(alignment: .leading, spacing: 7) { cliSection }
                 VStack(alignment: .leading, spacing: 7) { cleaningModeSection }
                 #endif
             }
-        case .actions:
+
+        case .more:
             settingsSection("Actions", icon: "ellipsis.circle.fill") {
                 actionRow("sparkles", .pink, "Welcome Tour") { OnboardingManager.shared.show() }
                 rowDivider()
@@ -603,49 +640,6 @@ struct MacWakeMenuView: View {
         }
     }
 
-    /// Control-Center-style grid of the common on/off toggles: filled + glowing when on.
-    private var quickGrid: some View {
-        LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
-            quickTile("power", .green, "Launch at Login", launchAtLoginBinding)
-            quickTile("sparkles", .purple, "Enable Animations", $tracker.enableAnimations)
-            quickTile("rectangle.on.rectangle", .blue, "Show Desktop Widget", $tracker.showWidget)
-            quickTile("oval.portrait.tophalf.filled", .indigo, "Dynamic Island", $tracker.enableDynamicIsland)
-            if tracker.enableDynamicIsland {
-                quickTile("hand.tap", .pink, "Haptics", $tracker.enableDynamicIslandHaptics)
-                quickTile("tray.and.arrow.down", .teal, "Shelf", $tracker.enableNotchShelf)
-                #if !APPSTORE
-                quickTile("music.note", .pink, "Now Playing", $nowPlaying.isEnabled)
-                #endif
-            }
-            quickTile("battery.25percent", .orange, "Low Battery Alert", $tracker.lowBatteryAlertEnabled)
-        }
-    }
-
-    private func quickTile(_ icon: String, _ tint: Color, _ title: String, _ binding: Binding<Bool>) -> some View {
-        let on = binding.wrappedValue
-        return Button {
-            withAnimation(.easeInOut(duration: 0.15)) { binding.wrappedValue.toggle() }
-        } label: {
-            VStack(alignment: .leading, spacing: 0) {
-                iconTile(icon, on ? tint : Color.gray.opacity(0.55))
-                Spacer(minLength: 10)
-                Text(LocalizedStringKey(title))
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(on ? .primary : .secondary)
-                    .lineLimit(2).multilineTextAlignment(.leading)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .frame(height: 92, alignment: .topLeading)
-            .padding(12)
-            .background(RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(on ? tint.opacity(0.14) : Color.primary.opacity(0.04)))
-            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .stroke(on ? tint.opacity(0.45) : Color.primary.opacity(0.06), lineWidth: 1))
-            .shadow(color: on ? tint.opacity(0.35) : .clear, radius: 10, y: 2)
-        }
-        .buttonStyle(.plain)
-    }
 
     /// A titled settings group: an icon + uppercase label tightly coupled to its card.
     @ViewBuilder
@@ -795,6 +789,57 @@ struct MacWakeMenuView: View {
         case .discharge: return String(localized: "Calibrating — discharging to 15%…")
         case .charge:    return String(localized: "Calibrating — charging to 100%…")
         case .hold:      return String(localized: "Calibrating — holding at 100%…")
+        }
+    }
+
+    /// Manual discharge. The charge limit can only stop charging, so a Mac left plugged in
+    /// at a high level has no way down without unplugging — this drains it to a target.
+    @ViewBuilder
+    private var dischargeSection: some View {
+        if chargeLimit.helperStatus == .ready {
+            sectionLabel("Discharge", icon: "battery.25percent")
+            settingsCard {
+                if chargeLimit.dischargeActive {
+                    HStack(spacing: 11) {
+                        iconTile("bolt.slash.fill", .orange)
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text("Discharging").font(.subheadline)
+                            Text(String(format: String(localized: "DISCHARGE_PROGRESS_FMT"),
+                                        tracker.currentBatteryLevel, chargeLimit.dischargeTarget))
+                                .font(.system(size: 11)).foregroundColor(.secondary)
+                        }
+                        Spacer()
+                        Button("Stop") { chargeLimit.cancelDischarge() }
+                            .buttonStyle(.bordered).controlSize(.small)
+                    }
+                    .padding(.horizontal, 12).padding(.vertical, 9)
+                } else {
+                    HStack(spacing: 11) {
+                        iconTile("battery.25percent", .orange)
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text("Discharge to").font(.subheadline)
+                            Text("DISCHARGE_HELP")
+                                .font(.system(size: 11)).foregroundColor(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        Spacer(minLength: 8)
+                        Button {
+                            chargeLimit.startDischarge()
+                        } label: {
+                            Text("\(chargeLimit.dischargeTarget)%").monospacedDigit()
+                        }
+                        .buttonStyle(.borderedProminent).controlSize(.small).tint(.orange)
+                        .disabled(tracker.currentBatteryLevel <= chargeLimit.dischargeTarget)
+                    }
+                    .padding(.horizontal, 12).padding(.vertical, 9)
+                    rowDivider()
+                    sliderBlock {
+                        Slider(value: Binding(get: { Double(chargeLimit.dischargeTarget) },
+                                              set: { chargeLimit.dischargeTarget = Int($0) }),
+                               in: 20...95, step: 5).tint(.orange)
+                    }
+                }
+            }
         }
     }
 

@@ -405,3 +405,18 @@
 "Reload Helper" = "重新加载助手";
 "Copied" = "已复制";
 "FAN_UNSUPPORTED_NOTE" = "这台 Mac 的控制器拒绝手动风扇转速 — macOS 保持风扇自动控制。风扇读数仍然可用。";
+
+/* 手动放电 + 重新设计的设置 (v1.48) */
+"Charging" = "充电";
+"Display" = "显示";
+"Alerts" = "提醒";
+"More" = "更多";
+"Discharge" = "放电";
+"Discharge to" = "放电至";
+"Discharging" = "正在放电";
+"Stop" = "停止";
+"DISCHARGE_HELP" = "插电时改用电池供电，降到你设定的电量后自动恢复充电。";
+"DISCHARGE_STARTED_FMT" = "正在放电至 %d%%，之后自动恢复充电。";
+"DISCHARGE_DONE_FMT" = "已达到 %d%%，充电已恢复。";
+"DISCHARGE_PROGRESS_FMT" = "%d%% → 目标 %d%%";
+"Discharge cancelled. Charging resumed." = "放电已取消，充电已恢复。";
