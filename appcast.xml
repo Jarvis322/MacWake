@@ -10,39 +10,11 @@
             <pubDate>Sat, 08 Aug 2026 11:30:00 +0000</pubDate>
             <sparkle:version>55</sparkle:version>
             <sparkle:shortVersionString>1.49</sparkle:shortVersionString>
-            <description><![CDATA[
-                <meta charset="utf-8">
-                <style>
-                    :root { color-scheme: light dark; }
-                    body { font: 13px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; margin: 4px 2px; color: #1d1d1f; }
-                    h1 { font-size: 15px; margin: 0 0 2px; }
-                    .date { font-size: 11px; opacity: .5; margin: 0 0 14px; }
-                    .tag { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; opacity: .55; margin: 16px 0 8px; }
-                    .tag:first-of-type { margin-top: 0; }
-                    ul { margin: 0; padding-left: 18px; }
-                    li { margin-bottom: 8px; }
-                    b { font-weight: 600; }
-                    hr { border: 0; border-top: 1px solid rgba(0,0,0,.1); margin: 16px 0 0; }
-                    @media (prefers-color-scheme: dark) { body { color: #f5f5f7; } hr { border-top-color: rgba(255,255,255,.12); } }
-                </style>
-                <h1>Wake 1.49</h1>
-                <p class="date">8 Ağustos 2026 · 8 August 2026</p>
-                <p class="tag">🔋 Önemli güvenlik düzeltmesi</p>
-                <ul>
-                    <li><b>Kalibrasyon artık %15 güvenlik sınırında duruyor.</b> Sınıra ulaşınca güç bir sonraki kontrol turuna kadar geri verilmiyordu ve pil bu aralıkta %8-9'a kadar inebiliyordu. Kalibrasyon kullanıyorsanız bu güncelleme önerilir.</li>
-                    <li>Adaptörü geri açma komutu başarısız olduğunda uygulama artık "geri geldi" saymıyor — tekrar deniyor, böylece Mac farkında olmadan pilde kalmıyor.</li>
-                    <li>Pil zaten %15'in altındayken kalibrasyon başlatılırsa boşaltma aşaması atlanıyor, doğrudan şarjla başlıyor.</li>
-                </ul>
-                <hr>
-                <p class="tag">🔋 Important safety fix</p>
-                <ul>
-                    <li><b>Calibration now stops at the 15% safety floor.</b> Reaching it didn't restore power until the next control tick, and the battery could keep draining to 8-9% in that window. Recommended if you use calibration.</li>
-                    <li>When the command to re-enable the adapter fails, the app no longer treats it as restored — it retries, so a Mac can't be left silently running on battery.</li>
-                    <li>Starting a calibration while already below 15% now skips the discharge phase and begins by charging.</li>
-                </ul>
-                <p class="tag">🙏</p>
-                <ul><li>Reported by @ssdiwu.</li></ul>
-            ]]></description>
+            <description xml:lang="en"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:0 0 8px}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.49</h1><p class="date">8 August 2026</p><p class="tag">🔋 Important safety fix</p><ul><li><b>Calibration now stops at the 15% safety floor.</b> Reaching it didn't restore power until the next control tick, and the battery could keep draining to 8–9% in that window. Recommended if you use calibration.</li><li>When the command to re-enable the adapter fails, the app no longer treats it as restored — it retries, so a Mac can't be left silently running on battery.</li><li>Starting a calibration while already below 15% now skips the discharge phase and begins by charging.</li></ul><p style="font-size:11px;opacity:.55;margin-top:14px">🙏 Reported by @ssdiwu.</p>]]></description>
+            <description xml:lang="tr"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:0 0 8px}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.49</h1><p class="date">8 Ağustos 2026</p><p class="tag">🔋 Önemli güvenlik düzeltmesi</p><ul><li><b>Kalibrasyon artık %15 güvenlik sınırında duruyor.</b> Sınıra ulaşınca güç bir sonraki kontrol turuna kadar geri verilmiyordu ve pil bu aralıkta %8-9'a kadar inebiliyordu. Kalibrasyon kullanıyorsanız bu güncelleme önerilir.</li><li>Adaptörü geri açma komutu başarısız olduğunda uygulama artık "geri geldi" saymıyor — tekrar deniyor, böylece Mac farkında olmadan pilde kalmıyor.</li><li>Pil zaten %15'in altındayken kalibrasyon başlatılırsa boşaltma aşaması atlanıyor, doğrudan şarjla başlıyor.</li></ul><p style="font-size:11px;opacity:.55;margin-top:14px">🙏 Bildiren: @ssdiwu.</p>]]></description>
+            <description xml:lang="zh-Hans"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:0 0 8px}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.49</h1><p class="date">2026 年 8 月 8 日</p><p class="tag">🔋 重要安全修复</p><ul><li><b>校准现在会在 15% 安全下限处停止。</b>此前到达下限后要等到下一个控制周期才恢复供电，电量可能在这段时间内降到 8–9%。如果你使用校准功能，建议更新。</li><li>当重新启用电源适配器的命令失败时，应用不再视为已恢复 — 它会重试，因此 Mac 不会在你不知情的情况下继续用电池运行。</li><li>在电量已低于 15% 时开始校准，现在会跳过放电阶段，直接开始充电。</li></ul><p style="font-size:11px;opacity:.55;margin-top:14px">🙏 由 @ssdiwu 报告。</p>]]></description>
+            <description xml:lang="ja"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:0 0 8px}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.49</h1><p class="date">2026年8月8日</p><p class="tag">🔋 重要な安全性の修正</p><ul><li><b>キャリブレーションが 15% の安全下限で停止するようになりました。</b>下限に到達しても次の制御サイクルまで電源が戻らず、その間にバッテリーが 8〜9% まで減ることがありました。キャリブレーションをお使いの方は更新をおすすめします。</li><li>電源アダプタを再度有効にするコマンドが失敗した場合、復帰したものとして扱わず再試行します。Mac が気づかないうちにバッテリー駆動を続けることがなくなります。</li><li>すでに 15% を下回っている状態でキャリブレーションを開始すると、放電フェーズをスキップして充電から始めます。</li></ul><p style="font-size:11px;opacity:.55;margin-top:14px">🙏 報告: @ssdiwu さん。</p>]]></description>
+            <description xml:lang="ko"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:0 0 8px}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.49</h1><p class="date">2026년 8월 8일</p><p class="tag">🔋 중요한 안전 수정</p><ul><li><b>이제 캘리브레이션이 15% 안전 하한에서 멈춥니다.</b> 하한에 도달해도 다음 제어 주기까지 전원이 복구되지 않아 그 사이에 배터리가 8~9%까지 내려갈 수 있었습니다. 캘리브레이션을 사용한다면 업데이트를 권장합니다.</li><li>전원 어댑터를 다시 활성화하는 명령이 실패하면 이제 복구된 것으로 처리하지 않고 재시도합니다. Mac이 모르는 사이에 배터리로 계속 작동하지 않습니다.</li><li>이미 15% 아래인 상태에서 캘리브레이션을 시작하면 방전 단계를 건너뛰고 충전부터 시작합니다.</li></ul><p style="font-size:11px;opacity:.55;margin-top:14px">🙏 제보: @ssdiwu.</p>]]></description>
             <enclosure
                 url="https://github.com/Jarvis322/MacWake/releases/download/v1.49/Wake-1.49.dmg"
                 sparkle:version="55"
