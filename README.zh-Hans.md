@@ -110,7 +110,8 @@ brew install --cask macwake
 
 ### 系统要求
 *   **macOS 14.0 (Sonoma)** 或更高版本
-*   Apple Silicon 或 Intel
+*   Apple Silicon 或 Intel — 下载包为通用（Universal）构建，在两种架构上均原生运行
+*   充电控制（上限、Sailing 模式、手动放电、校准）需要 Apple Silicon M 系列的 SMC 键，在 Intel 上不可用；监控、健康历史、会话、风扇读数和小组件在所有机型上均可使用
 
 ### 手动 Terminal 命令
 如果你希望通过终端管理此 App：

@@ -115,7 +115,8 @@ Download the latest DMG from [GitHub Releases](https://github.com/Jarvis322/MacW
 
 ### Requirements
 *   **macOS 14.0 (Sonoma)** or later
-*   Apple Silicon or Intel
+*   Apple Silicon or Intel — the download is a Universal build and runs natively on both
+*   Charge control (limit, Sailing Mode, manual discharge, calibration) needs Apple Silicon M-series SMC keys and is unavailable on Intel; monitoring, health history, sessions, fan readout and the widget work everywhere
 
 ### Manual Terminal Commands
 If you wish to manage the app via the terminal:

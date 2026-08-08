@@ -110,7 +110,8 @@ brew install --cask macwake
 
 ### 요구 사항
 *   **macOS 14.0 (Sonoma)** 이상
-*   Apple Silicon 또는 Intel
+*   Apple Silicon 또는 Intel — 다운로드는 유니버설 빌드이며 두 아키텍처에서 모두 네이티브로 실행됩니다
+*   충전 제어(제한, Sailing 모드, 수동 방전, 캘리브레이션)는 Apple Silicon M 시리즈 SMC 키가 필요해 Intel에서는 사용할 수 없습니다. 모니터링, 상태 기록, 세션, 팬 표시, 위젯은 모든 기기에서 동작합니다
 
 ### 수동 Terminal 명령
 명령줄에서 앱을 관리하려면 다음 명령을 사용하십시오.

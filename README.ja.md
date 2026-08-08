@@ -110,7 +110,8 @@ brew install --cask macwake
 
 ### 動作要件
 *   **macOS 14.0 (Sonoma)** 以降
-*   Apple Silicon または Intel
+*   Apple Silicon または Intel — ダウンロードはユニバーサルビルドで、どちらでもネイティブに動作します
+*   充電コントロール（上限、Sailing モード、手動放電、キャリブレーション）は Apple Silicon M シリーズの SMC キーが必要で、Intel では利用できません。モニタリング、健康履歴、セッション、ファン表示、ウィジェットはどの機種でも動作します
 
 ### Terminal の手動コマンド
 コマンドラインからアプリを管理する場合：

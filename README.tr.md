@@ -110,7 +110,8 @@ En yeni en son DMG dosyasını [GitHub Releases](https://github.com/Jarvis322/Ma
 
 ### Gereksinimler
 *   **macOS 14.0 (Sonoma)** veya daha yenisi
-*   Apple Silicon veya Intel
+*   Apple Silicon veya Intel — indirme Universal derlemedir ve ikisinde de doğal olarak çalışır
+*   Şarj kontrolü (sınır, Sailing Modu, manuel boşaltma, kalibrasyon) Apple Silicon M-serisi SMC anahtarlarına ihtiyaç duyar ve Intel'de kullanılamaz; izleme, sağlık geçmişi, oturumlar, fan okuması ve widget her yerde çalışır
 
 ### Manuel Terminal Komutları
 Uygulamayı komut satırı üzerinden yönetmek isterseniz:
