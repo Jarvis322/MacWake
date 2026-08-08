@@ -28,35 +28,83 @@ final class BatteryHealthMathTests: XCTestCase {
         XCTAssertNil(BatteryHealthMath.ratio(nominal: nominal, liveMax: liveMax, design: nil))
     }
 
-    func testSettledRatioIsNotDamped() {
-        // Real wear must move the value immediately, however small the step.
-        let ratio = BatteryHealthMath.Ratio(value: 98.51, isLiveEstimate: false)
-        XCTAssertEqual(BatteryHealthMath.displayedHealth(current: 99, ratio: ratio), 98)
+    private let epoch = Date(timeIntervalSince1970: 1_770_000_000)
+
+    func testFirstReadingIsAdoptedImmediately() {
+        // Never set before, so it must not sit on the 100% default waiting out a day.
+        XCTAssertEqual(
+            BatteryHealthMath.headline(samples: [95.97], current: 100, lastMoved: nil, now: epoch),
+            95
+        )
     }
 
-    func testLiveEstimateStopsOscillating() {
-        // The reported symptom: the value bounced 96↔97 minute to minute and wrote a
-        // health-history entry on every flip. The guarantee is that drift settles — it may
-        // move once as it finds its level, then stays put while samples wobble around it.
-        let samples = [96.9, 97.05, 96.4, 97.02, 96.08, 96.95, 97.1, 96.2]
-        var displayed = 96
-        var changes: [Int] = []
-        for value in samples {
-            let next = BatteryHealthMath.displayedHealth(
-                current: displayed,
-                ratio: BatteryHealthMath.Ratio(value: value, isLiveEstimate: true)
+    func testStateDependentRecalculationDoesNotMoveTheHeadline() {
+        // The v1.52 follow-up: NominalChargeCapacity swung between 5997 and 6156 on a
+        // 6249 mAh design capacity — 95.97% ↔ 98.51% — with the cycle count fixed at 63,
+        // and each swing persisted a history row that looked like wear and then recovered.
+        var displayed = 95
+        var lastMoved: Date? = epoch
+        var samples: [Double] = []
+        var moves = 0
+        for step in 0..<40 {
+            samples.append(step.isMultiple(of: 2) ? 95.97 : 98.51)
+            let now = epoch.addingTimeInterval(Double(step) * 30)
+            let next = BatteryHealthMath.headline(
+                samples: samples, current: displayed, lastMoved: lastMoved, now: now
             )
-            if next != displayed { changes.append(next) }
-            displayed = next
+            if next != displayed { moves += 1; displayed = next; lastMoved = now }
         }
-        XCTAssertLessThanOrEqual(changes.count, 1, "drift must not keep rewriting the value")
-        XCTAssertEqual(displayed, 97)
+        XCTAssertEqual(moves, 0, "an alternating estimate must not be recorded as wear")
+        XCTAssertEqual(displayed, 95)
     }
 
-    func testLiveEstimateStillFollowsRealDecay() {
-        // Damping must not freeze the value: a full point of movement gets through.
-        let decayed = BatteryHealthMath.Ratio(value: 95.4, isLiveEstimate: true)
-        XCTAssertEqual(BatteryHealthMath.displayedHealth(current: 97, ratio: decayed), 95)
+    func testHeadlineMovesAtMostOncePerDay() {
+        // Even a sustained shift may only be written once a day, which is what bounds the
+        // history to one row per day.
+        let samples = Array(repeating: 91.2, count: 10)
+        let tenMinutes = epoch.addingTimeInterval(600)
+        XCTAssertEqual(
+            BatteryHealthMath.headline(samples: samples, current: 95, lastMoved: epoch, now: tenMinutes),
+            95
+        )
+        let nextDay = epoch.addingTimeInterval(24 * 3600 + 60)
+        XCTAssertEqual(
+            BatteryHealthMath.headline(samples: samples, current: 95, lastMoved: epoch, now: nextDay),
+            91
+        )
+    }
+
+    func testHeadlineStillFollowsRealDecay() {
+        // Damping must not freeze the value: a sustained drop a day later gets through.
+        let samples = Array(repeating: 93.4, count: 20)
+        let later = epoch.addingTimeInterval(48 * 3600)
+        XCTAssertEqual(
+            BatteryHealthMath.headline(samples: samples, current: 95, lastMoved: epoch, now: later),
+            93
+        )
+    }
+
+    func testSubPointDriftIsIgnoredEvenAfterDays() {
+        // 95.97 rounds to 95 already; a drift to 95.2 is not a point of movement.
+        let samples = Array(repeating: 95.2, count: 20)
+        let later = epoch.addingTimeInterval(72 * 3600)
+        XCTAssertEqual(
+            BatteryHealthMath.headline(samples: samples, current: 95, lastMoved: epoch, now: later),
+            95
+        )
+    }
+
+    func testMedianIgnoresIsolatedOutliers() {
+        // One bad sample among many must not decide the figure.
+        let samples = [95.9, 96.0, 95.8, 60.0, 96.1, 95.95, 96.05]
+        XCTAssertEqual(BatteryHealthMath.median(samples) ?? 0, 95.95, accuracy: 0.01)
+    }
+
+    func testEmptySampleSetKeepsCurrentValue() {
+        XCTAssertEqual(
+            BatteryHealthMath.headline(samples: [], current: 95, lastMoved: nil, now: epoch),
+            95
+        )
     }
 
     func testRatioIsClampedToOneHundred() {

@@ -33,9 +33,12 @@ class BatteryTracker: ObservableObject {
     /// The capacity ratio before rounding, for the diagnostic readout. Never used as the
     /// headline value or on any summary surface.
     @Published var batteryHealthPrecise: Double?
-    /// True when the ratio came from the drifting live re-estimate rather than the
-    /// controller's settled NominalChargeCapacity.
-    @Published private(set) var healthIsLiveEstimate = false
+    /// Recent capacity ratios, feeding the median behind the headline figure.
+    private var healthSamples: [Double] = []
+    /// When the headline last moved, so the once-a-day limit survives a relaunch.
+    private var healthLastMovedAt: Date? {
+        didSet { UserDefaults.standard.set(healthLastMovedAt, forKey: "healthLastMovedAt") }
+    }
     @Published var batteryCycles: Int = 0
     @Published var batteryTemperature: Double = 0.0
     @Published var temperatureSamples: [Double] = []
@@ -424,6 +427,9 @@ class BatteryTracker: ObservableObject {
     
     // Read macOS Golden Gate user charge limit
     func loadSettings() {
+        // Restore the once-a-day limit; without this every relaunch would let the headline
+        // move again, which is how a jittering value got back into the history.
+        self.healthLastMovedAt = UserDefaults.standard.object(forKey: "healthLastMovedAt") as? Date
         self.showWidget = UserDefaults.standard.bool(forKey: "showWidget")
         self.isWidgetLocked = UserDefaults.standard.bool(forKey: "isWidgetLocked")
         if UserDefaults.standard.object(forKey: "enableAnimations") != nil {
@@ -842,7 +848,6 @@ class BatteryTracker: ObservableObject {
 
         let ratio = BatteryHealthMath.ratio(nominal: nominalMax, liveMax: rawMax, design: design)
 
-        healthIsLiveEstimate = ratio?.isLiveEstimate ?? false
         batteryHealthPrecise = ratio?.value
         rawBatteryHealth = ratio.map { Int($0.value.rounded(.down)) }
 
@@ -852,7 +857,21 @@ class BatteryTracker: ObservableObject {
         // correct. Keep MaxCapacity only as a last resort for Macs that expose no
         // capacity pair (older Intel models report it as a real percentage there).
         if let ratio {
-            batteryHealth = BatteryHealthMath.displayedHealth(current: batteryHealth, ratio: ratio)
+            healthSamples.append(ratio.value)
+            if healthSamples.count > BatteryHealthMath.sampleWindow {
+                healthSamples.removeFirst(healthSamples.count - BatteryHealthMath.sampleWindow)
+            }
+            let now = Date()
+            let settled = BatteryHealthMath.headline(
+                samples: healthSamples,
+                current: batteryHealth,
+                lastMoved: healthLastMovedAt,
+                now: now
+            )
+            if settled != batteryHealth {
+                batteryHealth = settled
+                healthLastMovedAt = now
+            }
         } else if let reportedMaxCapacity = dict["MaxCapacity"] as? Int,
                   (0...100).contains(reportedMaxCapacity) {
             batteryHealth = reportedMaxCapacity
@@ -1797,13 +1816,19 @@ extension BatteryTracker.Session {
 enum BatteryHealthMath {
     struct Ratio: Equatable {
         let value: Double
-        /// The source drifts between samples, so the display has to damp it.
+        /// Which field the ratio came from. This selects the numerator only — it says
+        /// nothing about stability, because no capacity field is stable (see `headline`).
         let isLiveEstimate: Bool
     }
 
-    /// `nominal` is the controller's settled figure and always wins; `liveMax`
-    /// (FullChargeCapacity / AppleRawMaxCapacity) is a re-estimate that moves minute to
-    /// minute and is only used when nothing better is exposed.
+    /// `nominal` is the better numerator and always wins; `liveMax` (FullChargeCapacity /
+    /// AppleRawMaxCapacity) is a coarser re-estimate used when nothing better is exposed.
+    ///
+    /// Neither is authoritative for a *displayed* figure. `NominalChargeCapacity` was
+    /// assumed to be the controller's settled value in 1.52; it is not. On one Mac here it
+    /// moved 4820 → 4766 mAh in a few hours with the cycle count unchanged — 1.2 points of
+    /// ratio — and a reporter saw it swing between 5997 and 6156 (95% ↔ 98%), recovering
+    /// each time as the battery changed state.
     static func ratio(nominal: Int?, liveMax: Int?, design: Int?) -> Ratio? {
         guard let design, design > 0 else { return nil }
         if let nominal {
@@ -1815,13 +1840,39 @@ enum BatteryHealthMath {
         return nil
     }
 
-    /// The headline integer. On the live-estimate path the ratio sits near an integer
-    /// boundary, so requiring a full point of movement stops it flip-flopping (which also
-    /// wrote a battery-health history entry on every sample).
-    static func displayedHealth(current: Int, ratio: Ratio) -> Int {
-        if ratio.isLiveEstimate, abs(ratio.value - Double(current)) < 1.0 {
-            return current
-        }
-        return Int(ratio.value.rounded(.down))
+    /// Number of recent samples kept for the median. Enough to span a stretch of tick
+    /// intervals without pretending to be a long-term record.
+    static let sampleWindow = 120
+
+    /// Wear is a weeks-scale quantity, so the headline is deliberately slow: it is the
+    /// median of recent samples, must clear the shown value by a full point, and may move
+    /// at most once a day. Deriving it from a single sample is what let the controller's
+    /// state-dependent recalculation write "wear" that recovered minutes later.
+    ///
+    /// Damping applies on every path. Gating it on `isLiveEstimate` — as 1.52 did — left
+    /// the `NominalChargeCapacity` path undamped, and that field drifts too.
+    ///
+    /// - Parameters:
+    ///   - samples: recent ratio values, oldest first.
+    ///   - current: the integer on screen.
+    ///   - lastMoved: when the headline last changed; `nil` means it has never been set, so
+    ///     the first real reading is adopted at once rather than sitting on the 100% default.
+    static func headline(samples: [Double], current: Int, lastMoved: Date?, now: Date,
+                         minimumInterval: TimeInterval = 24 * 3600) -> Int {
+        guard let middle = median(samples) else { return current }
+        let candidate = Int(middle.rounded(.down))
+        guard candidate != current else { return current }
+        guard let lastMoved else { return candidate }
+        // A full point of separation, so a value sitting near a boundary can't flip back.
+        guard abs(middle - Double(current)) >= 1.0 else { return current }
+        guard now.timeIntervalSince(lastMoved) >= minimumInterval else { return current }
+        return candidate
+    }
+
+    static func median(_ values: [Double]) -> Double? {
+        guard !values.isEmpty else { return nil }
+        let sorted = values.sorted()
+        let mid = sorted.count / 2
+        return sorted.count.isMultiple(of: 2) ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid]
     }
 }
