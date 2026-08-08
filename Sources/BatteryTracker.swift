@@ -1116,6 +1116,10 @@ class BatteryTracker: ObservableObject {
         center.addObserver(forName: NSWorkspace.willSleepNotification, object: nil, queue: .main) { [weak self] _ in
             Task { @MainActor [weak self] in
                 self?.handleStateTransition(to: "systemSleep")
+                // The app control loop is suspended during sleep. A manual calibration
+                // must synchronously release its forced-discharge state before that gap
+                // can cross the 15% safety floor.
+                ChargeLimitManager.shared.cancelCalibrationBeforeSleep()
             }
         }
         

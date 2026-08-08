@@ -37,7 +37,7 @@
     *   Her çip için en iyi yöntemi seçer: M1/M2/M3'te temiz şarj engelleme (CHTE/CH0C), M4'te adaptör denetimi (CHIE) — notarizasyonu yapılmış küçük bir arka plan yardımcısı aracılığıyla (bir defalık onay, parola istemi yok).
     *   **⛵ Yelken Modu:** Üst sınırda mikro şarj yapmak yerine, yeniden şarj etmeden önce pilin alt sınıra kadar düşmesine izin verir — daha az döngü, daha az ısı.
     *   **🪫 Manuel Boşaltma:** fişteyken pili seçtiğiniz seviyeye indirin — limit yalnızca şarjı *durdurabilir*, bu ise %95'te takılı kalmış bir Mac'i aşağı çeker — sonra şarj kendiliğinden devam eder.
-    *   **🧪 Derin Pil Kalibrasyonu:** Yakıt göstergesini yeniden kalibre etmek için tam bir döngü uygular — yaklaşık %15'e kadar boşaltır, %100'e kadar şarj eder ve bir saat bekletir — işlem bir programa göre veya “Şimdi Kalibre Et” seçeneğiyle başlatılabilir (canlı aşama durumu ve İptal düğmesiyle).
+    *   **🧪 Derin Pil Kalibrasyonu:** Yakıt göstergesini yeniden kalibre etmek için tam bir döngü uygular — yaklaşık %15'e kadar boşaltır, %100'e kadar şarj eder ve bir saat bekletir — yalnızca onay sonrasında “Şimdi Kalibre Et” ile manuel olarak başlatılabilir (canlı aşama durumu ve İptal düğmesiyle).
 *   **⌨️ Komut satırı aracı:**
     *   Ayarlar'dan `macwake` CLI aracını yükleyin ve şarjı Terminal üzerinden denetleyin: `macwake status`, `charging on|off`, `adapter on|off`, `energy auto|low|high`, `fan auto|<rpm>`.
 *   **⚡️ Enerji Modu:**

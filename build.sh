@@ -83,6 +83,11 @@ cat <<EOF > "${CONTENTS_DIR}/Info.plist"
 </plist>
 EOF
 
+echo "=== Validating localization resources ==="
+for strings_file in Resources/*.lproj/Localizable.strings; do
+    plutil -lint "${strings_file}" >/dev/null
+done
+
 echo "=== Copying localization resources ==="
 for lproj in Resources/*.lproj; do
     [ -d "$lproj" ] || continue
