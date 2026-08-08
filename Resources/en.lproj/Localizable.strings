@@ -90,3 +90,6 @@
 "SHELF_TOUR_DROP" = "Drop files here\nLast copied text";
 "SCREEN_ON_HM_FMT" = "%dh %dm on screen";
 "SCREEN_ON_M_FMT" = "%dm on screen";
+
+"MENUBAR_HIDDEN" = "Hidden";
+"MENUBAR_HIDDEN_NOTE" = "The menu bar item is hidden. Click the notch to open MacWake from the Dynamic Island, or switch any part back on here.";

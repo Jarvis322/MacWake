@@ -421,3 +421,6 @@
 "SHELF_TOUR_DROP" = "把文件拖到这里\n最近复制的文本";
 "SCREEN_ON_HM_FMT" = "亮屏 %1$d 小时 %2$d 分";
 "SCREEN_ON_M_FMT" = "亮屏 %d 分";
+
+"MENUBAR_HIDDEN" = "已隐藏";
+"MENUBAR_HIDDEN_NOTE" = "菜单栏图标已隐藏。点击刘海从灵动岛打开 MacWake，或在此重新开启任意一项。";

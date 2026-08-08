@@ -54,9 +54,9 @@ cat <<EOF > "${CONTENTS_DIR}/Info.plist"
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.50</string>
+    <string>1.51</string>
     <key>CFBundleVersion</key>
-    <string>56</string>
+    <string>57</string>
     <key>LSMinimumSystemVersion</key>
     <string>14.0</string>
     <key>LSApplicationCategoryType</key>
@@ -106,9 +106,11 @@ if [ -n "${LAST_TAG}" ]; then
     fi
 fi
 
-echo "=== Compiling using Swift Package Manager ==="
+echo "=== Compiling using Swift Package Manager (universal: arm64 + x86_64) ==="
+# Ship both slices. The DMG used to be arm64-only while the README advertised Intel
+# support, so Intel Macs refused to launch it ("not supported on this type of Mac").
 XCODE_DIR="$(ls -d /Applications/Xcode*.app 2>/dev/null | head -1)/Contents/Developer"
-DEVELOPER_DIR="${DEVELOPER_DIR:-$XCODE_DIR}" swift build -c release
+DEVELOPER_DIR="${DEVELOPER_DIR:-$XCODE_DIR}" swift build -c release --arch arm64 --arch x86_64
 
 echo "=== Copying Binary to App Bundle ==="
 cp .build/release/MacWake "${MACOS_DIR}/MacWake"
@@ -123,7 +125,9 @@ AI_SDK="$(DEVELOPER_DIR=${XC_APP}/Contents/Developer xcrun --sdk macosx --show-s
 AI_XCV="$(DEVELOPER_DIR=${XC_APP}/Contents/Developer xcodebuild -version 2>/dev/null | grep Build | awk '{print $3}')"
 AI_TMP="$(mktemp -d)"
 ls Sources/*.swift > "${AI_TMP}/sources.txt"
-find .build/out/Intermediates.noindex/MacWake.build/Release/MacWake-p.build -name "*.swiftconstvalues" > "${AI_TMP}/constvals.txt"
+# One slice only: the universal build emits an identical set per architecture, and
+# feeding the processor both makes every intent appear twice.
+find .build/out/Intermediates.noindex/MacWake.build/Release/MacWake-p.build -path "*/arm64/*" -name "*.swiftconstvalues" > "${AI_TMP}/constvals.txt"
 if "${TOOLCHAIN}/usr/bin/appintentsmetadataprocessor" \
     --output "${AI_TMP}/out" \
     --toolchain-dir "${TOOLCHAIN}" \

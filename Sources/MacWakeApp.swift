@@ -146,13 +146,17 @@ struct MacWakeApp: App {
     }
     
     var body: some Scene {
-        MenuBarExtra {
+        MenuBarExtra(isInserted: Binding(
+            get: { tracker.menuBarItemVisible },
+            // The state is derived from the toggles in Settings; there is nothing to
+            // write back, and ignoring the setter means a transient system removal
+            // is undone on the next update rather than sticking silently.
+            set: { _ in }
+        )) {
             MacWakeMenuView(tracker: tracker)
         } label: {
             HStack(spacing: 4) {
-                // Always keep the icon if the user turned off every text part, so the
-                // menu-bar item never becomes invisible.
-                if tracker.showMenuBarIcon || tracker.menuBarText.isEmpty {
+                if tracker.showsMenuBarIcon {
                     Image(systemName: tracker.effectiveMenuBarIcon)
                 }
                 if !tracker.menuBarText.isEmpty {

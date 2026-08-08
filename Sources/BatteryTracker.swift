@@ -1602,6 +1602,22 @@ extension BatteryTracker {
         }
     }
 
+    /// Whether the menu-bar item is in the menu bar at all.
+    ///
+    /// Turning off every part used to force the icon back so the item could never
+    /// become unreachable. The Dynamic Island is a second way into the app, so when
+    /// it is on we honour an empty menu bar by removing the item outright rather than
+    /// leaving a blank sliver behind.
+    var menuBarItemVisible: Bool {
+        showMenuBarIcon || !menuBarText.isEmpty || !enableDynamicIsland
+    }
+
+    /// Whether the item — when present — draws its icon. Text-only is a valid choice,
+    /// but an item with no icon *and* no text would be invisible yet still clickable.
+    var showsMenuBarIcon: Bool {
+        showMenuBarIcon || menuBarText.isEmpty
+    }
+
     var menuBarText: String {
         var parts: [String] = []
 

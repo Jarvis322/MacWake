@@ -674,11 +674,15 @@ struct MacWakeMenuView: View {
             sectionLabel("Menu Bar", icon: "menubar.rectangle")
             // Live preview of what the menu-bar item will show.
             HStack(spacing: 3) {
-                if tracker.showMenuBarIcon || tracker.menuBarText.isEmpty {
-                    Image(systemName: tracker.effectiveMenuBarIcon)
-                }
-                if !tracker.menuBarText.isEmpty {
-                    Text(tracker.menuBarText)
+                if !tracker.menuBarItemVisible {
+                    Text("MENUBAR_HIDDEN").italic()
+                } else {
+                    if tracker.showsMenuBarIcon {
+                        Image(systemName: tracker.effectiveMenuBarIcon)
+                    }
+                    if !tracker.menuBarText.isEmpty {
+                        Text(tracker.menuBarText)
+                    }
                 }
             }
             .font(.caption.monospacedDigit())
@@ -698,6 +702,16 @@ struct MacWakeMenuView: View {
             toggleRow("hourglass", .purple, "Time Remaining", $tracker.showMenuBarTimeRemaining)
             rowDivider()
             toggleRow("thermometer.medium", .red, "Temperature", $tracker.showMenuBarTemp)
+        }
+
+        // Reassure the user that switching everything off doesn't lock them out —
+        // and tell them how to get back in before they go looking for the icon.
+        if !tracker.menuBarItemVisible {
+            Text("MENUBAR_HIDDEN_NOTE")
+                .font(.system(size: 10))
+                .foregroundColor(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, 4)
         }
     }
 

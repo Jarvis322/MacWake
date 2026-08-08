@@ -411,3 +411,6 @@
 "SHELF_TOUR_DROP" = "Dosyaları buraya bırak\nSon kopyalanan metin";
 "SCREEN_ON_HM_FMT" = "%1$dsa %2$ddk ekran açık";
 "SCREEN_ON_M_FMT" = "%ddk ekran açık";
+
+"MENUBAR_HIDDEN" = "Gizli";
+"MENUBAR_HIDDEN_NOTE" = "Menü çubuğu öğesi gizli. MacWake'i açmak için çentiğe tıklayıp Dinamik Ada'yı kullanın ya da buradan herhangi bir parçayı geri açın.";
