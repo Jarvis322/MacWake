@@ -104,3 +104,5 @@
 "HELPER_CURRENT_FMT" = "Version %@ — up to date.";
 "HELPER_OUTDATED_FMT" = "Version %@ is running, but this build expects %@. Reload to update it.";
 "HELPER_UNREACHABLE" = "Not responding. Reload to restart it.";
+
+"INSTALL_FAILED_FMT" = "macOS refused to register the helper: %@\n\nAllow MacWake under Login Items & Extensions → Allow in the Background, then try again.";

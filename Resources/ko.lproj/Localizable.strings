@@ -437,3 +437,5 @@
 "HELPER_CURRENT_FMT" = "버전 %@ — 최신입니다.";
 "HELPER_OUTDATED_FMT" = "버전 %@이(가) 실행 중이지만 이 빌드는 %@을(를) 요구합니다. 다시 불러와 업데이트하세요.";
 "HELPER_UNREACHABLE" = "응답이 없습니다. 다시 불러와 재시작하세요.";
+
+"INSTALL_FAILED_FMT" = "macOS가 도우미 등록을 거부했습니다: %@\n\n‘로그인 항목 및 확장 프로그램 → 백그라운드에서 허용’에서 MacWake를 허용한 뒤 다시 시도하세요.";

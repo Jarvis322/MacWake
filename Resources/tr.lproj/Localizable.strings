@@ -427,3 +427,5 @@
 "HELPER_CURRENT_FMT" = "Sürüm %@ — güncel.";
 "HELPER_OUTDATED_FMT" = "Sürüm %@ çalışıyor ama bu derleme %@ bekliyor. Güncellemek için yeniden yükleyin.";
 "HELPER_UNREACHABLE" = "Yanıt vermiyor. Yeniden başlatmak için yeniden yükleyin.";
+
+"INSTALL_FAILED_FMT" = "macOS yardımcıyı kaydetmeyi reddetti: %@\n\nGiriş Öğeleri ve Uzantılar → Arka Planda İzin Ver altında MacWake'e izin verip tekrar deneyin.";

@@ -437,3 +437,5 @@
 "HELPER_CURRENT_FMT" = "版本 %@ —— 已是最新。";
 "HELPER_OUTDATED_FMT" = "正在运行版本 %@，但此版本应用需要 %@。请重新加载以更新。";
 "HELPER_UNREACHABLE" = "无响应。请重新加载以重启它。";
+
+"INSTALL_FAILED_FMT" = "macOS 拒绝注册辅助程序：%@\n\n请在“登录项与扩展 → 允许在后台运行”中允许 MacWake，然后重试。";

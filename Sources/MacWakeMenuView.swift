@@ -1212,6 +1212,11 @@ struct MacWakeMenuView: View {
                         .font(.system(size: 10)).foregroundColor(.secondary)
                     Button("Open System Settings") { chargeLimit.install() }
                         .buttonStyle(.borderedProminent).controlSize(.small)
+                    if let failure = chargeLimit.installError {
+                        Text(String(format: String(localized: "INSTALL_FAILED_FMT"), failure))
+                            .font(.system(size: 10)).foregroundColor(.orange)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
                 .padding(12)
             }
@@ -1229,6 +1234,11 @@ struct MacWakeMenuView: View {
                         .font(.system(size: 11)).foregroundColor(.secondary).fixedSize(horizontal: false, vertical: true)
                     Button("Enable Advanced Controls") { chargeLimit.install() }
                         .buttonStyle(.borderedProminent).controlSize(.small).frame(maxWidth: .infinity)
+                    if let failure = chargeLimit.installError {
+                        Text(String(format: String(localized: "INSTALL_FAILED_FMT"), failure))
+                            .font(.system(size: 10)).foregroundColor(.orange)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
                 .padding(12)
             }

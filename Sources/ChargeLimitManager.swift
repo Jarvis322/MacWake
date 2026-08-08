@@ -448,11 +448,20 @@ final class ChargeLimitManager: ObservableObject {
 
     /// Registers the daemon. First call usually lands in `.requiresApproval`,
     /// so we also open System Settings for the user to flip the switch.
+    /// Set when registering the daemon was refused, so the UI can say why instead of looking
+    /// like a dead button. macOS returns "Operation not permitted" here when it wants the
+    /// background item allowed first — and a `print` in a menu-bar app reaches nobody.
+    @Published private(set) var installError: String?
+
     func install() {
+        installError = nil
         do {
             try service.register()
         } catch {
-            print("ChargeLimit: register failed: \(error)")
+            installError = error.localizedDescription
+            refreshStatus()
+            SMAppService.openSystemSettingsLoginItems()
+            return
         }
         refreshStatus()
         if helperStatus == .requiresApproval {
