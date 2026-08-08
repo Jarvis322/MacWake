@@ -54,6 +54,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         UNUserNotificationCenter.current().delegate = self
+
+        // A second launch is the recovery gesture for a hidden menu-bar item: bring the icon
+        // back so Settings is reachable again. Deliberately does not touch the other parts.
+        DistributedNotificationCenter.default().addObserver(
+            forName: MacWakeApp.revealMenuBarItemNotification, object: nil, queue: .main
+        ) { _ in
+            Task { @MainActor in
+                BatteryTracker.sharedForIntents?.showMenuBarIcon = true
+            }
+        }
         #if !APPSTORE
         _ = updaterController   // force-start the updater at launch
         #endif
@@ -140,10 +150,19 @@ struct MacWakeApp: App {
         let bundleId = Bundle.main.bundleIdentifier ?? "com.macwake"
         let runningApps = NSRunningApplication.runningApplications(withBundleIdentifier: bundleId)
         if runningApps.count > 1 {
+            // Launching MacWake again is how someone asks for it back after hiding the
+            // menu-bar item: tell the running copy to show its icon before stepping aside.
+            // Without this, a deliberately hidden item left no route to Settings at all and
+            // the only way back was editing preferences by hand.
+            DistributedNotificationCenter.default().postNotificationName(
+                Self.revealMenuBarItemNotification, object: nil, userInfo: nil, deliverImmediately: true
+            )
             print("Another instance of MacWake is already running. Exiting.")
             exit(0)
         }
     }
+
+    static let revealMenuBarItemNotification = Notification.Name("com.jarvisit.macwake.revealMenuBarItem")
     
     var body: some Scene {
         MenuBarExtra(isInserted: Binding(

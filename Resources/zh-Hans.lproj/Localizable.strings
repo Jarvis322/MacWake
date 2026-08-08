@@ -423,7 +423,7 @@
 "SCREEN_ON_M_FMT" = "亮屏 %d 分";
 
 "MENUBAR_HIDDEN" = "已隐藏";
-"MENUBAR_HIDDEN_NOTE" = "菜单栏图标已隐藏。点击刘海从灵动岛打开 MacWake，或在此重新开启任意一项。";
+"MENUBAR_HIDDEN_NOTE" = "菜单栏图标已隐藏。从“应用程序”中再次打开 MacWake 即可让图标回来，或在此重新开启任意一项。";
 
 "HEALTH_ESTIMATE_HELP_FMT" = "控制器估算容量：%.1f%%\n\n该值来自电池控制器，仅供诊断参考，可能与 macOS 的最大容量以及上方数值不同 — 上方数值经过时间平滑，以免把控制器的重新计算误认为电池损耗。";
 

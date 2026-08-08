@@ -1629,13 +1629,30 @@ extension BatteryTracker {
     /// it is on we honour an empty menu bar by removing the item outright rather than
     /// leaving a blank sliver behind.
     var menuBarItemVisible: Bool {
-        showMenuBarIcon || !menuBarText.isEmpty || !enableDynamicIsland
+        MenuBarVisibility.itemVisible(
+            contentEnabled: menuBarContentEnabled, dynamicIslandEnabled: enableDynamicIsland
+        )
+    }
+
+    /// Whether the user has any menu-bar content switched on — independent of whether that
+    /// content has a value at this moment.
+    ///
+    /// Visibility must follow the preferences, not the rendered string. Keying it off the
+    /// text meant an enabled metric with nothing to show yet — Time Remaining before an
+    /// estimate exists, wattage while on battery, a temperature the Mac doesn't expose —
+    /// read as "the user switched everything off" and removed the item, taking the only
+    /// route back into Settings with it.
+    var menuBarContentEnabled: Bool {
+        MenuBarVisibility.contentEnabled(
+            icon: showMenuBarIcon, percent: showMenuBarPercent, power: showMenuBarPower,
+            timeRemaining: showMenuBarTimeRemaining, temperature: showMenuBarTemp
+        )
     }
 
     /// Whether the item — when present — draws its icon. Text-only is a valid choice,
     /// but an item with no icon *and* no text would be invisible yet still clickable.
     var showsMenuBarIcon: Bool {
-        showMenuBarIcon || menuBarText.isEmpty
+        MenuBarVisibility.showsIcon(iconEnabled: showMenuBarIcon, textIsEmpty: menuBarText.isEmpty)
     }
 
     var menuBarText: String {
@@ -1667,8 +1684,10 @@ extension BatteryTracker {
             parts.append(h > 0 ? "~\(h)h \(m)m" : "~\(m)m")
         }
 
-        if showMenuBarTemp, let cpu = cpuTemperature {
-            parts.append(String(format: "%.0f°", cpu))
+        // Fall back to the battery sensor: the CPU reading comes from the SMC, which the
+        // sandboxed build has no access to, so this toggle could never show anything there.
+        if showMenuBarTemp, let temp = cpuTemperature ?? (batteryTemperature > 0 ? batteryTemperature : nil) {
+            parts.append(String(format: "%.0f°", temp))
         }
 
         return parts.joined(separator: "  ")
@@ -1874,5 +1893,27 @@ enum BatteryHealthMath {
         let sorted = values.sorted()
         let mid = sorted.count / 2
         return sorted.count.isMultiple(of: 2) ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid]
+    }
+}
+
+/// Menu-bar visibility rules, kept pure so the lock-out case can be regression-tested.
+///
+/// The rule must depend on what the user switched on, never on whether those parts happen to
+/// have a value right now — deriving it from the rendered text removed the item (and with it
+/// the only route to Settings) whenever an enabled metric had nothing to show.
+enum MenuBarVisibility {
+    static func contentEnabled(icon: Bool, percent: Bool, power: Bool,
+                               timeRemaining: Bool, temperature: Bool) -> Bool {
+        icon || percent || power || timeRemaining || temperature
+    }
+
+    static func itemVisible(contentEnabled: Bool, dynamicIslandEnabled: Bool) -> Bool {
+        contentEnabled || !dynamicIslandEnabled
+    }
+
+    /// An item with content enabled but no value yet still needs something clickable, so the
+    /// icon stands in until the text arrives.
+    static func showsIcon(iconEnabled: Bool, textIsEmpty: Bool) -> Bool {
+        iconEnabled || textIsEmpty
     }
 }
