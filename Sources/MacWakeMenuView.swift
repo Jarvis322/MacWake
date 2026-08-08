@@ -702,6 +702,9 @@ struct MacWakeMenuView: View {
             toggleRow("hourglass", .purple, "Time Remaining", $tracker.showMenuBarTimeRemaining)
             rowDivider()
             toggleRow("thermometer.medium", .red, "Temperature", $tracker.showMenuBarTemp)
+            rowDivider()
+            toggleRow("arrow.left.and.right.righttriangle.left.righttriangle.right", .indigo,
+                      "Compact", $tracker.menuBarCompact, subtitle: "MENUBAR_COMPACT_SUB")
         }
 
         // Reassure the user that switching everything off doesn't lock them out —

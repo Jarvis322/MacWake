@@ -144,6 +144,11 @@ class BatteryTracker: ObservableObject {
     @Published var showMenuBarTimeRemaining: Bool = UserDefaults.standard.object(forKey: "showMenuBarTimeRemaining") as? Bool ?? false {
         didSet { UserDefaults.standard.set(showMenuBarTimeRemaining, forKey: "showMenuBarTimeRemaining") }
     }
+    /// Spend fewer characters on the same metrics. Off by default: the existing layout stays
+    /// exactly as it was, and this only ever shortens — it never wraps or reorders anything.
+    @Published var menuBarCompact: Bool = UserDefaults.standard.bool(forKey: "menuBarCompact") {
+        didSet { UserDefaults.standard.set(menuBarCompact, forKey: "menuBarCompact") }
+    }
     
     private var lastStateChange: Date = Date()
     private var heartbeatTimer: Timer?
@@ -1665,23 +1670,22 @@ extension BatteryTracker {
         if showMenuBarPower {
             if isPluggedIn {
                 if let dyn = dynamicWatts {
-                    parts.append(String(format: "%.1fW", dyn))
+                    parts.append(MenuBarLabel.watts(dyn, compact: menuBarCompact))
                 } else if let watts = powerAdapterWatts {
                     parts.append("\(watts)W")
                 }
             } else if let session = currentSession {
                 let delta = appState == "active" ? Date().timeIntervalSince(lastStateChange) : 0
-                let total = session.screenOnDuration + delta
-                let hours = Int(total) / 3600
-                let minutes = (Int(total) % 3600) / 60
-                parts.append(hours > 0 ? "\(hours)h \(minutes)m" : "\(minutes)m")
+                parts.append(MenuBarLabel.duration(
+                    seconds: session.screenOnDuration + delta, compact: menuBarCompact
+                ))
             }
         }
 
         if showMenuBarTimeRemaining, let remaining = remainingBatteryEstimate {
-            let mins = Int(remaining) / 60
-            let h = mins / 60, m = mins % 60
-            parts.append(h > 0 ? "~\(h)h \(m)m" : "~\(m)m")
+            // Keep the tilde even when compact: it is what separates a remaining estimate
+            // from the elapsed screen-on time above it.
+            parts.append("~" + MenuBarLabel.duration(seconds: remaining, compact: menuBarCompact))
         }
 
         // Fall back to the battery sensor: the CPU reading comes from the SMC, which the
@@ -1690,7 +1694,7 @@ extension BatteryTracker {
             parts.append(String(format: "%.0f°", temp))
         }
 
-        return parts.joined(separator: "  ")
+        return MenuBarLabel.join(parts, compact: menuBarCompact)
     }
     
     var currentScreenOnSeconds: TimeInterval {
@@ -1915,5 +1919,34 @@ enum MenuBarVisibility {
     /// icon stands in until the text arrives.
     static func showsIcon(iconEnabled: Bool, textIsEmpty: Bool) -> Bool {
         iconEnabled || textIsEmpty
+    }
+}
+
+/// Menu-bar label formatting, kept pure so the widths are testable.
+///
+/// The macOS menu bar is shared, horizontally constrained space. With every metric switched
+/// on the default label runs to roughly 24 characters, which crowds neighbouring items — so
+/// Compact keeps the same metrics and only spends fewer characters on them. It is opt-in:
+/// the default layout is unchanged, and nothing ever wraps or re-arranges on its own.
+enum MenuBarLabel {
+    /// `"3h 20m"` normally, `"3:20"` compact. Under an hour both read `"20m"` — a bare
+    /// `"0:20"` would be mistaken for 20 hours at a glance.
+    static func duration(seconds: Double, compact: Bool) -> String {
+        let minutes = max(0, Int(seconds) / 60)
+        let hours = minutes / 60, rest = minutes % 60
+        guard hours > 0 else { return "\(rest)m" }
+        return compact ? String(format: "%d:%02d", hours, rest) : "\(hours)h \(rest)m"
+    }
+
+    /// `"12.4W"` normally, `"12W"` compact — a tenth of a watt is not worth two characters
+    /// in a space this tight.
+    static func watts(_ value: Double, compact: Bool) -> String {
+        compact ? String(format: "%.0fW", value) : String(format: "%.1fW", value)
+    }
+
+    /// Compact halves the gap; two spaces are what make the default label read as separate
+    /// values rather than one run-on string.
+    static func join(_ parts: [String], compact: Bool) -> String {
+        parts.joined(separator: compact ? " " : "  ")
     }
 }

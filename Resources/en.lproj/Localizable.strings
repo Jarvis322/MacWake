@@ -98,3 +98,5 @@
 
 "CL_HOLD_ON_POWER" = "This Mac holds the limit on adapter power — charging pauses and the battery is not drained.";
 "CL_HOLD_DISCHARGES" = "This Mac has no charge-inhibit key, so holding the limit cuts adapter input and the battery discharges down to it. Above the limit you will see it running on battery with the cable attached.";
+
+"MENUBAR_COMPACT_SUB" = "Same metrics, fewer characters — for a menu bar shared with other apps.";

@@ -419,3 +419,6 @@
 
 "CL_HOLD_ON_POWER" = "Bu Mac sınırı adaptör gücünde tutuyor — şarj duruyor, pil boşaltılmıyor.";
 "CL_HOLD_DISCHARGES" = "Bu Mac'te şarj engelleme anahtarı yok; sınırı tutmak için adaptör girişi kesiliyor ve pil sınıra kadar boşalıyor. Sınırın üstündeyken kablo takılıyken pilde çalıştığını görürsünüz.";
+
+"Compact" = "Kompakt";
+"MENUBAR_COMPACT_SUB" = "Aynı ölçümler, daha az karakter — diğer uygulamalarla paylaşılan menü çubuğu için.";
