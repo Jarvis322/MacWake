@@ -712,11 +712,20 @@ final class ChargeLimitManager: ObservableObject {
         }
     }
 
+    /// True when the last attempt to force a fan speed didn't take on this Mac, so the UI
+    /// can say so instead of leaving a slider that does nothing.
+    @Published private(set) var fanControlUnsupported = false
+
     private func applyFan() async {
         guard helperStatus == .ready, fanCount > 0, let proxy = remoteProxy() else { return }
         let manual = fanControlEnabled
         let rpm = min(max(fanTargetRPM, fanMinRPM), fanMaxRPM == 0 ? fanTargetRPM : fanMaxRPM)
-        _ = await xpcBool { reply in proxy.setFanManual(manual, rpm: rpm, reply: reply) }
+        let applied = await xpcBool { reply in proxy.setFanManual(manual, rpm: rpm, reply: reply) }
+        guard manual else { fanControlUnsupported = false; return }
+        // The helper now verifies its own writes by reading the target back, so a false
+        // here means this Mac's SMC refuses fan control — don't pretend it's on.
+        fanControlUnsupported = !applied
+        if !applied { fanControlEnabled = false }
     }
 
     func restoreFanAuto() {

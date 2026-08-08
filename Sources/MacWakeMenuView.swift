@@ -849,6 +849,18 @@ struct MacWakeMenuView: View {
                 .padding(.horizontal, 12).padding(.vertical, 8)
                 .help("FAN_CONTROL_HELP")
 
+                if chargeLimit.fanControlUnsupported {
+                    rowDivider()
+                    HStack(spacing: 8) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.system(size: 12)).foregroundColor(.orange)
+                        Text("FAN_UNSUPPORTED_NOTE")
+                            .font(.system(size: 11)).foregroundColor(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(.horizontal, 12).padding(.vertical, 8)
+                }
+
                 if chargeLimit.fanControlEnabled {
                     rowDivider()
                     // Clamp once and reuse it for both the label and the slider's position,

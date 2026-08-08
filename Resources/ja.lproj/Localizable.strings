@@ -399,3 +399,9 @@
 "No account, no cloud, no tracking — ever." = "アカウントもクラウドもトラッキングも一切ありません。";
 "Everything is instant" = "すべてすぐに利用可能";
 "Monitoring, Dynamic Island, widgets and the menu bar work right away." = "モニタリング、Dynamic Island、ウィジェット、メニューバーはすぐに使えます。";
+
+/* Fan diagnostics (v1.47) */
+"Copy Diagnostics" = "診断情報をコピー";
+"Reload Helper" = "ヘルパーを再読み込み";
+"Copied" = "コピーしました";
+"FAN_UNSUPPORTED_NOTE" = "この Mac のコントローラは手動ファン速度を受け付けません — macOS がファンを自動制御のままにします。ファンの数値表示は引き続き利用できます。";

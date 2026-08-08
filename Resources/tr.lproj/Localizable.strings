@@ -389,3 +389,9 @@
 "No account, no cloud, no tracking — ever." = "Hesap yok, bulut yok, takip yok — hiçbir zaman.";
 "Everything is instant" = "Her şey anında";
 "Monitoring, Dynamic Island, widgets and the menu bar work right away." = "İzleme, Dynamic Island, widget'lar ve menü çubuğu hemen çalışır.";
+
+/* Fan diagnostics (v1.47) */
+"Copy Diagnostics" = "Tanılamayı Kopyala";
+"Reload Helper" = "Yardımcıyı Yenile";
+"Copied" = "Kopyalandı";
+"FAN_UNSUPPORTED_NOTE" = "Bu Mac'in denetleyicisi manuel fan hızını kabul etmiyor — macOS fanları otomatik tutuyor. Fan okumaları çalışmaya devam eder.";

@@ -399,3 +399,9 @@
 "No account, no cloud, no tracking — ever." = "无账户、无云端、无追踪——永不。";
 "Everything is instant" = "一切即时可用";
 "Monitoring, Dynamic Island, widgets and the menu bar work right away." = "监测、Dynamic Island、小组件和菜单栏立即可用。";
+
+/* Fan diagnostics (v1.47) */
+"Copy Diagnostics" = "复制诊断信息";
+"Reload Helper" = "重新加载助手";
+"Copied" = "已复制";
+"FAN_UNSUPPORTED_NOTE" = "这台 Mac 的控制器拒绝手动风扇转速 — macOS 保持风扇自动控制。风扇读数仍然可用。";

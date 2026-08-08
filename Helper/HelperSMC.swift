@@ -138,6 +138,10 @@ enum HelperSMC {
             // give the fan time to spin up, then measure.
             let hwMin = hardwareMin[i] ?? readFanRPM(conn, "F\(i)Mn")
             let maxRPM = readFanRPM(conn, "F\(i)Mx")
+            // Remember what the fan was set to so the probe can put it back — a manual
+            // override in progress must survive a diagnostics run.
+            let priorTarget = readFanRPM(conn, "F\(i)Tg")
+            let priorMin = readFanRPM(conn, "F\(i)Mn")
             let probe = min(hwMin + 1800, maxRPM > hwMin ? maxRPM : 6000)
             let wTg = writeFanRPM(conn, "F\(i)Tg", probe)
             let wMn = writeFanRPM(conn, "F\(i)Mn", probe)
@@ -148,13 +152,12 @@ enum HelperSMC {
             let rpmAfter = readFanRPM(conn, "F\(i)Ac")
             out += "probe F\(i): RPM \(rpmBefore) -> \(rpmAfter) after 4s, Tg reads back \(readFanRPM(conn, "F\(i)Tg"))"
             out += rpmAfter > rpmBefore + 200 ? "  >>> FAN RESPONDED\n" : "  >>> no change\n"
-            // Leave the machine as we found it unless a manual override is active.
-            if hardwareMin[i] == nil {
-                _ = writeFanRPM(conn, "F\(i)Tg", 0)
-                _ = writeFanRPM(conn, "F\(i)Mn", hwMin)
-                _ = write(conn, "F\(i)Md", 0)
-                out += "probe F\(i): reverted to auto\n"
-            }
+            // Always restore what we found. Skipping this while a manual override was
+            // active left the user's chosen target overwritten by the probe value.
+            _ = writeFanRPM(conn, "F\(i)Tg", priorTarget)
+            _ = writeFanRPM(conn, "F\(i)Mn", priorMin)
+            if hardwareMin[i] == nil { _ = write(conn, "F\(i)Md", 0) }
+            out += "probe F\(i): restored Tg=\(priorTarget) Mn=\(priorMin)\n"
         }
         return out
     }
@@ -228,18 +231,38 @@ enum HelperSMC {
                 // are read-only there); the others are best-effort for Intel, where forced
                 // mode is what matters. Succeed if EITHER path took — gating on F0Mn made
                 // every Apple Silicon call report failure even when the target was set.
-                let okTg  = writeFanRPM(conn, "F\(i)Tg", clamped)
-                let okMin = writeFanRPM(conn, "F\(i)Mn", clamped)
-                let okMd  = write(conn, "F\(i)Md", 1)
-                fanLog("F\(i) target=\(clamped) writeTg=\(okTg) writeMn=\(okMin) writeMd=\(okMd) actualBefore=\(before)")
-                ok = okTg || okMin || ok
+                // Escalate through the known mechanisms and VERIFY each one by reading the
+                // target back. A write call returning success is not proof: on Apple
+                // Silicon the SMC accepts a fan write and silently discards it, which is
+                // how manual mode looked enabled while the fan never moved.
+                var took = writeFanRPM(conn, "F\(i)Tg", clamped) && readFanRPM(conn, "F\(i)Tg") == clamped
+                if !took {
+                    // Intel path: forced mode first, then the target.
+                    _ = write(conn, "F\(i)Md", 1)
+                    took = writeFanRPM(conn, "F\(i)Tg", clamped) && readFanRPM(conn, "F\(i)Tg") == clamped
+                }
+                if !took {
+                    // Older Macs gate manual control behind the FS! bitmask (one bit per fan).
+                    let mask = read(conn, "FS! ")
+                    _ = write(conn, "FS! ", mask | UInt8(1 << i))
+                    took = writeFanRPM(conn, "F\(i)Tg", clamped) && readFanRPM(conn, "F\(i)Tg") == clamped
+                }
+                if !took {
+                    // Some controllers only honour a raised floor.
+                    took = writeFanRPM(conn, "F\(i)Mn", clamped) && readFanRPM(conn, "F\(i)Mn") == clamped
+                }
+                fanLog("F\(i) target=\(clamped) tookEffect=\(took) actualBefore=\(before)")
+                ok = took || ok
             } else {
                 // A zero target is what these keys hold when the system owns the fan, so
                 // that — not the unwritable mode key — is how auto control is handed back.
                 let okTg = writeFanRPM(conn, "F\(i)Tg", 0)
                 if let hwMin = hardwareMin[i] { _ = writeFanRPM(conn, "F\(i)Mn", hwMin) }
                 _ = write(conn, "F\(i)Md", 0)
-                fanLog("F\(i) restore -> Tg=0 (\(okTg)), Mn=\(hardwareMin[i] ?? -1)")
+                let mask = read(conn, "FS! ")
+                _ = write(conn, "FS! ", mask & ~UInt8(1 << i))
+                hardwareMin[i] = nil
+                fanLog("F\(i) restore -> Tg=0 (\(okTg))")
                 ok = okTg || ok
             }
         }

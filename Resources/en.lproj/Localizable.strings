@@ -79,3 +79,6 @@
 "MacWake couldn't restart" = "MacWake couldn't restart";
 "Quit and reopen MacWake to apply the language change." = "Quit and reopen MacWake to apply the language change.";
 "OK" = "OK";
+
+/* Fan control support note (v1.47) */
+"FAN_UNSUPPORTED_NOTE" = "This Mac's controller refuses manual fan speeds — macOS keeps the fans on automatic. Fan readings still work.";
