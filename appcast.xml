@@ -6,6 +6,51 @@
         <description>Wake — Battery Health update feed</description>
         <language>en</language>
         <item>
+            <title>Version 1.47</title>
+            <pubDate>Sat, 25 Jul 2026 22:00:00 +0000</pubDate>
+            <sparkle:version>53</sparkle:version>
+            <sparkle:shortVersionString>1.47</sparkle:shortVersionString>
+            <description><![CDATA[
+                <meta charset="utf-8">
+                <style>
+                    :root { color-scheme: light dark; }
+                    body { font: 13px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; margin: 4px 2px; color: #1d1d1f; }
+                    h1 { font-size: 15px; margin: 0 0 2px; }
+                    .date { font-size: 11px; opacity: .5; margin: 0 0 14px; }
+                    .tag { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; opacity: .55; margin: 16px 0 8px; }
+                    .tag:first-of-type { margin-top: 0; }
+                    ul { margin: 0; padding-left: 18px; }
+                    li { margin-bottom: 8px; }
+                    b { font-weight: 600; }
+                    hr { border: 0; border-top: 1px solid rgba(0,0,0,.1); margin: 16px 0 0; }
+                    @media (prefers-color-scheme: dark) { body { color: #f5f5f7; } hr { border-top-color: rgba(255,255,255,.12); } }
+                </style>
+                <h1>Wake 1.47</h1>
+                <p class="date">25 Temmuz 2026 · 25 July 2026</p>
+                <p class="tag">🌀 Manuel fan</p>
+                <ul>
+                    <li><b>Fan komutları artık doğrulanıyor</b> — uygulama yazdığı hedefi geri okuyor ve tutana kadar bilinen yöntemleri sırayla deniyor.</li>
+                    <li><b>Desteklenmiyorsa açıkça söylüyor</b> — Mac'in denetleyicisi manuel hızı kabul etmiyorsa anahtar kendiliğinden kapanıyor ve Monitör sekmesinde bunu belirten bir not çıkıyor. Sessizce hiçbir şey yapmayan bir slider yok artık.</li>
+                    <li>Fan tanılama araçları 5 dile çevrildi.</li>
+                </ul>
+                <hr>
+                <p class="tag">🌀 Manual fan</p>
+                <ul>
+                    <li><b>Fan commands are now verified</b> — the app reads the target back and escalates through the known mechanisms until one verifiably sticks.</li>
+                    <li><b>It says so when unsupported</b> — if a Mac's controller refuses manual speeds, the toggle switches itself back and the Monitor tab explains why, instead of leaving a slider that silently does nothing.</li>
+                    <li>Fan diagnostics tools localized into all 5 languages.</li>
+                </ul>
+            ]]></description>
+            <enclosure
+                url="https://github.com/Jarvis322/MacWake/releases/download/v1.47/Wake-1.47.dmg"
+                sparkle:version="53"
+                sparkle:shortVersionString="1.47"
+                length="5028698"
+                type="application/octet-stream"
+                sparkle:edSignature="OXJ5xHPYW606AkvSegJ3PgGmRE+nwxfitXGKWX8y2ssGJ4JRa6jHRB447hSj2+GpgND/m/7bQhKecHqvSZecDw=="
+            />
+        </item>
+        <item>
             <title>Version 1.46</title>
             <pubDate>Sat, 25 Jul 2026 21:00:00 +0000</pubDate>
             <sparkle:version>52</sparkle:version>
