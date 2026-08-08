@@ -89,9 +89,10 @@ class BatteryTracker: ObservableObject {
             UserDefaults.standard.set(enableDynamicIslandHaptics, forKey: "enableDynamicIslandHaptics")
         }
     }
-    /// Off by default — this polls the system clipboard, which is worth opting into
-    /// rather than doing passively.
-    @Published var enableNotchShelf: Bool = false {
+    /// On by default: the Shelf is what the expanded panel is for — a file drop tray and
+    /// the last thing you copied. It does poll the clipboard, which is disclosed in the
+    /// tour and in Settings, and switching it off stops the watcher entirely.
+    @Published var enableNotchShelf: Bool = true {
         didSet {
             UserDefaults.standard.set(enableNotchShelf, forKey: "enableNotchShelf")
             ClipboardWatcher.shared.setEnabled(enableDynamicIsland && enableNotchShelf)
@@ -434,9 +435,14 @@ class BatteryTracker: ObservableObject {
         // real work (repositions the Dynamic Island window) — loadSettings() is called on
         // every heartbeat/power-status update, so an unconditional assignment would redo
         // that work every ~30s for no reason.
-        let storedNotchShelf = UserDefaults.standard.bool(forKey: "enableNotchShelf")
-        if storedNotchShelf != enableNotchShelf {
-            self.enableNotchShelf = storedNotchShelf
+        // Only honour a stored value that actually exists: bool(forKey:) reports false for
+        // a missing key, which would silently override the on-by-default Shelf on every
+        // fresh install and for anyone who never touched the switch.
+        if UserDefaults.standard.object(forKey: "enableNotchShelf") != nil {
+            let storedNotchShelf = UserDefaults.standard.bool(forKey: "enableNotchShelf")
+            if storedNotchShelf != enableNotchShelf {
+                self.enableNotchShelf = storedNotchShelf
+            }
         }
         
         // Use UserDefaults to read the value from cfprefsd (memory cache)

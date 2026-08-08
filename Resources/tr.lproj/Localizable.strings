@@ -410,3 +410,5 @@
 "DISCHARGE_DONE_FMT" = "%%%d seviyesine ulaşıldı. Şarj devam ediyor.";
 "DISCHARGE_PROGRESS_FMT" = "%%%d → hedef %%%d";
 "Discharge cancelled. Charging resumed." = "Boşaltma iptal edildi. Şarj devam ediyor.";
+"SHELF_TOUR_POWER" = "GÜÇ · SAĞLIK · SICAKLIK";
+"SHELF_TOUR_DROP" = "Dosyaları buraya bırak\nSon kopyalanan metin";

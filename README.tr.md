@@ -53,7 +53,7 @@
 *   **🏝️ Dynamic Island (Çentik UI):**
     *   Fiziksel çentiği saran ve daraltıldığında donanımla bütünleşen panel.
     *   İmleç üzerine geldiğinde veya tıklandığında esnek bir yay animasyonu ve dokunsal geri bildirimle genişler.
-    *   Dönen işaret halkaları ve şarj gücüyle titreşen parlak bir çekirdeğe sahip **JARVIS tarzı ark reaktörü HUD**.
+    *   Yerleşik **Raf**: dosyaları çentiğe sürükleyip bırakın, son kopyaladığınız metni tek tıkla alın. Varsayılan olarak açık.
     *   Güç, pil sağlığı ve sıcaklığı bir bakışta gösterir; ayrıca hızlı anahtarlar sunar (araç takımı, sıfırlama, animasyonlar, bildirimler).
 *   **🌍 Yerelleştirme:**
     *   İngilizce, Türkçe, Basitleştirilmiş Çince (简体中文), Japonca (日本語) ve Korece (한국어) için eksiksiz UI desteği. macOS sistem dilini kullanın veya MacWake Ayarları'ndan bir dil seçin; değişikliği uygulamak için yeniden başlatın. WidgetKit uzantısı, sistem tarafından sağlanan kendi dil ortamını kullanmaya devam eder.

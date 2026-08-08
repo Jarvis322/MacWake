@@ -58,7 +58,7 @@ clicking it opens the full panel — Session, History, Hardware, and Settings.
 *   **🏝️ Dynamic Island (Notch UI):**
     *   Panel that hugs the physical notch and blends with the hardware when collapsed.
     *   Hover or click to expand with a bouncy spring animation and haptic feedback.
-    *   A **JARVIS-style arc-reactor HUD** with rotating tick rings and a glowing core that pulses with charging power.
+    *   A **Shelf** built in: drag files onto the notch to park them, and grab the last thing you copied with one click. On by default.
     *   At-a-glance power, battery health, and temperature, plus quick toggles (widget, reset, animations, notifications).
 *   **🌍 Localization:**
     *   Full English, Turkish, Simplified Chinese (简体中文), Japanese (日本語), and Korean (한국어) UI. Follow the macOS system language or choose a language in MacWake Settings; restart to apply the change. The WidgetKit extension continues to use its own system-provided language environment.

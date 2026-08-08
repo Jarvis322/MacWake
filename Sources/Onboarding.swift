@@ -217,18 +217,29 @@ struct OnboardingView: View {
 
     private var dynamicIslandPage: some View {
         VStack(spacing: 16) {
-            header("oval.portrait.tophalf.filled", "Dynamic Island", "On notch Macs, hover the notch — you'll see this live JARVIS arc reactor.")
+            header("oval.portrait.tophalf.filled", "Dynamic Island", "On notch Macs, hover the notch — a live battery panel opens with the Shelf.")
             ZStack {
                 RoundedRectangle(cornerRadius: 22).fill(Color.black).frame(width: 360, height: 150)
-                ArcReactorView(level: 82, isCharging: true, temperature: 34, watts: 60)
+                HStack(spacing: 16) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("82%").font(.system(size: 26, weight: .bold)).foregroundColor(.green)
+                        Text("SHELF_TOUR_POWER").font(.system(size: 10)).foregroundColor(.white.opacity(0.5))
+                    }
+                    Rectangle().fill(Color.white.opacity(0.12)).frame(width: 1, height: 70)
+                    VStack(spacing: 6) {
+                        Image(systemName: "tray.and.arrow.down.fill")
+                            .font(.system(size: 22)).foregroundColor(.teal)
+                        Text("SHELF_TOUR_DROP").font(.system(size: 10)).foregroundColor(.white.opacity(0.6))
+                            .multilineTextAlignment(.center)
+                    }
+                    .frame(width: 130)
+                }
             }
             .padding(.top, 6)
-            Text("The core pulses faster the more power flows in. Color shifts on low battery or heat.")
-                .font(.system(size: 12)).foregroundColor(.secondary).multilineTextAlignment(.center).frame(maxWidth: 440)
 
             HStack(spacing: 6) {
                 Image(systemName: "tray.and.arrow.down").foregroundColor(.secondary)
-                Text("Turn on the Shelf in Settings for a last-copied-text peek and a file drop tray.")
+                Text("The Shelf keeps your last copied text one click away and takes files you drag in — on by default.")
                     .foregroundColor(.secondary)
             }
             .font(.system(size: 12))

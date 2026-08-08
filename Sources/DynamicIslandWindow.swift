@@ -224,6 +224,8 @@ struct DynamicIslandPanelView: View {
             }
             #endif
 
+            // The Shelf is the reason to open the panel — drop files in, grab the last
+            // thing you copied — so it sits at the end of the row and is on by default.
             if tracker.enableNotchShelf {
                 Rectangle()
                     .fill(Color.white.opacity(0.1))
@@ -235,19 +237,12 @@ struct DynamicIslandPanelView: View {
         }
     }
 
-    // MARK: - Left Widget (Power) — battery ring gauge + liquid mascot
+    // MARK: - Left Widget (Power) — battery ring gauge and readouts
     private var leftWidget: some View {
         HStack(spacing: 10) {
             batteryInfoColumn
                 .fixedSize(horizontal: true, vertical: false)
             Spacer(minLength: 4)
-            ArcReactorView(
-                level: tracker.currentBatteryLevel,
-                isCharging: tracker.isPluggedIn,
-                temperature: tracker.batteryTemperature,
-                watts: tracker.dynamicWatts ?? Double(tracker.powerAdapterWatts ?? 0)
-            )
-            .padding(.trailing, 2)
         }
     }
 

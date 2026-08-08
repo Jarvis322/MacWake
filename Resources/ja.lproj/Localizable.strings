@@ -420,3 +420,5 @@
 "DISCHARGE_DONE_FMT" = "%d%% に到達しました。充電を再開しました。";
 "DISCHARGE_PROGRESS_FMT" = "%d%% → 目標 %d%%";
 "Discharge cancelled. Charging resumed." = "放電をキャンセルしました。充電を再開しました。";
+"SHELF_TOUR_POWER" = "電力 · 状態 · 温度";
+"SHELF_TOUR_DROP" = "ここにファイルをドロップ\n最後にコピーしたテキスト";

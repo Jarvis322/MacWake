@@ -420,3 +420,5 @@
 "DISCHARGE_DONE_FMT" = "%d%%에 도달했습니다. 충전을 재개했습니다.";
 "DISCHARGE_PROGRESS_FMT" = "%d%% → 목표 %d%%";
 "Discharge cancelled. Charging resumed." = "방전이 취소되었습니다. 충전을 재개했습니다.";
+"SHELF_TOUR_POWER" = "전력 · 성능 · 온도";
+"SHELF_TOUR_DROP" = "여기에 파일을 놓으세요\n마지막으로 복사한 텍스트";
