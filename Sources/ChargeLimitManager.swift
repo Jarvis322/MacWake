@@ -377,6 +377,8 @@ final class ChargeLimitManager: ObservableObject {
         // and answering XPC — and with this check inside the `.enabled` branch the app could
         // never repair itself. A daemon that replies to getVersion can be reloaded whatever
         // SMAppService reports about it.
+        loadHelperVersion()
+
         if !didReconcile {
             didReconcile = true
             reloadHelperIfOutdated(observedStatus: status)
@@ -902,6 +904,22 @@ final class ChargeLimitManager: ObservableObject {
     /// so it cannot be inferred from the chip name.
     @Published private(set) var holdCutsAdapter: Bool?
 
+    /// The running daemon's reported version. Surfaced in Settings because a machine on an
+    /// outdated helper behaves in ways the current build cannot explain, and until now there
+    /// was nothing in the UI that said so.
+    @Published private(set) var helperVersion: String?
+
+    /// What this build ships, for the UI to compare against `helperVersion` without needing
+    /// the shared module.
+    let expectedHelperVersion = kMacWakeHelperVersion
+
+    private func loadHelperVersion() {
+        guard let proxy = remoteProxy() else { return }
+        proxy.getVersion { [weak self] version in
+            Task { @MainActor in self?.helperVersion = version }
+        }
+    }
+
     private func loadChargeControlMethod() {
         guard let proxy = remoteProxy() else { return }
         proxy.chargeControlMethod { [weak self] method in
@@ -1048,6 +1066,7 @@ final class ChargeLimitManager: ObservableObject {
         catch { log += "register FAILED: \(error.localizedDescription)\n" }
 
         log += "status after register: \(service.status.rawValue)"
+        helperVersion = nil
         refreshStatus()
         fanCount = 0
         loadFanInfo()

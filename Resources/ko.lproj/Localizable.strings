@@ -432,3 +432,8 @@
 
 "Compact" = "간결하게";
 "MENUBAR_COMPACT_SUB" = "같은 항목을 더 적은 글자로 — 다른 앱과 공유하는 메뉴 바를 위해.";
+
+"Background Helper" = "백그라운드 도우미";
+"HELPER_CURRENT_FMT" = "버전 %@ — 최신입니다.";
+"HELPER_OUTDATED_FMT" = "버전 %@이(가) 실행 중이지만 이 빌드는 %@을(를) 요구합니다. 다시 불러와 업데이트하세요.";
+"HELPER_UNREACHABLE" = "응답이 없습니다. 다시 불러와 재시작하세요.";

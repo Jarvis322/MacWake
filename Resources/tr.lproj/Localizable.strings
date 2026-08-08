@@ -422,3 +422,8 @@
 
 "Compact" = "Kompakt";
 "MENUBAR_COMPACT_SUB" = "Aynı ölçümler, daha az karakter — diğer uygulamalarla paylaşılan menü çubuğu için.";
+
+"Background Helper" = "Arka Plan Yardımcısı";
+"HELPER_CURRENT_FMT" = "Sürüm %@ — güncel.";
+"HELPER_OUTDATED_FMT" = "Sürüm %@ çalışıyor ama bu derleme %@ bekliyor. Güncellemek için yeniden yükleyin.";
+"HELPER_UNREACHABLE" = "Yanıt vermiyor. Yeniden başlatmak için yeniden yükleyin.";

@@ -432,3 +432,8 @@
 
 "Compact" = "紧凑";
 "MENUBAR_COMPACT_SUB" = "相同的信息，更少的字符 —— 适合与其他应用共享的菜单栏。";
+
+"Background Helper" = "后台辅助程序";
+"HELPER_CURRENT_FMT" = "版本 %@ —— 已是最新。";
+"HELPER_OUTDATED_FMT" = "正在运行版本 %@，但此版本应用需要 %@。请重新加载以更新。";
+"HELPER_UNREACHABLE" = "无响应。请重新加载以重启它。";

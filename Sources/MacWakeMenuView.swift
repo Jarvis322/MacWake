@@ -968,22 +968,6 @@ struct MacWakeMenuView: View {
                     }
                     .buttonStyle(.bordered).controlSize(.small)
 
-                    Button {
-                        // The reload reports each step and its error, and that report was
-                        // being thrown away — leaving the one tool for diagnosing a stale
-                        // daemon with no visible output at all. Put it on the clipboard.
-                        Task {
-                            let report = await chargeLimit.forceReloadHelper()
-                            NSPasteboard.general.clearContents()
-                            NSPasteboard.general.setString(report, forType: .string)
-                            helperReloadCopied = true
-                        }
-                    } label: {
-                        Label(helperReloadCopied ? "Copied" : "Reload Helper",
-                              systemImage: helperReloadCopied ? "checkmark" : "arrow.clockwise")
-                            .font(.caption)
-                    }
-                    .buttonStyle(.bordered).controlSize(.small)
                     Spacer()
                 }
                 .padding(.horizontal, 12).padding(.vertical, 8)
@@ -1187,6 +1171,36 @@ struct MacWakeMenuView: View {
                         }
                     }
                 }
+
+                // The only control that can repair a stale daemon used to live in the fan
+                // diagnostics block, so it was invisible on every fanless Mac — exactly the
+                // machines that still need it. It belongs with the helper it repairs.
+                rowDivider()
+                HStack(spacing: 11) {
+                    iconTile("gearshape.arrow.trianglehead.2.clockwise.rotate.90", .gray)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Background Helper").font(.subheadline)
+                        Text(helperVersionLine)
+                            .font(.system(size: 10)).foregroundColor(.secondary)
+                    }
+                    Spacer()
+                    Button {
+                        // Each step and its error, on the clipboard: this report was being
+                        // discarded, leaving no way to see why a reload did nothing.
+                        Task {
+                            let report = await chargeLimit.forceReloadHelper()
+                            NSPasteboard.general.clearContents()
+                            NSPasteboard.general.setString(report, forType: .string)
+                            helperReloadCopied = true
+                        }
+                    } label: {
+                        Label(helperReloadCopied ? "Copied" : "Reload",
+                              systemImage: helperReloadCopied ? "checkmark" : "arrow.clockwise")
+                            .font(.caption)
+                    }
+                    .buttonStyle(.bordered).controlSize(.small)
+                }
+                .padding(.horizontal, 12).padding(.vertical, 8)
             }
 
         case .requiresApproval:
@@ -1496,6 +1510,17 @@ struct MacWakeMenuView: View {
     /// Hover text for the Health card. The controller's estimate is diagnostic only: it is
     /// shown here to one decimal and deliberately kept off the menu bar, widget, Dynamic
     /// Island and health alerts, which all read the headline value.
+    /// Says outright when the running daemon is older than the app expects.
+    private var helperVersionLine: String {
+        guard let running = chargeLimit.helperVersion else {
+            return String(localized: "HELPER_UNREACHABLE")
+        }
+        guard running == chargeLimit.expectedHelperVersion else {
+            return String(format: String(localized: "HELPER_OUTDATED_FMT"), running, chargeLimit.expectedHelperVersion)
+        }
+        return String(format: String(localized: "HELPER_CURRENT_FMT"), running)
+    }
+
     private var healthDiagnosticNote: String? {
         guard let precise = tracker.batteryHealthPrecise else { return nil }
         return String(format: String(localized: "HEALTH_ESTIMATE_HELP_FMT"), precise)

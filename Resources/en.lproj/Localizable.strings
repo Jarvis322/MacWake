@@ -100,3 +100,7 @@
 "CL_HOLD_DISCHARGES" = "This Mac has no charge-inhibit key, so holding the limit cuts adapter input and the battery discharges down to it. Above the limit you will see it running on battery with the cable attached.";
 
 "MENUBAR_COMPACT_SUB" = "Same metrics, fewer characters — for a menu bar shared with other apps.";
+
+"HELPER_CURRENT_FMT" = "Version %@ — up to date.";
+"HELPER_OUTDATED_FMT" = "Version %@ is running, but this build expects %@. Reload to update it.";
+"HELPER_UNREACHABLE" = "Not responding. Reload to restart it.";
