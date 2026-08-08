@@ -34,7 +34,8 @@
 
 *   **🔋 Şarj Sınırı (tüm Apple Silicon M serisi):**
     *   Uzun vadeli pil aşınmasını azaltmak için şarjı %50 ile %95 arasındaki herhangi bir düzeyde sınırlar.
-    *   Her çip için en iyi yöntemi seçer: M1/M2/M3'te temiz şarj engelleme (CHTE/CH0C), M4'te adaptör denetimi (CHIE) — notarizasyonu yapılmış küçük bir arka plan yardımcısı aracılığıyla (bir defalık onay, parola istemi yok).
+    *   Makinenin sunduğu en iyi yöntemi seçer; bunu çip adından değil, SMC'nin gerçekten sunduğu anahtarlardan saptar — notarizasyonu yapılmış küçük bir arka plan yardımcısı aracılığıyla (bir defalık onay, parola istemi yok).
+    *   **Sınırın nasıl tutulduğu Mac'e göre değişir.** Şarj engelleme anahtarı (CHTE/CH0C) varsa şarj yalnızca duruyor ve Mac adaptör gücünde kalıyor. Yoksa — şimdiye kadar M4 ve sonrası — tek mekanizma adaptör girişini kesmek, yani pil sınıra kadar *boşalıyor* ve macOS kablo takılıyken pilde çalıştığını bildiriyor. Ayarlar, Mac'inizin hangisini kullandığını yazıyor; `Tanılamayı Kopyala` da sahip olduğu tüm CH\* anahtarlarını listeliyor.
     *   **⛵ Yelken Modu:** Üst sınırda mikro şarj yapmak yerine, yeniden şarj etmeden önce pilin alt sınıra kadar düşmesine izin verir — daha az döngü, daha az ısı.
     *   **🪫 Manuel Boşaltma:** fişteyken pili seçtiğiniz seviyeye indirin — limit yalnızca şarjı *durdurabilir*, bu ise %95'te takılı kalmış bir Mac'i aşağı çeker — sonra şarj kendiliğinden devam eder.
     *   **🧪 Derin Pil Kalibrasyonu:** Yakıt göstergesini yeniden kalibre etmek için tam bir döngü uygular — yaklaşık %15'e kadar boşaltır, %100'e kadar şarj eder ve bir saat bekletir — yalnızca onay sonrasında “Şimdi Kalibre Et” ile manuel olarak başlatılabilir (canlı aşama durumu ve İptal düğmesiyle).

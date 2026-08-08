@@ -39,7 +39,8 @@ clicking it opens the full panel — Session, History, Hardware, and Settings.
 
 *   **🔋 Charge Limit (full Apple Silicon M-series):**
     *   Cap charging at any level from 50% to 95% to reduce long-term battery wear.
-    *   Picks the best method per chip: clean charge-inhibit (CHTE/CH0C) on M1/M2/M3, adapter control (CHIE) on M4 — via a small notarized background helper (one-time approval, no password prompts).
+    *   Picks the best method the machine offers, detected from the SMC keys it actually exposes rather than from the chip name — via a small notarized background helper (one-time approval, no password prompts).
+    *   **How the limit is held differs by Mac.** Where a charge-inhibit key (CHTE/CH0C) exists, charging simply pauses and the Mac stays on adapter power. Where it doesn't — M4 and later so far — the only mechanism is cutting adapter input, so the battery *discharges* down to the limit and macOS reports it running on battery with the cable attached. Settings names which one your Mac uses, and `Copy Diagnostics` lists every CH\* key it has.
     *   **⛵ Sailing Mode:** let the battery drift down to a lower bound before topping back up, instead of micro-charging at the ceiling — fewer cycles, less heat.
     *   **🪫 Manual Discharge:** drain the battery to a level you pick while plugged in — the limit can only *stop* charging, this brings a Mac sitting at 95% back down — then charging resumes on its own.
     *   **🧪 Deep Battery Calibration:** a full cycle — discharge to ~15%, charge to 100%, hold for one hour — to recalibrate the fuel gauge, started manually after confirmation (with live phase status and a Cancel button).

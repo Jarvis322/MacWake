@@ -1024,6 +1024,20 @@ struct MacWakeMenuView: View {
                         .padding(.top, 2)
                         Text(String(format: String(localized: "CL_HOLD_FMT"), chargeLimit.limit))
                             .font(.system(size: 10)).foregroundColor(.secondary)
+                        // Two mechanisms feel very different, so name the one this Mac uses:
+                        // inhibiting charge keeps it on adapter power, whereas cutting
+                        // adapter input means the battery really drains down to the limit.
+                        if let cutsAdapter = chargeLimit.holdCutsAdapter {
+                            HStack(alignment: .top, spacing: 5) {
+                                Image(systemName: cutsAdapter ? "battery.50" : "powerplug.fill")
+                                    .font(.system(size: 9))
+                                    .foregroundColor(cutsAdapter ? .orange : .green)
+                                Text(String(localized: cutsAdapter ? "CL_HOLD_DISCHARGES" : "CL_HOLD_ON_POWER"))
+                                    .font(.system(size: 10)).foregroundColor(.secondary)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                            .padding(.top, 2)
+                        }
                         HStack(alignment: .top, spacing: 5) {
                             Image(systemName: "exclamationmark.triangle.fill").font(.system(size: 9)).foregroundColor(.orange)
                             Text(String(localized: "CL_OPT_WARNING")).font(.system(size: 10)).foregroundColor(.secondary)

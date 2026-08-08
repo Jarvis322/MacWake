@@ -18,6 +18,28 @@ enum CalibrationRecovery {
     }
 }
 
+/// Rules for holding a charge limit, kept pure so the floors can be tested without an SMC.
+///
+/// On Macs whose SMC exposes no charge-inhibit key, stopping charge means cutting adapter
+/// input, so every "pause" here is a real discharge. Anything that pauses charging
+/// therefore needs a floor, and nothing may delay the recovery direction.
+enum ChargeHoldRules {
+    /// Heat Guard used to pause charging with no lower bound, so on adapter-cut hardware a
+    /// hot battery drained until it cooled — reported reaching 73% under an 80% limit.
+    static func heatGuardShouldRestore(batteryLevel: Int, lowerBound: Int) -> Bool {
+        batteryLevel <= lowerBound
+    }
+
+    /// The anti-flapping interval must gate only the stop direction. Rate-limiting a restore
+    /// leaves the Mac draining on adapter power for another window, which is what let the
+    /// level overshoot the lower bound.
+    static func toggleIsRateLimited(chargingAllowed: Bool, sinceLastToggle: TimeInterval?,
+                                    minimumInterval: TimeInterval) -> Bool {
+        guard !chargingAllowed, let sinceLastToggle else { return false }
+        return sinceLastToggle < minimumInterval
+    }
+}
+
 /// Manages the privileged helper daemon and drives charge limiting by toggling
 /// the power adapter (SMC key CHIE) through the helper.
 ///
@@ -340,6 +362,7 @@ final class ChargeLimitManager: ObservableObject {
         case .enabled:
             helperStatus = .ready
             if lastAdapterEnabled == nil { syncAdapterState() }
+            if holdCutsAdapter == nil { loadChargeControlMethod() }
             if fanCount == 0 { loadFanInfo() }
             readEnergyMode()
             if !didReconcile { didReconcile = true; reloadHelperIfOutdated() }
@@ -603,8 +626,20 @@ final class ChargeLimitManager: ObservableObject {
         // Heat Guard outranks Top Up and normal limiting (never outranks calibration —
         // heatGuardCheck skips while calibrating so a hot charge phase can't stall it
         // forever; the calibration timeout still applies).
+        let lower = sailingEnabled ? sailingLower : (limit - hysteresis)
+
         if heatGuardPaused {
-            if lastAdapterEnabled != false { Task { await applyChargingAllowed(false) } }
+            // Where the SMC has no clean charge-inhibit key, "stop charging" cuts adapter
+            // input and the battery genuinely drains. Heat Guard therefore needs a floor:
+            // without one a hot battery kept discharging until it cooled, with no lower
+            // bound at all — reported dropping to 73% under an 80% limit. A warm battery is
+            // a smaller problem than an unbounded discharge, so at the floor we let it
+            // charge again and leave Heat Guard to re-pause once it has room.
+            if ChargeHoldRules.heatGuardShouldRestore(batteryLevel: batteryLevel, lowerBound: lower) {
+                if lastAdapterEnabled != true { Task { await restoreCharging() } }
+            } else if lastAdapterEnabled != false {
+                Task { await applyChargingAllowed(false) }
+            }
             return
         }
 
@@ -646,8 +681,6 @@ final class ChargeLimitManager: ObservableObject {
             }
         }
 
-        let lower = sailingEnabled ? sailingLower : (limit - hysteresis)
-
         let shouldChargeAllowed: Bool
         if batteryLevel >= limit {
             shouldChargeAllowed = false                       // at/over ceiling → stop
@@ -659,8 +692,14 @@ final class ChargeLimitManager: ObservableObject {
 
         guard lastAdapterEnabled != shouldChargeAllowed else { return }
 
-        // Hard backstop: never toggle faster than minToggleInterval.
-        if let last = lastToggleAt, Date().timeIntervalSince(last) < minToggleInterval {
+        // Hard backstop against flapping — but only in the direction that stops charging.
+        // Rate-limiting a *restore* leaves the Mac draining on AC for another window, which
+        // is how the drop overshot the lower bound. Same mistake the calibration floor made.
+        if ChargeHoldRules.toggleIsRateLimited(
+            chargingAllowed: shouldChargeAllowed,
+            sinceLastToggle: lastToggleAt.map { Date().timeIntervalSince($0) },
+            minimumInterval: minToggleInterval
+        ) {
             return
         }
 
@@ -819,6 +858,24 @@ final class ChargeLimitManager: ObservableObject {
 
     /// True when the last attempt to force a fan speed didn't take on this Mac, so the UI
     /// can say so instead of leaving a slider that does nothing.
+    /// Whether holding the limit on this Mac means cutting adapter input — i.e. the battery
+    /// actually discharges — rather than inhibiting charge while staying on adapter power.
+    /// `nil` until the helper has answered. Detected from SMC key availability per machine,
+    /// so it cannot be inferred from the chip name.
+    @Published private(set) var holdCutsAdapter: Bool?
+
+    private func loadChargeControlMethod() {
+        guard let proxy = remoteProxy() else { return }
+        proxy.chargeControlMethod { [weak self] method in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                // "none" leaves this nil: there is no hold to describe.
+                if method.hasPrefix("adapter:") { self.holdCutsAdapter = true }
+                else if method.hasPrefix("inhibit:") { self.holdCutsAdapter = false }
+            }
+        }
+    }
+
     @Published private(set) var fanControlUnsupported = false
 
     private func applyFan() async {

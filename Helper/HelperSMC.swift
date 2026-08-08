@@ -159,7 +159,72 @@ enum HelperSMC {
             if hardwareMin[i] == nil { _ = write(conn, "F\(i)Md", 0) }
             out += "probe F\(i): restored Tg=\(priorTarget) Mn=\(priorMin)\n"
         }
+        out += chargeDiagnostics(conn)
         return out
+    }
+
+    /// Which mechanism this Mac's SMC offers for stopping charge, and which one we picked.
+    ///
+    /// The two differ in a way users feel: a charge-inhibit key holds the battery while the
+    /// Mac stays on adapter power, whereas the adapter key cuts input so the battery
+    /// actually drains to hold the limit. Reports on hardware where charge limiting behaved
+    /// unexpectedly could not say which path was taken, so this reads them out directly.
+    private static func chargeDiagnostics(_ conn: io_connect_t) -> String {
+        var out = "--- charge control ---\n"
+        out += "method=\(chargeControlMethod())\n"
+        for key in ["CHTE", "CH0C", "CHIE", "CH0J"] {
+            guard let info = keyInfo(conn, key) else {
+                out += "\(key) ABSENT\n"
+                continue
+            }
+            let writable = (info.dataAttributes & 0x02) != 0 ? "w" : "r"
+            out += "\(key) type=\(typeString(info.dataType)) size=\(info.dataSize)"
+            out += " attr=0x\(String(info.dataAttributes, radix: 16))\(writable) value=\(read(conn, key))\n"
+        }
+        // Probing the four keys we know about only ever confirms what we already guessed.
+        // Newer Macs may expose a charge-inhibit key under a name nobody has seen yet, and
+        // a machine that falls back to cutting adapter input is exactly where such a key
+        // would be worth finding — so dump every CH* key the SMC actually has. Discovery
+        // only: an unknown key is never written to, because writing SMC keys blind can
+        // change hardware behaviour in ways we cannot predict.
+        out += "--- all CH* keys ---\n" + enumerateChargeKeys(conn) + "--- end ---\n"
+        return out
+    }
+
+    /// `"inhibit:<key>"`, `"adapter:<key>"` or `"none"` — see the protocol documentation.
+    static func chargeControlMethod() -> String {
+        switch method {
+        case .inhibit(let key): return "inhibit:\(key)"
+        case .adapter(let key, _): return "adapter:\(key)"
+        case nil: return "none"
+        }
+    }
+
+    private static func enumerateChargeKeys(_ conn: io_connect_t) -> String {
+        var inp = SMCParamStruct()
+        inp.key = fourCC("#KEY"); inp.data8 = 5
+        if let info = keyInfo(conn, "#KEY") { inp.keyInfo.dataSize = info.dataSize }
+        var out = SMCParamStruct(); var sz = MemoryLayout<SMCParamStruct>.stride
+        guard IOConnectCallStructMethod(conn, 2, &inp, MemoryLayout<SMCParamStruct>.stride, &out, &sz) == kIOReturnSuccess else {
+            return "(key enumeration unavailable)\n"
+        }
+        let total = (UInt32(out.bytes.0) << 24) | (UInt32(out.bytes.1) << 16)
+                  | (UInt32(out.bytes.2) << 8) | UInt32(out.bytes.3)
+        var text = ""
+        for index in 0..<Int(total) {
+            var q = SMCParamStruct()
+            q.data8 = 8
+            q.data32 = UInt32(index)
+            var r = SMCParamStruct(); var rs = MemoryLayout<SMCParamStruct>.stride
+            guard IOConnectCallStructMethod(conn, 2, &q, MemoryLayout<SMCParamStruct>.stride, &r, &rs) == kIOReturnSuccess else { continue }
+            let name = typeString(r.key)
+            guard name.hasPrefix("CH") else { continue }
+            guard let info = keyInfo(conn, name) else { continue }
+            let writable = (info.dataAttributes & 0x02) != 0 ? "w" : "r"
+            text += "\(name) \(typeString(info.dataType)) size=\(info.dataSize)"
+            text += " attr=0x\(String(info.dataAttributes, radix: 16))\(writable) value=\(read(conn, name))\n"
+        }
+        return text.isEmpty ? "(no CH* keys found)\n" : text
     }
 
     /// Walks the SMC's key table and reports every key whose name starts with "F", with its

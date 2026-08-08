@@ -416,3 +416,6 @@
 "MENUBAR_HIDDEN_NOTE" = "Menü çubuğu öğesi gizli. MacWake'i açmak için çentiğe tıklayıp Dinamik Ada'yı kullanın ya da buradan herhangi bir parçayı geri açın.";
 
 "HEALTH_ESTIMATE_HELP_FMT" = "Kontrolcü tahmini: %%%.1f\n\nBu değer pil kontrolcüsünden geliyor ve yalnızca tanılama amaçlıdır. macOS'un bildirdiği Maksimum Kapasite'den ve yukarıdaki değerden farklı olabilir; yukarıdaki değer zamana yayılarak yumuşatılır, böylece kontrolcünün yeniden hesaplaması aşınma sanılmaz.";
+
+"CL_HOLD_ON_POWER" = "Bu Mac sınırı adaptör gücünde tutuyor — şarj duruyor, pil boşaltılmıyor.";
+"CL_HOLD_DISCHARGES" = "Bu Mac'te şarj engelleme anahtarı yok; sınırı tutmak için adaptör girişi kesiliyor ve pil sınıra kadar boşalıyor. Sınırın üstündeyken kablo takılıyken pilde çalıştığını görürsünüz.";

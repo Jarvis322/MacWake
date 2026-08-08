@@ -52,6 +52,13 @@ public let kMacWakeCodeSigningRequirement =
     /// proved unreliable for remote debugging (nothing tells you whether the daemon even
     /// reloaded), so the app surfaces this text directly for a tester to copy.
     func fanDiagnostics(reply: @escaping (String) -> Void)
+
+    /// How this Mac stops charging, so the UI can tell the two apart honestly:
+    /// `"inhibit:<key>"` holds the battery while the Mac stays on adapter power, whereas
+    /// `"adapter:<key>"` cuts adapter input, meaning the battery discharges to hold the
+    /// limit. `"none"` when the SMC exposes neither. Reported per machine because it is
+    /// detected from key availability, not from the chip model.
+    func chargeControlMethod(reply: @escaping (String) -> Void)
 }
 
 /// Bumped whenever the helper's XPC surface or SMC logic changes, so the app can
@@ -62,4 +69,4 @@ public let kMacWakeCodeSigningRequirement =
 /// without bumping means users keep executing the previous code. That silently
 /// swallowed two Apple Silicon fan fixes (1.43, 1.45) before it was caught; build.sh
 /// now warns when Helper/ changes without a bump.
-public let kMacWakeHelperVersion = "9"
+public let kMacWakeHelperVersion = "10"
