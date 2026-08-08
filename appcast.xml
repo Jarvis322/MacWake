@@ -29,47 +29,11 @@
             <pubDate>Sat, 08 Aug 2026 10:00:00 +0000</pubDate>
             <sparkle:version>54</sparkle:version>
             <sparkle:shortVersionString>1.48</sparkle:shortVersionString>
-            <description><![CDATA[
-                <meta charset="utf-8">
-                <style>
-                    :root { color-scheme: light dark; }
-                    body { font: 13px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; margin: 4px 2px; color: #1d1d1f; }
-                    h1 { font-size: 15px; margin: 0 0 2px; }
-                    .date { font-size: 11px; opacity: .5; margin: 0 0 14px; }
-                    .tag { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; opacity: .55; margin: 16px 0 8px; }
-                    .tag:first-of-type { margin-top: 0; }
-                    ul { margin: 0; padding-left: 18px; }
-                    li { margin-bottom: 8px; }
-                    b { font-weight: 600; }
-                    hr { border: 0; border-top: 1px solid rgba(0,0,0,.1); margin: 16px 0 0; }
-                    @media (prefers-color-scheme: dark) { body { color: #f5f5f7; } hr { border-top-color: rgba(255,255,255,.12); } }
-                </style>
-                <h1>Wake 1.48</h1>
-                <p class="date">8 Ağustos 2026 · 8 August 2026</p>
-                <p class="tag">✨ Yeni</p>
-                <ul>
-                    <li><b>Manuel boşaltma</b> — fişteyken pili seçtiğin seviyeye indir, sonra şarj kaldığı yerden devam etsin. Ayarlar › Şarj.</li>
-                    <li><b>Dynamic Island'da Raf</b> — ark reaktörünün yerini dosya bırakma alanı ve son kopyalanan metin aldı. Artık varsayılan olarak açık.</li>
-                    <li><b>Yeniden tasarlanan Ayarlar</b> — Şarj, Görünüm, Uyarılar, Genel ve Diğer olarak yeniden düzenlendi; her ayarın tek bir yeri var.</li>
-                </ul>
-                <p class="tag">🐛 Düzeltmeler</p>
-                <ul>
-                    <li><b>Temizlik Modu</b> artık ses, parlaklık ve müzik tuşlarını da engelliyor — ekranı silerken ses açılmıyor.</li>
-                    <li>Dynamic Island'daki boşluk giderildi ve ekran süresi satırı çevrildi.</li>
-                </ul>
-                <hr>
-                <p class="tag">✨ New</p>
-                <ul>
-                    <li><b>Manual discharge</b> — drain to a level you pick while plugged in, then charging resumes. Settings › Charging.</li>
-                    <li><b>The Shelf in the Dynamic Island</b> — the arc reactor makes way for a file drop tray and your last copied text. On by default now.</li>
-                    <li><b>Redesigned Settings</b> — reorganised into Charging, Display, Alerts, General and More, with one home per setting.</li>
-                </ul>
-                <p class="tag">🐛 Fixes</p>
-                <ul>
-                    <li><b>Cleaning Mode</b> now blocks the volume, brightness and playback keys too — wiping the screen no longer changes the volume.</li>
-                    <li>Closed a gap in the Dynamic Island and localised the screen-time line.</li>
-                </ul>
-            ]]></description>
+<description xml:lang="en"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.48</h1><p class="date">8 August 2026</p><p class="tag">✨ New</p><ul><li><b>Manual discharge</b> — drain to a level you pick while plugged in, then charging resumes. Settings › Charging.</li><li><b>The Shelf in the Dynamic Island</b> — the arc reactor makes way for a file drop tray and your last copied text. On by default now.</li><li><b>Redesigned Settings</b> — reorganised into Charging, Display, Alerts, General and More, with one home per setting.</li></ul><p class="tag">🐛 Fixes</p><ul><li><b>Cleaning Mode</b> now blocks the volume, brightness and playback keys too — wiping the screen no longer changes the volume.</li><li>Closed a gap in the Dynamic Island and localised the screen-time line.</li></ul>]]></description>
+            <description xml:lang="tr"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.48</h1><p class="date">8 Ağustos 2026</p><p class="tag">✨ Yeni</p><ul><li><b>Manuel boşaltma</b> — fişteyken pili seçtiğin seviyeye indir, sonra şarj kaldığı yerden devam etsin. Ayarlar › Şarj.</li><li><b>Dynamic Island'da Raf</b> — ark reaktörünün yerini dosya bırakma alanı ve son kopyalanan metin aldı. Artık varsayılan olarak açık.</li><li><b>Yeniden tasarlanan Ayarlar</b> — Şarj, Görünüm, Uyarılar, Genel ve Diğer olarak yeniden düzenlendi; her ayarın tek bir yeri var.</li></ul><p class="tag">🐛 Düzeltmeler</p><ul><li><b>Temizlik Modu</b> artık ses, parlaklık ve müzik tuşlarını da engelliyor — ekranı silerken ses açılmıyor.</li><li>Dynamic Island'daki boşluk giderildi ve ekran süresi satırı çevrildi.</li></ul>]]></description>
+            <description xml:lang="zh-Hans"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.48</h1><p class="date">2026 年 8 月 8 日</p><p class="tag">✨ 新增</p><ul><li><b>手动放电</b> — 插电时把电量降到你设定的水平，之后自动恢复充电。设置 › 充电。</li><li><b>灵动岛中的置物架</b> — 弧形反应堆让位给文件暂存区和最近复制的文本，现已默认开启。</li><li><b>重新设计的设置</b> — 分为充电、显示、提醒、通用和更多，每项设置只有一个归属。</li></ul><p class="tag">🐛 修复</p><ul><li><b>键盘清洁模式</b>现在也会屏蔽音量、亮度和播放键 — 擦拭屏幕不会再改变音量。</li><li>修复了灵动岛中的空隙，并将屏幕使用时间一行本地化。</li></ul>]]></description>
+            <description xml:lang="ja"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.48</h1><p class="date">2026年8月8日</p><p class="tag">✨ 新機能</p><ul><li><b>手動放電</b> — 電源接続中に指定した残量まで放電し、その後自動で充電を再開します。設定 › 充電。</li><li><b>Dynamic Island のシェルフ</b> — アークリアクターに代わり、ファイルの一時置き場と最後にコピーしたテキストを表示。デフォルトでオンになりました。</li><li><b>設定画面を刷新</b> — 充電・表示・通知・一般・その他に整理し、すべての設定に置き場所をひとつだけ用意しました。</li></ul><p class="tag">🐛 修正</p><ul><li><b>クリーニングモード</b>が音量・輝度・再生キーもブロックするようになりました — 画面を拭いても音量が変わりません。</li><li>Dynamic Island の余白を詰め、画面オン時間の行を各言語に対応させました。</li></ul>]]></description>
+            <description xml:lang="ko"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.48</h1><p class="date">2026년 8월 8일</p><p class="tag">✨ 새로운 기능</p><ul><li><b>수동 방전</b> — 전원에 연결된 상태에서 원하는 수준까지 방전하고, 이후 자동으로 충전을 재개합니다. 설정 › 충전.</li><li><b>Dynamic Island의 선반</b> — 아크 리액터 대신 파일 임시 보관함과 마지막으로 복사한 텍스트가 표시됩니다. 이제 기본으로 켜집니다.</li><li><b>새로워진 설정</b> — 충전, 표시, 알림, 일반, 더 보기로 정리되어 모든 설정에 자리가 하나씩 생겼습니다.</li></ul><p class="tag">🐛 수정 사항</p><ul><li><b>청소 모드</b>가 이제 음량, 밝기, 재생 키까지 차단합니다 — 화면을 닦아도 음량이 바뀌지 않습니다.</li><li>Dynamic Island의 빈 공간을 없애고 화면 켜짐 시간 문구를 현지화했습니다.</li></ul>]]></description>
             <enclosure
                 url="https://github.com/Jarvis322/MacWake/releases/download/v1.48/Wake-1.48.dmg"
                 sparkle:version="54"
@@ -84,37 +48,11 @@
             <pubDate>Sat, 25 Jul 2026 22:00:00 +0000</pubDate>
             <sparkle:version>53</sparkle:version>
             <sparkle:shortVersionString>1.47</sparkle:shortVersionString>
-            <description><![CDATA[
-                <meta charset="utf-8">
-                <style>
-                    :root { color-scheme: light dark; }
-                    body { font: 13px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; margin: 4px 2px; color: #1d1d1f; }
-                    h1 { font-size: 15px; margin: 0 0 2px; }
-                    .date { font-size: 11px; opacity: .5; margin: 0 0 14px; }
-                    .tag { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; opacity: .55; margin: 16px 0 8px; }
-                    .tag:first-of-type { margin-top: 0; }
-                    ul { margin: 0; padding-left: 18px; }
-                    li { margin-bottom: 8px; }
-                    b { font-weight: 600; }
-                    hr { border: 0; border-top: 1px solid rgba(0,0,0,.1); margin: 16px 0 0; }
-                    @media (prefers-color-scheme: dark) { body { color: #f5f5f7; } hr { border-top-color: rgba(255,255,255,.12); } }
-                </style>
-                <h1>Wake 1.47</h1>
-                <p class="date">25 Temmuz 2026 · 25 July 2026</p>
-                <p class="tag">🌀 Manuel fan</p>
-                <ul>
-                    <li><b>Fan komutları artık doğrulanıyor</b> — uygulama yazdığı hedefi geri okuyor ve tutana kadar bilinen yöntemleri sırayla deniyor.</li>
-                    <li><b>Desteklenmiyorsa açıkça söylüyor</b> — Mac'in denetleyicisi manuel hızı kabul etmiyorsa anahtar kendiliğinden kapanıyor ve Monitör sekmesinde bunu belirten bir not çıkıyor. Sessizce hiçbir şey yapmayan bir slider yok artık.</li>
-                    <li>Fan tanılama araçları 5 dile çevrildi.</li>
-                </ul>
-                <hr>
-                <p class="tag">🌀 Manual fan</p>
-                <ul>
-                    <li><b>Fan commands are now verified</b> — the app reads the target back and escalates through the known mechanisms until one verifiably sticks.</li>
-                    <li><b>It says so when unsupported</b> — if a Mac's controller refuses manual speeds, the toggle switches itself back and the Monitor tab explains why, instead of leaving a slider that silently does nothing.</li>
-                    <li>Fan diagnostics tools localized into all 5 languages.</li>
-                </ul>
-            ]]></description>
+<description xml:lang="en"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.47</h1><p class="date">25 July 2026</p><p class="tag">🌀 Manual fan</p><ul><li><b>Fan commands are now verified</b> — the app reads the target back and escalates through the known mechanisms until one verifiably sticks.</li><li><b>It says so when unsupported</b> — if a Mac's controller refuses manual speeds, the toggle switches itself back and the Monitor tab explains why, instead of leaving a slider that silently does nothing.</li><li>Fan diagnostics tools localized into all 5 languages.</li></ul>]]></description>
+            <description xml:lang="tr"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.47</h1><p class="date">25 Temmuz 2026</p><p class="tag">🌀 Manuel fan</p><ul><li><b>Fan komutları artık doğrulanıyor</b> — uygulama yazdığı hedefi geri okuyor ve tutana kadar bilinen yöntemleri sırayla deniyor.</li><li><b>Desteklenmiyorsa açıkça söylüyor</b> — Mac'in denetleyicisi manuel hızı kabul etmiyorsa anahtar kendiliğinden kapanıyor ve Monitör sekmesinde bunu belirten bir not çıkıyor. Sessizce hiçbir şey yapmayan bir slider yok artık.</li><li>Fan tanılama araçları 5 dile çevrildi.</li></ul>]]></description>
+            <description xml:lang="zh-Hans"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.47</h1><p class="date">2026 年 7 月 25 日</p><p class="tag">🌀 手动风扇</p><ul><li><b>风扇命令现在会被验证</b> — 应用会读回目标值，并依次尝试已知机制，直到确认某一种真正生效。</li><li><b>不支持时会明确告知</b> — 如果这台 Mac 的控制器拒绝手动转速，开关会自动关闭，监测标签页会说明原因，而不是留下一个毫无作用的滑块。</li><li>风扇诊断工具已本地化为全部 5 种语言。</li></ul>]]></description>
+            <description xml:lang="ja"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.47</h1><p class="date">2026年7月25日</p><p class="tag">🌀 手動ファン</p><ul><li><b>ファン指令を検証するようになりました</b> — 目標値を読み戻し、確実に反映されるまで既知の方式を順に試します。</li><li><b>非対応なら明示します</b> — この Mac のコントローラが手動速度を受け付けない場合、スイッチは自動でオフに戻り、モニタータブが理由を説明します。何も起きないスライダーを残しません。</li><li>ファン診断ツールを 5 言語に対応させました。</li></ul>]]></description>
+            <description xml:lang="ko"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.47</h1><p class="date">2026년 7월 25일</p><p class="tag">🌀 수동 팬</p><ul><li><b>이제 팬 명령을 검증합니다</b> — 목표값을 다시 읽고, 확실히 적용될 때까지 알려진 방식을 차례로 시도합니다.</li><li><b>지원하지 않으면 그렇다고 알려줍니다</b> — 이 Mac의 컨트롤러가 수동 속도를 거부하면 스위치가 스스로 꺼지고 모니터 탭이 이유를 설명합니다. 아무 일도 하지 않는 슬라이더를 남기지 않습니다.</li><li>팬 진단 도구를 5개 언어로 현지화했습니다.</li></ul>]]></description>
             <enclosure
                 url="https://github.com/Jarvis322/MacWake/releases/download/v1.47/Wake-1.47.dmg"
                 sparkle:version="53"
@@ -129,33 +67,11 @@
             <pubDate>Sat, 25 Jul 2026 21:00:00 +0000</pubDate>
             <sparkle:version>52</sparkle:version>
             <sparkle:shortVersionString>1.46</sparkle:shortVersionString>
-            <description><![CDATA[
-                <meta charset="utf-8">
-                <style>
-                    :root { color-scheme: light dark; }
-                    body { font: 13px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; margin: 4px 2px; color: #1d1d1f; }
-                    h1 { font-size: 15px; margin: 0 0 2px; }
-                    .date { font-size: 11px; opacity: .5; margin: 0 0 14px; }
-                    .tag { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; opacity: .55; margin: 16px 0 8px; }
-                    .tag:first-of-type { margin-top: 0; }
-                    ul { margin: 0; padding-left: 18px; }
-                    li { margin-bottom: 8px; }
-                    b { font-weight: 600; }
-                    hr { border: 0; border-top: 1px solid rgba(0,0,0,.1); margin: 16px 0 0; }
-                    @media (prefers-color-scheme: dark) { body { color: #f5f5f7; } hr { border-top-color: rgba(255,255,255,.12); } }
-                </style>
-                <h1>Wake 1.46</h1>
-                <p class="date">25 Temmuz 2026 · 25 July 2026</p>
-                <p class="tag">🐛 Hata düzeltmesi</p>
-                <ul>
-                    <li><b>Pil sağlığı doğru gösteriliyor</b> — Donanım sekmesindeki sağlık, aşınmış pillerde bile %100 görünüyordu; macOS'un normalize ettiği değer yerine artık gerçek kapasite oranı okunuyor. Sağlık Azalma Kaydı'ndaki hatalı %100 satırları da temizleniyor. Ayrıntılı bildiren kullanıcıya teşekkürler! 🙏</li>
-                </ul>
-                <hr>
-                <p class="tag">🐛 Bug fix</p>
-                <ul>
-                    <li><b>Battery health now reads true</b> — the Hardware tab showed 100% even on a worn battery; it now uses the real capacity ratio instead of the value macOS normalises to 100. Bogus 100% rows are also pruned from the Health Decay Log. Thanks to the user who reported it with a full diagnosis! 🙏</li>
-                </ul>
-            ]]></description>
+<description xml:lang="en"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.46</h1><p class="date">25 July 2026</p><p class="tag">🐛 Bug fix</p><ul><li><b>Battery health now reads true</b> — the Hardware tab showed 100% even on a worn battery; it now uses the real capacity ratio instead of the value macOS normalises to 100. Bogus 100% rows are also pruned from the Health Decay Log. Thanks to the user who reported it with a full diagnosis! 🙏</li></ul>]]></description>
+            <description xml:lang="tr"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.46</h1><p class="date">25 Temmuz 2026</p><p class="tag">🐛 Hata düzeltmesi</p><ul><li><b>Pil sağlığı doğru gösteriliyor</b> — Donanım sekmesindeki sağlık, aşınmış pillerde bile %100 görünüyordu; macOS'un normalize ettiği değer yerine artık gerçek kapasite oranı okunuyor. Sağlık Azalma Kaydı'ndaki hatalı %100 satırları da temizleniyor. Ayrıntılı bildiren kullanıcıya teşekkürler! 🙏</li></ul>]]></description>
+            <description xml:lang="zh-Hans"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.46</h1><p class="date">2026 年 7 月 25 日</p><p class="tag">🐛 问题修复</p><ul><li><b>电池健康度现在显示真实数值</b> — 硬件标签页即使在损耗的电池上也显示 100%；现在读取真实容量比例，而不是 macOS 归一化后的数值。健康衰减记录中错误的 100% 条目也会被清理。</li></ul>]]></description>
+            <description xml:lang="ja"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.46</h1><p class="date">2026年7月25日</p><p class="tag">🐛 バグ修正</p><ul><li><b>バッテリー状態が実際の値を表示</b> — ハードウェアタブが劣化したバッテリーでも 100% と表示していました。macOS が正規化した値ではなく実際の容量比を読み取ります。推移ログの誤った 100% の記録も削除します。</li></ul>]]></description>
+            <description xml:lang="ko"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.46</h1><p class="date">2026년 7월 25일</p><p class="tag">🐛 버그 수정</p><ul><li><b>배터리 성능이 실제 값을 표시합니다</b> — 하드웨어 탭이 성능이 저하된 배터리에서도 100%를 표시했습니다. 이제 macOS가 정규화한 값이 아니라 실제 용량 비율을 읽습니다. 성능 저하 기록의 잘못된 100% 항목도 정리합니다.</li></ul>]]></description>
             <enclosure
                 url="https://github.com/Jarvis322/MacWake/releases/download/v1.46/Wake-1.46.dmg"
                 sparkle:version="52"
@@ -170,33 +86,11 @@
             <pubDate>Thu, 23 Jul 2026 00:00:00 +0000</pubDate>
             <sparkle:version>45</sparkle:version>
             <sparkle:shortVersionString>1.44</sparkle:shortVersionString>
-            <description><![CDATA[
-                <meta charset="utf-8">
-                <style>
-                    :root { color-scheme: light dark; }
-                    body { font: 13px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; margin: 4px 2px; color: #1d1d1f; }
-                    h1 { font-size: 15px; margin: 0 0 2px; }
-                    .date { font-size: 11px; opacity: .5; margin: 0 0 14px; }
-                    .tag { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; opacity: .55; margin: 16px 0 8px; }
-                    .tag:first-of-type { margin-top: 0; }
-                    ul { margin: 0; padding-left: 18px; }
-                    li { margin-bottom: 8px; }
-                    b { font-weight: 600; }
-                    hr { border: 0; border-top: 1px solid rgba(0,0,0,.1); margin: 16px 0 0; }
-                    @media (prefers-color-scheme: dark) { body { color: #f5f5f7; } hr { border-top-color: rgba(255,255,255,.12); } }
-                </style>
-                <h1>Wake 1.44</h1>
-                <p class="date">23 Temmuz 2026 · 23 July 2026</p>
-                <p class="tag">🌍 Yeni</p>
-                <ul>
-                    <li><b>Japonca (日本語) ve Korece (한국어)</b> — Wake artık 5 dilde: İngilizce, Türkçe, Çince, Japonca, Korece. Sistem dilini takip eder ya da Ayarlar'dan seçilir. Topluluk katkısıyla (@ssdiwu). 🙏</li>
-                </ul>
-                <hr>
-                <p class="tag">🌍 New</p>
-                <ul>
-                    <li><b>Japanese (日本語) and Korean (한국어)</b> — Wake now speaks 5 languages: English, Turkish, Chinese, Japanese, Korean. Follows your system language, or pick one in Settings. Community contribution by @ssdiwu. 🙏</li>
-                </ul>
-            ]]></description>
+<description xml:lang="en"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.44</h1><p class="date">23 July 2026</p><p class="tag">🌍 New</p><ul><li><b>Japanese (日本語) and Korean (한국어)</b> — Wake now speaks 5 languages: English, Turkish, Chinese, Japanese, Korean. Follows your system language, or pick one in Settings. Community contribution by @ssdiwu. 🙏</li></ul>]]></description>
+            <description xml:lang="tr"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.44</h1><p class="date">23 Temmuz 2026</p><p class="tag">🌍 Yeni</p><ul><li><b>Japonca (日本語) ve Korece (한국어)</b> — Wake artık 5 dilde: İngilizce, Türkçe, Çince, Japonca, Korece. Sistem dilini takip eder ya da Ayarlar'dan seçilir. Topluluk katkısıyla (@ssdiwu). 🙏</li></ul>]]></description>
+            <description xml:lang="zh-Hans"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.44</h1><p class="date">2026 年 7 月 23 日</p><p class="tag">🌍 新增</p><ul><li><b>日语（日本語）与韩语（한국어）</b> — Wake 现已支持 5 种语言：英语、土耳其语、简体中文、日语、韩语。跟随系统语言，或在设置中选择。由社区贡献（@ssdiwu）。🙏</li></ul>]]></description>
+            <description xml:lang="ja"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.44</h1><p class="date">2026年7月23日</p><p class="tag">🌍 新機能</p><ul><li><b>日本語と韓国語（한국어）</b> — Wake は 5 言語に対応しました：英語・トルコ語・簡体字中国語・日本語・韓国語。システム言語に従うか、設定から選べます。コミュニティによる貢献（@ssdiwu）。🙏</li></ul>]]></description>
+            <description xml:lang="ko"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.44</h1><p class="date">2026년 7월 23일</p><p class="tag">🌍 새로운 기능</p><ul><li><b>일본어(日本語)와 한국어</b> — Wake는 이제 5개 언어를 지원합니다: 영어, 터키어, 중국어 간체, 일본어, 한국어. 시스템 언어를 따르거나 설정에서 선택하세요. 커뮤니티 기여(@ssdiwu). 🙏</li></ul>]]></description>
             <enclosure
                 url="https://github.com/Jarvis322/MacWake/releases/download/v1.44/Wake-1.44.dmg"
                 sparkle:version="45"
@@ -211,35 +105,11 @@
             <pubDate>Wed, 22 Jul 2026 12:00:00 +0000</pubDate>
             <sparkle:version>44</sparkle:version>
             <sparkle:shortVersionString>1.43</sparkle:shortVersionString>
-            <description><![CDATA[
-                <meta charset="utf-8">
-                <style>
-                    :root { color-scheme: light dark; }
-                    body { font: 13px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; margin: 4px 2px; color: #1d1d1f; }
-                    h1 { font-size: 15px; margin: 0 0 2px; }
-                    .date { font-size: 11px; opacity: .5; margin: 0 0 14px; }
-                    .tag { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; opacity: .55; margin: 16px 0 8px; }
-                    .tag:first-of-type { margin-top: 0; }
-                    ul { margin: 0; padding-left: 18px; }
-                    li { margin-bottom: 8px; }
-                    b { font-weight: 600; }
-                    hr { border: 0; border-top: 1px solid rgba(0,0,0,.1); margin: 16px 0 0; }
-                    @media (prefers-color-scheme: dark) { body { color: #f5f5f7; } hr { border-top-color: rgba(255,255,255,.12); } }
-                </style>
-                <h1>Wake 1.43</h1>
-                <p class="date">22 Temmuz 2026 · 22 July 2026</p>
-                <p class="tag">🐛 Hata düzeltmeleri</p>
-                <ul>
-                    <li><b>Manuel fan kontrolü (Apple Silicon)</b> — M serisi Mac'lerde manuel fan hızı artık gerçekten devreye giriyor; hedef RPM yanlış formatta yazılıyordu. Bildiren kullanıcıya teşekkürler! 🙏</li>
-                    <li><b>İki fanlı MacBook Pro'lar</b> — manuel mod artık her iki fanı da sürüyor, öncekinde ikinci fan otomatikte kalıyordu.</li>
-                </ul>
-                <hr>
-                <p class="tag">🐛 Bug fixes</p>
-                <ul>
-                    <li><b>Manual fan control (Apple Silicon)</b> — manual fan speed now actually engages on M-series Macs; the target RPM was being written in the wrong format. Thanks to the user who reported it! 🙏</li>
-                    <li><b>Two-fan MacBook Pros</b> — manual mode now drives both fans; previously the second fan stayed on automatic.</li>
-                </ul>
-            ]]></description>
+<description xml:lang="en"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.43</h1><p class="date">22 July 2026</p><p class="tag">🐛 Bug fixes</p><ul><li><b>Manual fan control (Apple Silicon)</b> — manual fan speed now actually engages on M-series Macs; the target RPM was being written in the wrong format. Thanks to the user who reported it! 🙏</li><li><b>Two-fan MacBook Pros</b> — manual mode now drives both fans; previously the second fan stayed on automatic.</li></ul>]]></description>
+            <description xml:lang="tr"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.43</h1><p class="date">22 Temmuz 2026</p><p class="tag">🐛 Hata düzeltmeleri</p><ul><li><b>Manuel fan kontrolü (Apple Silicon)</b> — M serisi Mac'lerde manuel fan hızı artık gerçekten devreye giriyor; hedef RPM yanlış formatta yazılıyordu. Bildiren kullanıcıya teşekkürler! 🙏</li><li><b>İki fanlı MacBook Pro'lar</b> — manuel mod artık her iki fanı da sürüyor, öncekinde ikinci fan otomatikte kalıyordu.</li></ul>]]></description>
+            <description xml:lang="zh-Hans"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.43</h1><p class="date">2026 年 7 月 22 日</p><p class="tag">🐛 问题修复</p><ul><li><b>手动风扇控制（Apple Silicon）</b> — 手动风扇转速现在真正在 M 系列 Mac 上生效；此前目标转速以错误的格式写入。感谢报告此问题的用户！🙏</li><li><b>双风扇 MacBook Pro</b> — 手动模式现在会驱动两个风扇，此前第二个风扇仍处于自动状态。</li></ul>]]></description>
+            <description xml:lang="ja"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.43</h1><p class="date">2026年7月22日</p><p class="tag">🐛 バグ修正</p><ul><li><b>手動ファン制御（Apple Silicon）</b> — M シリーズ Mac で手動ファン速度が実際に有効になりました。以前は目標 RPM が誤った形式で書き込まれていました。報告してくださった方に感謝します！🙏</li><li><b>ファン 2 基の MacBook Pro</b> — 手動モードが両方のファンを制御します。以前は 2 基目が自動のままでした。</li></ul>]]></description>
+            <description xml:lang="ko"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.43</h1><p class="date">2026년 7월 22일</p><p class="tag">🐛 버그 수정</p><ul><li><b>수동 팬 제어(Apple Silicon)</b> — M 시리즈 Mac에서 수동 팬 속도가 실제로 작동합니다. 이전에는 목표 RPM이 잘못된 형식으로 기록되었습니다. 제보해 주신 분께 감사합니다! 🙏</li><li><b>팬이 두 개인 MacBook Pro</b> — 수동 모드가 이제 두 팬 모두를 제어합니다. 이전에는 두 번째 팬이 자동으로 남아 있었습니다.</li></ul>]]></description>
             <enclosure
                 url="https://github.com/Jarvis322/MacWake/releases/download/v1.43/Wake-1.43.dmg"
                 sparkle:version="44"
@@ -254,37 +124,11 @@
             <pubDate>Wed, 22 Jul 2026 00:00:00 +0000</pubDate>
             <sparkle:version>43</sparkle:version>
             <sparkle:shortVersionString>1.42</sparkle:shortVersionString>
-            <description><![CDATA[
-                <meta charset="utf-8">
-                <style>
-                    :root { color-scheme: light dark; }
-                    body { font: 13px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; margin: 4px 2px; color: #1d1d1f; }
-                    h1 { font-size: 15px; margin: 0 0 2px; }
-                    .date { font-size: 11px; opacity: .5; margin: 0 0 14px; }
-                    .tag { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; opacity: .55; margin: 16px 0 8px; }
-                    .tag:first-of-type { margin-top: 0; }
-                    ul { margin: 0; padding-left: 18px; }
-                    li { margin-bottom: 8px; }
-                    b { font-weight: 600; }
-                    hr { border: 0; border-top: 1px solid rgba(0,0,0,.1); margin: 16px 0 0; }
-                    @media (prefers-color-scheme: dark) { body { color: #f5f5f7; } hr { border-top-color: rgba(255,255,255,.12); } }
-                </style>
-                <h1>Wake 1.42</h1>
-                <p class="date">22 Temmuz 2026 · 22 July 2026</p>
-                <p class="tag">✨ Yenilendi</p>
-                <ul>
-                    <li><b>Yeni uygulama simgesi</b> — parlayan bir "güç çekirdeği" arc-reactor.</li>
-                    <li><b>Yeni Ayarlar</b> — hızlı erişim için kutucuk ızgarası ve kategori sekmeleriyle tamamen yeniden tasarlandı; her ayarın altında kısa açıklama.</li>
-                    <li><b>Tanıtım turu</b> — yeni simge, Now Playing, widget'lar, Kısayollar ve akıllı uyarılar eklendi.</li>
-                </ul>
-                <hr>
-                <p class="tag">✨ Refreshed</p>
-                <ul>
-                    <li><b>New app icon</b> — a glowing "power core" arc reactor.</li>
-                    <li><b>Redesigned Settings</b> — a quick tile grid and category tabs, with a one-line description under every setting.</li>
-                    <li><b>Welcome tour</b> — new icon, plus pages for Now Playing, widgets, Shortcuts and smart alerts.</li>
-                </ul>
-            ]]></description>
+<description xml:lang="en"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.42</h1><p class="date">22 July 2026</p><p class="tag">✨ Refreshed</p><ul><li><b>New app icon</b> — a glowing "power core" arc reactor.</li><li><b>Redesigned Settings</b> — a quick tile grid and category tabs, with a one-line description under every setting.</li><li><b>Welcome tour</b> — new icon, plus pages for Now Playing, widgets, Shortcuts and smart alerts.</li></ul>]]></description>
+            <description xml:lang="tr"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.42</h1><p class="date">22 Temmuz 2026</p><p class="tag">✨ Yenilendi</p><ul><li><b>Yeni uygulama simgesi</b> — parlayan bir "güç çekirdeği" arc-reactor.</li><li><b>Yeni Ayarlar</b> — hızlı erişim için kutucuk ızgarası ve kategori sekmeleriyle tamamen yeniden tasarlandı; her ayarın altında kısa açıklama.</li><li><b>Tanıtım turu</b> — yeni simge, Now Playing, widget'lar, Kısayollar ve akıllı uyarılar eklendi.</li></ul>]]></description>
+            <description xml:lang="zh-Hans"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.42</h1><p class="date">2026 年 7 月 22 日</p><p class="tag">✨ 全新外观</p><ul><li><b>全新应用图标</b> — 发光的“能量核心”弧形反应堆。</li><li><b>重新设计的设置</b> — 快速磁贴与分类标签，每项设置下方都有一行说明。</li><li><b>欢迎导览</b> — 新图标，并新增 Now Playing、小组件、快捷指令与智能提醒页面。</li></ul>]]></description>
+            <description xml:lang="ja"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.42</h1><p class="date">2026年7月22日</p><p class="tag">✨ 刷新</p><ul><li><b>新しいアプリアイコン</b> — 発光する「パワーコア」アークリアクター。</li><li><b>設定画面を刷新</b> — クイックタイルとカテゴリタブ、各設定に一行の説明を追加。</li><li><b>ウェルカムツアー</b> — 新しいアイコンに加え、Now Playing・ウィジェット・ショートカット・スマート通知のページを追加。</li></ul>]]></description>
+            <description xml:lang="ko"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.42</h1><p class="date">2026년 7월 22일</p><p class="tag">✨ 새단장</p><ul><li><b>새로운 앱 아이콘</b> — 빛나는 “파워 코어” 아크 리액터.</li><li><b>새로워진 설정</b> — 빠른 타일과 카테고리 탭, 모든 설정 아래 한 줄 설명.</li><li><b>환영 투어</b> — 새 아이콘과 함께 Now Playing, 위젯, 단축어, 스마트 알림 페이지를 추가했습니다.</li></ul>]]></description>
             <enclosure
                 url="https://github.com/Jarvis322/MacWake/releases/download/v1.42/Wake-1.42.dmg"
                 sparkle:version="43"
@@ -299,33 +143,11 @@
             <pubDate>Tue, 21 Jul 2026 12:00:00 +0000</pubDate>
             <sparkle:version>42</sparkle:version>
             <sparkle:shortVersionString>1.41</sparkle:shortVersionString>
-            <description><![CDATA[
-                <meta charset="utf-8">
-                <style>
-                    :root { color-scheme: light dark; }
-                    body { font: 13px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; margin: 4px 2px; color: #1d1d1f; }
-                    h1 { font-size: 15px; margin: 0 0 2px; }
-                    .date { font-size: 11px; opacity: .5; margin: 0 0 14px; }
-                    .tag { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; opacity: .55; margin: 16px 0 8px; }
-                    .tag:first-of-type { margin-top: 0; }
-                    ul { margin: 0; padding-left: 18px; }
-                    li { margin-bottom: 8px; }
-                    b { font-weight: 600; }
-                    hr { border: 0; border-top: 1px solid rgba(0,0,0,.1); margin: 16px 0 0; }
-                    @media (prefers-color-scheme: dark) { body { color: #f5f5f7; } hr { border-top-color: rgba(255,255,255,.12); } }
-                </style>
-                <h1>Wake 1.41</h1>
-                <p class="date">21 Temmuz 2026 · 21 July 2026</p>
-                <p class="tag">🌐 Yeni</p>
-                <ul>
-                    <li><b>Uygulama içi dil seçici</b> — sistem dilini takip et ya da Ayarlar'dan İngilizce, Türkçe veya Çince seç. Değişikliği uygulamak için yeniden başlatma gerekir. Topluluk katkısıyla (@ssdiwu). 🙏</li>
-                </ul>
-                <hr>
-                <p class="tag">🌐 New</p>
-                <ul>
-                    <li><b>In-app language selector</b> — follow the system language or pick English, Turkish, or Chinese in Settings. A restart applies the change. Community contribution by @ssdiwu. 🙏</li>
-                </ul>
-            ]]></description>
+<description xml:lang="en"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.41</h1><p class="date">21 July 2026</p><p class="tag">🌐 New</p><ul><li><b>In-app language selector</b> — follow the system language or pick English, Turkish, or Chinese in Settings. A restart applies the change. Community contribution by @ssdiwu. 🙏</li></ul>]]></description>
+            <description xml:lang="tr"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.41</h1><p class="date">21 Temmuz 2026</p><p class="tag">🌐 Yeni</p><ul><li><b>Uygulama içi dil seçici</b> — sistem dilini takip et ya da Ayarlar'dan İngilizce, Türkçe veya Çince seç. Değişikliği uygulamak için yeniden başlatma gerekir. Topluluk katkısıyla (@ssdiwu). 🙏</li></ul>]]></description>
+            <description xml:lang="zh-Hans"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.41</h1><p class="date">2026 年 7 月 21 日</p><p class="tag">🌐 新增</p><ul><li><b>应用内语言选择</b> — 跟随系统语言，或在设置中选择英语、土耳其语或中文。重启后生效。由社区贡献（@ssdiwu）。🙏</li></ul>]]></description>
+            <description xml:lang="ja"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.41</h1><p class="date">2026年7月21日</p><p class="tag">🌐 新機能</p><ul><li><b>アプリ内の言語選択</b> — システム言語に従うか、設定で英語・トルコ語・中国語を選べます。再起動で反映されます。コミュニティによる貢献（@ssdiwu）。🙏</li></ul>]]></description>
+            <description xml:lang="ko"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.41</h1><p class="date">2026년 7월 21일</p><p class="tag">🌐 새로운 기능</p><ul><li><b>앱 내 언어 선택</b> — 시스템 언어를 따르거나 설정에서 영어, 터키어, 중국어를 선택하세요. 재시작하면 적용됩니다. 커뮤니티 기여(@ssdiwu). 🙏</li></ul>]]></description>
             <enclosure
                 url="https://github.com/Jarvis322/MacWake/releases/download/v1.41/Wake-1.41.dmg"
                 sparkle:version="42"
@@ -340,33 +162,11 @@
             <pubDate>Tue, 21 Jul 2026 00:00:00 +0000</pubDate>
             <sparkle:version>41</sparkle:version>
             <sparkle:shortVersionString>1.40</sparkle:shortVersionString>
-            <description><![CDATA[
-                <meta charset="utf-8">
-                <style>
-                    :root { color-scheme: light dark; }
-                    body { font: 13px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; margin: 4px 2px; color: #1d1d1f; }
-                    h1 { font-size: 15px; margin: 0 0 2px; }
-                    .date { font-size: 11px; opacity: .5; margin: 0 0 14px; }
-                    .tag { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; opacity: .55; margin: 16px 0 8px; }
-                    .tag:first-of-type { margin-top: 0; }
-                    ul { margin: 0; padding-left: 18px; }
-                    li { margin-bottom: 8px; }
-                    b { font-weight: 600; }
-                    hr { border: 0; border-top: 1px solid rgba(0,0,0,.1); margin: 16px 0 0; }
-                    @media (prefers-color-scheme: dark) { body { color: #f5f5f7; } hr { border-top-color: rgba(255,255,255,.12); } }
-                </style>
-                <h1>Wake 1.40</h1>
-                <p class="date">21 Temmuz 2026 · 21 July 2026</p>
-                <p class="tag">🌍 Yeni</p>
-                <ul>
-                    <li><b>Basitleştirilmiş Çince (简体中文)</b> arayüz desteği — uygulama artık sistem diline göre İngilizce, Türkçe veya Çince görünüyor. Topluluk katkısıyla (@ssdiwu). 🙏</li>
-                </ul>
-                <hr>
-                <p class="tag">🌍 New</p>
-                <ul>
-                    <li><b>Simplified Chinese (简体中文)</b> interface — the app now follows your system language in English, Turkish, or Chinese. Community contribution by @ssdiwu. 🙏</li>
-                </ul>
-            ]]></description>
+<description xml:lang="en"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.40</h1><p class="date">21 July 2026</p><p class="tag">🌍 New</p><ul><li><b>Simplified Chinese (简体中文)</b> interface — the app now follows your system language in English, Turkish, or Chinese. Community contribution by @ssdiwu. 🙏</li></ul>]]></description>
+            <description xml:lang="tr"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.40</h1><p class="date">21 Temmuz 2026</p><p class="tag">🌍 Yeni</p><ul><li><b>Basitleştirilmiş Çince (简体中文)</b> arayüz desteği — uygulama artık sistem diline göre İngilizce, Türkçe veya Çince görünüyor. Topluluk katkısıyla (@ssdiwu). 🙏</li></ul>]]></description>
+            <description xml:lang="zh-Hans"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.40</h1><p class="date">2026 年 7 月 21 日</p><p class="tag">🌍 新增</p><ul><li><b>简体中文</b>界面 — 应用现在会根据系统语言显示英语、土耳其语或中文。由社区贡献（@ssdiwu）。🙏</li></ul>]]></description>
+            <description xml:lang="ja"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.40</h1><p class="date">2026年7月21日</p><p class="tag">🌍 新機能</p><ul><li><b>簡体字中国語（简体中文）</b>のインターフェース — アプリがシステム言語に応じて英語・トルコ語・中国語で表示されます。コミュニティによる貢献（@ssdiwu）。🙏</li></ul>]]></description>
+            <description xml:lang="ko"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.40</h1><p class="date">2026년 7월 21일</p><p class="tag">🌍 새로운 기능</p><ul><li><b>중국어 간체(简体中文)</b> 인터페이스 — 이제 시스템 언어에 따라 영어, 터키어, 중국어로 표시됩니다. 커뮤니티 기여(@ssdiwu). 🙏</li></ul>]]></description>
             <enclosure
                 url="https://github.com/Jarvis322/MacWake/releases/download/v1.40/Wake-1.40.dmg"
                 sparkle:version="41"
@@ -381,37 +181,11 @@
             <pubDate>Fri, 10 Jul 2026 00:00:00 +0000</pubDate>
             <sparkle:version>40</sparkle:version>
             <sparkle:shortVersionString>1.39</sparkle:shortVersionString>
-            <description><![CDATA[
-                <meta charset="utf-8">
-                <style>
-                    :root { color-scheme: light dark; }
-                    body { font: 13px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; margin: 4px 2px; color: #1d1d1f; }
-                    h1 { font-size: 15px; margin: 0 0 2px; }
-                    .date { font-size: 11px; opacity: .5; margin: 0 0 14px; }
-                    .tag { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; opacity: .55; margin: 16px 0 8px; }
-                    .tag:first-of-type { margin-top: 0; }
-                    ul { margin: 0; padding-left: 18px; }
-                    li { margin-bottom: 8px; }
-                    b { font-weight: 600; }
-                    hr { border: 0; border-top: 1px solid rgba(0,0,0,.1); margin: 16px 0 0; }
-                    @media (prefers-color-scheme: dark) { body { color: #f5f5f7; } hr { border-top-color: rgba(255,255,255,.12); } }
-                </style>
-                <h1>Wake 1.39</h1>
-                <p class="date">10 Temmuz 2026 · 10 July 2026</p>
-                <p class="tag">🐛 Hata düzeltmeleri</p>
-                <ul>
-                    <li><b>Now Playing</b> — önceki/sonraki şarkıya geçtiğinde parça adı ve kapak artık anında güncelleniyor; bir sonraki yenilemeyi veya tekrar üstüne gelmeyi beklemene gerek yok.</li>
-                    <li><b>Şarj limiti</b> — zamanlanmış şarjda pil dolmaya yakınken oluşan takılma ve kalibrasyon sırasında limiti kapatınca yaşanan nadir donma düzeltildi.</li>
-                    <li><b>Dynamic Island</b> — müzik başlayınca veya durunca panel artık imlecin altında kapanmıyor.</li>
-                </ul>
-                <hr>
-                <p class="tag">🐛 Bug fixes</p>
-                <ul>
-                    <li><b>Now Playing</b> — the track title and artwork now update instantly when you skip to the previous or next song, instead of lagging until the next refresh or a re-hover.</li>
-                    <li><b>Charge limit</b> — fixed a stutter near full battery during scheduled charging, and a rare freeze if you turned the charge limit off while a calibration cycle was running.</li>
-                    <li><b>Dynamic Island</b> — the panel no longer collapses out from under the cursor when music starts or stops.</li>
-                </ul>
-            ]]></description>
+<description xml:lang="en"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.39</h1><p class="date">10 July 2026</p><p class="tag">🐛 Bug fixes</p><ul><li><b>Now Playing</b> — the track title and artwork now update instantly when you skip to the previous or next song, instead of lagging until the next refresh or a re-hover.</li><li><b>Charge limit</b> — fixed a stutter near full battery during scheduled charging, and a rare freeze if you turned the charge limit off while a calibration cycle was running.</li><li><b>Dynamic Island</b> — the panel no longer collapses out from under the cursor when music starts or stops.</li></ul>]]></description>
+            <description xml:lang="tr"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.39</h1><p class="date">10 Temmuz 2026</p><p class="tag">🐛 Hata düzeltmeleri</p><ul><li><b>Now Playing</b> — önceki/sonraki şarkıya geçtiğinde parça adı ve kapak artık anında güncelleniyor; bir sonraki yenilemeyi veya tekrar üstüne gelmeyi beklemene gerek yok.</li><li><b>Şarj limiti</b> — zamanlanmış şarjda pil dolmaya yakınken oluşan takılma ve kalibrasyon sırasında limiti kapatınca yaşanan nadir donma düzeltildi.</li><li><b>Dynamic Island</b> — müzik başlayınca veya durunca panel artık imlecin altında kapanmıyor.</li></ul>]]></description>
+            <description xml:lang="zh-Hans"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.39</h1><p class="date">2026 年 7 月 10 日</p><p class="tag">🐛 问题修复</p><ul><li><b>Now Playing</b> — 切换上一首/下一首时，曲目名称和封面现在会立即更新，不再等到下一次刷新或重新悬停。</li><li><b>充电限制</b> — 修复了定时充电在接近满电时的抖动，以及在校准过程中关闭充电限制时偶发的卡住问题。</li><li><b>灵动岛</b> — 音乐开始或停止时，面板不再从光标下方收起。</li></ul>]]></description>
+            <description xml:lang="ja"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.39</h1><p class="date">2026年7月10日</p><p class="tag">🐛 バグ修正</p><ul><li><b>Now Playing</b> — 前後の曲にスキップした際、曲名とアートワークが即座に更新されるようになりました。次の更新や再ホバーを待つ必要はありません。</li><li><b>充電上限</b> — スケジュール充電で満充電付近に生じるちらつきと、キャリブレーション中に充電上限をオフにしたときのまれな停止を修正しました。</li><li><b>Dynamic Island</b> — 音楽の再生開始・停止時に、パネルがカーソルの下で閉じてしまうことがなくなりました。</li></ul>]]></description>
+            <description xml:lang="ko"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.39</h1><p class="date">2026년 7월 10일</p><p class="tag">🐛 버그 수정</p><ul><li><b>Now Playing</b> — 이전/다음 곡으로 넘길 때 곡 제목과 아트워크가 즉시 갱신됩니다. 다음 새로 고침이나 다시 올려놓기를 기다릴 필요가 없습니다.</li><li><b>충전 제한</b> — 예약 충전에서 완충에 가까울 때 발생하던 떨림과, 캘리브레이션 중 충전 제한을 끌 때 드물게 멈추던 문제를 수정했습니다.</li><li><b>Dynamic Island</b> — 음악이 시작되거나 멈출 때 패널이 커서 아래에서 닫히지 않습니다.</li></ul>]]></description>
             <enclosure
                 url="https://github.com/Jarvis322/MacWake/releases/download/v1.39/Wake-1.39.dmg"
                 sparkle:version="40"
@@ -426,33 +200,11 @@
             <pubDate>Wed, 09 Jul 2026 00:00:00 +0000</pubDate>
             <sparkle:version>39</sparkle:version>
             <sparkle:shortVersionString>1.38</sparkle:shortVersionString>
-            <description><![CDATA[
-                <meta charset="utf-8">
-                <style>
-                    :root { color-scheme: light dark; }
-                    body { font: 13px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; margin: 4px 2px; color: #1d1d1f; }
-                    h1 { font-size: 15px; margin: 0 0 2px; }
-                    .date { font-size: 11px; opacity: .5; margin: 0 0 14px; }
-                    .tag { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; opacity: .55; margin: 16px 0 8px; }
-                    .tag:first-of-type { margin-top: 0; }
-                    ul { margin: 0; padding-left: 18px; }
-                    li { margin-bottom: 8px; }
-                    b { font-weight: 600; }
-                    hr { border: 0; border-top: 1px solid rgba(0,0,0,.1); margin: 16px 0 0; }
-                    @media (prefers-color-scheme: dark) { body { color: #f5f5f7; } hr { border-top-color: rgba(255,255,255,.12); } }
-                </style>
-                <h1>Wake 1.38</h1>
-                <p class="date">9 Temmuz 2026 · 9 July 2026</p>
-                <p class="tag">✨ Yeni</p>
-                <ul>
-                    <li><b>Now Playing 🎵</b> — çalan Spotify veya Apple Music parçasını doğrudan Dynamic Island'da gör; önceki / oynat-duraklat / sonraki kontrolleriyle. <b>Ayarlar › Now Playing</b>'den aç. (Developer ID sürümü; App Store sürümünde bulunmaz.)</li>
-                </ul>
-                <hr>
-                <p class="tag">✨ New</p>
-                <ul>
-                    <li><b>Now Playing 🎵</b> — see the current Spotify or Apple Music track right in the Dynamic Island, with previous / play-pause / next controls. Opt in from <b>Settings › Now Playing</b>. (Developer ID build; the App Store build doesn't include this.)</li>
-                </ul>
-            ]]></description>
+<description xml:lang="en"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.38</h1><p class="date">9 July 2026</p><p class="tag">✨ New</p><ul><li><b>Now Playing 🎵</b> — see the current Spotify or Apple Music track right in the Dynamic Island, with previous / play-pause / next controls. Opt in from <b>Settings › Now Playing</b>. (Developer ID build; the App Store build doesn't include this.)</li></ul>]]></description>
+            <description xml:lang="tr"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.38</h1><p class="date">9 Temmuz 2026</p><p class="tag">✨ Yeni</p><ul><li><b>Now Playing 🎵</b> — çalan Spotify veya Apple Music parçasını doğrudan Dynamic Island'da gör; önceki / oynat-duraklat / sonraki kontrolleriyle. <b>Ayarlar › Now Playing</b>'den aç. (Developer ID sürümü; App Store sürümünde bulunmaz.)</li></ul>]]></description>
+            <description xml:lang="zh-Hans"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.38</h1><p class="date">2026 年 7 月 9 日</p><p class="tag">✨ 新增</p><ul><li><b>Now Playing 🎵</b> — 在灵动岛中直接查看正在播放的 Spotify 或 Apple Music 曲目，并提供上一首 / 播放暂停 / 下一首控制。在设置 › Now Playing 中开启。（Developer ID 版本；App Store 版本不含此功能。）</li></ul>]]></description>
+            <description xml:lang="ja"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.38</h1><p class="date">2026年7月9日</p><p class="tag">✨ 新機能</p><ul><li><b>Now Playing 🎵</b> — 再生中の Spotify または Apple Music の曲を Dynamic Island に表示し、前へ / 再生・一時停止 / 次へ の操作ができます。設定 › Now Playing で有効化。（Developer ID 版のみ。App Store 版には含まれません。）</li></ul>]]></description>
+            <description xml:lang="ko"><![CDATA[<meta charset="utf-8"><style>:root{color-scheme:light dark}body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;margin:4px 2px;color:#1d1d1f}h1{font-size:15px;margin:0 0 2px}.date{font-size:11px;opacity:.5;margin:0 0 14px}.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.55;margin:14px 0 8px}.tag:first-of-type{margin-top:0}ul{margin:0;padding-left:18px}li{margin-bottom:8px}b{font-weight:600}@media(prefers-color-scheme:dark){body{color:#f5f5f7}}</style><h1>Wake 1.38</h1><p class="date">2026년 7월 9일</p><p class="tag">✨ 새로운 기능</p><ul><li><b>Now Playing 🎵</b> — 재생 중인 Spotify 또는 Apple Music 곡을 Dynamic Island에서 바로 확인하고 이전 / 재생·일시정지 / 다음을 제어하세요. 설정 › Now Playing에서 켤 수 있습니다. (Developer ID 버전 전용, App Store 버전에는 없습니다.)</li></ul>]]></description>
             <enclosure
                 url="https://github.com/Jarvis322/MacWake/releases/download/v1.38/Wake-1.38.dmg"
                 sparkle:version="39"
