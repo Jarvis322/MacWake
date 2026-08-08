@@ -110,6 +110,28 @@ enum HelperSMC {
         return String(bytes: b, encoding: .ascii) ?? "?"
     }
 
+    /// The fan mode key's casing is generation-specific: `F0Md` up to M4, lowercase `F0md`
+    /// on M5 (Mac17,x). Only the name differs, so ask the SMC which one it has instead of
+    /// guessing — the uppercase-only lookup made M5 report manual fan control as unsupported
+    /// while the key sat right there under another name, and it also meant the restore path
+    /// wrote a key that did not exist.
+    private static func fanModeKey(_ conn: io_connect_t, _ index: Int) -> String? {
+        for name in ["F\(index)Md", "F\(index)md"] where keyInfo(conn, name) != nil {
+            return name
+        }
+        return nil
+    }
+
+    /// AppleSMC key attributes: 0x80 = readable, 0x40 = writable. The previous check tested
+    /// 0x02, an unrelated flag, so every dump labelled writable keys read-only — including
+    /// the charge-control dump added in 1.54.
+    private static func accessSuffix(_ attributes: UInt8) -> String {
+        var suffix = ""
+        if attributes & 0x80 != 0 { suffix += "r" }
+        if attributes & 0x40 != 0 { suffix += "w" }
+        return suffix.isEmpty ? "-" : suffix
+    }
+
     /// Dumps every fan key with its SMC type and current value, then probes a write to the
     /// keys manual control depends on. Read by the app's "Copy fan diagnostics" button —
     /// the only reliable way to see what a remote tester's daemon is actually doing.
@@ -142,10 +164,18 @@ enum HelperSMC {
             // override in progress must survive a diagnostics run.
             let priorTarget = readFanRPM(conn, "F\(i)Tg")
             let priorMin = readFanRPM(conn, "F\(i)Mn")
-            let probe = min(hwMin + 1800, maxRPM > hwMin ? maxRPM : 6000)
+            // A target below what the fan is already doing can never show an increase, so
+            // the probe returned "no change" on any Mac whose fans were spinning fast — a
+            // false negative rather than a result. Aim above the current speed, still bounded
+            // by the reported maximum.
+            let currentRPM = readFanRPM(conn, "F\(i)Ac")
+            let ceiling = maxRPM > hwMin ? maxRPM : 6000
+            let probe = min(max(hwMin + 1800, currentRPM + 1200), ceiling)
             let wTg = writeFanRPM(conn, "F\(i)Tg", probe)
             let wMn = writeFanRPM(conn, "F\(i)Mn", probe)
-            let wMd = write(conn, "F\(i)Md", 1)
+            let modeKey = fanModeKey(conn, i)
+            let wMd = modeKey.map { write(conn, $0, 1) } ?? false
+            out += "probe F\(i): mode key \(modeKey ?? "ABSENT (neither Md nor md)")\n"
             out += "probe F\(i): target=\(probe) writeTg=\(wTg) writeMn=\(wMn) writeMd=\(wMd)\n"
             let rpmBefore = readFanRPM(conn, "F\(i)Ac")
             Thread.sleep(forTimeInterval: 4.0)
@@ -156,7 +186,7 @@ enum HelperSMC {
             // active left the user's chosen target overwritten by the probe value.
             _ = writeFanRPM(conn, "F\(i)Tg", priorTarget)
             _ = writeFanRPM(conn, "F\(i)Mn", priorMin)
-            if hardwareMin[i] == nil { _ = write(conn, "F\(i)Md", 0) }
+            if hardwareMin[i] == nil, let modeKey { _ = write(conn, modeKey, 0) }
             out += "probe F\(i): restored Tg=\(priorTarget) Mn=\(priorMin)\n"
         }
         out += chargeDiagnostics(conn)
@@ -177,7 +207,7 @@ enum HelperSMC {
                 out += "\(key) ABSENT\n"
                 continue
             }
-            let writable = (info.dataAttributes & 0x02) != 0 ? "w" : "r"
+            let writable = accessSuffix(info.dataAttributes)
             out += "\(key) type=\(typeString(info.dataType)) size=\(info.dataSize)"
             out += " attr=0x\(String(info.dataAttributes, radix: 16))\(writable) value=\(read(conn, key))\n"
         }
@@ -220,7 +250,7 @@ enum HelperSMC {
             let name = typeString(r.key)
             guard name.hasPrefix("CH") else { continue }
             guard let info = keyInfo(conn, name) else { continue }
-            let writable = (info.dataAttributes & 0x02) != 0 ? "w" : "r"
+            let writable = accessSuffix(info.dataAttributes)
             text += "\(name) \(typeString(info.dataType)) size=\(info.dataSize)"
             text += " attr=0x\(String(info.dataAttributes, radix: 16))\(writable) value=\(read(conn, name))\n"
         }
@@ -252,8 +282,7 @@ enum HelperSMC {
             guard let info = keyInfo(conn, name) else { continue }
             let type = typeString(info.dataType)
             let value = (type == "flt " || type == "fpe2") ? "\(readFanRPM(conn, name))" : "\(read(conn, name))"
-            // bit 0x02 of dataAttributes marks a writable key on this interface.
-            let writable = (info.dataAttributes & 0x02) != 0 ? "w" : "r"
+            let writable = accessSuffix(info.dataAttributes)
             text += "\(name) \(type) size=\(info.dataSize) attr=0x\(String(info.dataAttributes, radix: 16))\(writable) value=\(value)\n"
         }
         return text.isEmpty ? "(no F* keys found)\n" : text
@@ -303,7 +332,7 @@ enum HelperSMC {
                 var took = writeFanRPM(conn, "F\(i)Tg", clamped) && readFanRPM(conn, "F\(i)Tg") == clamped
                 if !took {
                     // Intel path: forced mode first, then the target.
-                    _ = write(conn, "F\(i)Md", 1)
+                    if let modeKey = fanModeKey(conn, i) { _ = write(conn, modeKey, 1) }
                     took = writeFanRPM(conn, "F\(i)Tg", clamped) && readFanRPM(conn, "F\(i)Tg") == clamped
                 }
                 if !took {
@@ -323,7 +352,9 @@ enum HelperSMC {
                 // that — not the unwritable mode key — is how auto control is handed back.
                 let okTg = writeFanRPM(conn, "F\(i)Tg", 0)
                 if let hwMin = hardwareMin[i] { _ = writeFanRPM(conn, "F\(i)Mn", hwMin) }
-                _ = write(conn, "F\(i)Md", 0)
+                // Restore must use the same resolved key: writing the uppercase name on a
+                // machine that only has the lowercase one silently skipped handing control back.
+                if let modeKey = fanModeKey(conn, i) { _ = write(conn, modeKey, 0) }
                 let mask = read(conn, "FS! ")
                 _ = write(conn, "FS! ", mask & ~UInt8(1 << i))
                 hardwareMin[i] = nil
