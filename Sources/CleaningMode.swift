@@ -92,6 +92,12 @@ final class CleaningModeManager: ObservableObject {
 
     // MARK: - Event Tap
 
+    /// NX_SYSDEFINED. CGEventType has no case for it, but the tap mask takes raw bits.
+    private let kSystemDefinedEventType = 14
+    /// NX_SUBTYPE_AUX_CONTROL_BUTTONS — the media/function keys within NX_SYSDEFINED.
+    /// Other subtypes (screen changes, power state) must pass through untouched.
+    private let kAuxControlButtonsSubtype: Int64 = 8
+
     private func installEventTap() -> Bool {
         let mask: CGEventMask =
             (1 << CGEventType.keyDown.rawValue) |
@@ -106,7 +112,11 @@ final class CleaningModeManager: ObservableObject {
             (1 << CGEventType.mouseMoved.rawValue) |
             (1 << CGEventType.leftMouseDragged.rawValue) |
             (1 << CGEventType.rightMouseDragged.rawValue) |
-            (1 << CGEventType.scrollWheel.rawValue)
+            (1 << CGEventType.scrollWheel.rawValue) |
+            // The media/function row (volume, brightness, play-pause, track skip) doesn't
+            // arrive as keyDown — it's NX_SYSDEFINED, which CGEventType doesn't name, so
+            // those keys stayed live and wiping the screen changed volume or skipped songs.
+            (1 << CGEventMask(kSystemDefinedEventType))
 
         guard let tap = CGEvent.tapCreate(
             tap: .cgSessionEventTap,
@@ -145,6 +155,14 @@ final class CleaningModeManager: ObservableObject {
         if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
             if let tap = eventTap { CGEvent.tapEnable(tap: tap, enable: true) }
             return nil
+        }
+
+        // System-defined events carry the media/function row, but also things the system
+        // needs (screen and power changes) — swallow only the aux control buttons, and
+        // pass anything we can't positively identify straight through.
+        if type.rawValue == UInt32(kSystemDefinedEventType) {
+            let isAuxControl = NSEvent(cgEvent: event)?.subtype.rawValue == Int16(kAuxControlButtonsSubtype)
+            return isAuxControl ? nil : Unmanaged.passUnretained(event)
         }
 
         if type == .keyDown || type == .keyUp {
