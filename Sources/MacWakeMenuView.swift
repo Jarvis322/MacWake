@@ -1138,7 +1138,7 @@ struct MacWakeMenuView: View {
                             Button(action: { chargeLimit.cancelCalibration() }) { Text("Cancel").frame(maxWidth: .infinity) }
                                 .buttonStyle(.bordered).controlSize(.small)
                         } else {
-                            Button(action: { chargeLimit.calibrateNow() }) {
+                            Button(action: { chargeLimit.calibrateNow(batteryLevel: tracker.currentBatteryLevel) }) {
                                 HStack { Image(systemName: "gauge.with.needle"); Text("Calibrate Now") }.frame(maxWidth: .infinity)
                             }
                             .buttonStyle(.bordered).controlSize(.small)

@@ -478,16 +478,24 @@ final class ChargeLimitManager: ObservableObject {
 
     /// Clear every charge block (both CHTE inhibit and CHIE adapter-off) so charging
     /// can proceed no matter which method was last used.
-    private func restoreCharging() async {
-        guard let proxy = remoteProxy() else { return }
-        await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
-            proxy.setForceDischarge(false) { _ in cont.resume() }
+    ///
+    /// A failed write must NOT update `lastAdapterEnabled`: claiming the adapter is back
+    /// while it's still cut makes the control loop believe there's nothing to do, and the
+    /// Mac keeps running down the battery. Leaving the old state means the guard in
+    /// evaluate() — and the calibration charge phase — retry on the next tick.
+    @discardableResult
+    private func restoreCharging() async -> Bool {
+        guard let proxy = remoteProxy() else { return false }
+        let dischargeCleared = await xpcBool { reply in
+            proxy.setForceDischarge(false, reply: reply)
         }
-        await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
-            proxy.setAdapterEnabled(true) { _ in cont.resume() }
+        let chargingAllowed = await xpcBool { reply in
+            proxy.setAdapterEnabled(true, reply: reply)
         }
+        guard dischargeCleared, chargingAllowed else { return false }
         lastAdapterEnabled = true
         lastToggleAt = Date()
+        return true
     }
 
     /// Synchronous best-effort restore for app termination — clears charge blocks and
@@ -548,7 +556,11 @@ final class ChargeLimitManager: ObservableObject {
             switch calibrationPhase {
             case .discharge:
                 if batteryLevel <= calibrationDischargeFloor {
+                    // Restore power in THIS evaluation. Only flipping the phase here left
+                    // the adapter cut until the next 30-second tick, and the battery kept
+                    // draining through that window — reported reaching 8–9% on a 15% floor.
                     calibrationPhase = .charge
+                    Task { await restoreCharging() }
                 } else if lastAdapterEnabled != false {
                     Task {
                         let ok = await forceDischarge(true)   // actively drain on AC
@@ -585,7 +597,7 @@ final class ChargeLimitManager: ObservableObject {
                 }
             }
         } else if calibrationEnabled, isCalibrationDue() {
-            startCalibration()
+            startCalibration(batteryLevel: batteryLevel)
             return
         }
 
@@ -665,9 +677,9 @@ final class ChargeLimitManager: ObservableObject {
     }
 
     /// Manually start a calibration cycle now (from the Settings button).
-    func calibrateNow() {
+    func calibrateNow(batteryLevel: Int) {
         guard helperStatus == .ready else { return }
-        startCalibration()
+        startCalibration(batteryLevel: batteryLevel)
     }
 
     /// Force a force-discharge state via the adapter (CHIE), independent of sailing mode.
@@ -682,17 +694,26 @@ final class ChargeLimitManager: ObservableObject {
         return ok
     }
 
-    private func startCalibration() {
+    /// A battery already at or below the safety floor must never be drained further, so
+    /// the discharge phase is skipped and the cycle starts by charging to 100%.
+    private func startCalibration(batteryLevel: Int) {
         guard !calibrationActive else { return }
+        let alreadyAtFloor = batteryLevel <= calibrationDischargeFloor
         calibrationActive = true
-        calibrationPhase = .discharge
+        calibrationPhase = alreadyAtFloor ? .charge : .discharge
         calibrationHoldStart = nil
         calibrationStartedAt = Date()
         calibrationXPCFailureCount = 0
-        Task { await forceDischarge(true) }   // begin by draining
+        if alreadyAtFloor {
+            Task { await restoreCharging() }
+        } else {
+            Task { await forceDischarge(true) }   // begin by draining
+        }
         DynamicIslandManager.shared.trigger(.alert(
             title: String(localized: "Battery Calibration"),
-            message: String(localized: "Discharging, then a full charge to recalibrate the battery."),
+            message: String(localized: alreadyAtFloor
+                            ? "Charging to 100% to recalibrate the battery."
+                            : "Discharging, then a full charge to recalibrate the battery."),
             isWarning: false
         ))
     }
