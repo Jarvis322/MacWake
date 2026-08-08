@@ -1443,7 +1443,8 @@ struct MacWakeMenuView: View {
                     title: "Health",
                     value: "\(tracker.batteryHealth)%",
                     subtitle: "Max capacity",
-                    color: greenColor
+                    color: greenColor,
+                    info: healthDiagnosticNote
                 )
                 
                 statCard(
@@ -1461,12 +1462,15 @@ struct MacWakeMenuView: View {
                 )
             }
 
-            if let rawHealth = tracker.rawBatteryHealth, rawHealth != tracker.batteryHealth {
-                Text(String(format: String(localized: "RAW_CAPACITY_NOTE_FMT"), rawHealth))
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-            }
         }
+    }
+
+    /// Hover text for the Health card. The controller's estimate is diagnostic only: it is
+    /// shown here to one decimal and deliberately kept off the menu bar, widget, Dynamic
+    /// Island and health alerts, which all read the headline value.
+    private var healthDiagnosticNote: String? {
+        guard let precise = tracker.batteryHealthPrecise else { return nil }
+        return String(format: String(localized: "HEALTH_ESTIMATE_HELP_FMT"), precise)
     }
 
     // MARK: - System Temperatures (Apple Silicon sensors)
@@ -1743,7 +1747,8 @@ struct MacWakeMenuView: View {
     }
     
     // MARK: - Helpers
-    private func statCard(title: String, value: String, subtitle: String, color: Color) -> some View {
+    private func statCard(title: String, value: String, subtitle: String, color: Color,
+                          info: String? = nil) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(LocalizedStringKey(title))
                 .font(.caption2)
@@ -1752,9 +1757,17 @@ struct MacWakeMenuView: View {
                 .font(.title2)
                 .fontWeight(.bold)
                 .foregroundColor(color)
-            Text(LocalizedStringKey(subtitle))
-                .font(.caption2)
-                .foregroundColor(.secondary)
+            HStack(spacing: 3) {
+                Text(LocalizedStringKey(subtitle))
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                if let info {
+                    Image(systemName: "info.circle")
+                        .font(.system(size: 9))
+                        .foregroundColor(.secondary)
+                        .help(info)
+                }
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(10)

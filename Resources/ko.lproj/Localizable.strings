@@ -424,3 +424,5 @@
 
 "MENUBAR_HIDDEN" = "숨김";
 "MENUBAR_HIDDEN_NOTE" = "메뉴 바 항목이 숨겨져 있습니다. 노치를 클릭해 다이내믹 아일랜드에서 MacWake를 열거나, 여기서 항목을 다시 켜세요.";
+
+"HEALTH_ESTIMATE_HELP_FMT" = "컨트롤러 추정값: %.1f%%\n\n이 값은 배터리 컨트롤러에서 가져온 것으로 진단 참고용입니다. macOS가 보고하는 최대 용량과 다를 수 있습니다.";

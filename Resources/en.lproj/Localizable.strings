@@ -93,3 +93,5 @@
 
 "MENUBAR_HIDDEN" = "Hidden";
 "MENUBAR_HIDDEN_NOTE" = "The menu bar item is hidden. Click the notch to open MacWake from the Dynamic Island, or switch any part back on here.";
+
+"HEALTH_ESTIMATE_HELP_FMT" = "Controller estimate: %.1f%%\n\nThis figure comes from the battery controller and is for diagnostics only. It may differ from the Maximum Capacity macOS reports.";

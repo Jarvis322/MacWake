@@ -30,6 +30,12 @@ class BatteryTracker: ObservableObject {
     @Published var isOriginalAppleAdapter: Bool = false
     @Published var batteryHealth: Int = 100
     @Published var rawBatteryHealth: Int?
+    /// The capacity ratio before rounding, for the diagnostic readout. Never used as the
+    /// headline value or on any summary surface.
+    @Published var batteryHealthPrecise: Double?
+    /// True when the ratio came from the drifting live re-estimate rather than the
+    /// controller's settled NominalChargeCapacity.
+    @Published private(set) var healthIsLiveEstimate = false
     @Published var batteryCycles: Int = 0
     @Published var batteryTemperature: Double = 0.0
     @Published var temperatureSamples: [Double] = []
@@ -834,24 +840,19 @@ class BatteryTracker: ObservableObject {
         let nominalMax = capacity("NominalChargeCapacity")
         let rawMax = capacity("AppleRawMaxCapacity") ?? capacity("FullChargeCapacity")
 
-        let rawHealth: Int?
-        if let nominalMax, let design, design > 0 {
-            rawHealth = min(100, nominalMax * 100 / design)
-        } else if let rawMax, let design, design > 0 {
-            rawHealth = min(100, rawMax * 100 / design)
-        } else {
-            rawHealth = nil
-        }
+        let ratio = BatteryHealthMath.ratio(nominal: nominalMax, liveMax: rawMax, design: design)
 
-        rawBatteryHealth = rawHealth
+        healthIsLiveEstimate = ratio?.isLiveEstimate ?? false
+        batteryHealthPrecise = ratio?.value
+        rawBatteryHealth = ratio.map { Int($0.value.rounded(.down)) }
 
         // Capacity ratio first. On Apple Silicon AppleSmartBattery's MaxCapacity is a
         // normalised value macOS pins at 100 regardless of wear — trusting it reported
         // 100% health on an 82%-worn battery while the raw ratio right below it was
         // correct. Keep MaxCapacity only as a last resort for Macs that expose no
         // capacity pair (older Intel models report it as a real percentage there).
-        if let rawHealth {
-            batteryHealth = rawHealth
+        if let ratio {
+            batteryHealth = BatteryHealthMath.displayedHealth(current: batteryHealth, ratio: ratio)
         } else if let reportedMaxCapacity = dict["MaxCapacity"] as? Int,
                   (0...100).contains(reportedMaxCapacity) {
             batteryHealth = reportedMaxCapacity
@@ -1783,5 +1784,44 @@ extension BatteryTracker.Session {
     var screenMinutesPerPercent: Double? {
         guard batteryUsed > 0 else { return nil }
         return (screenOnDuration / 60) / Double(batteryUsed)
+    }
+}
+
+/// Battery-health arithmetic, kept pure so the two metrics can be regression-tested
+/// without an IORegistry snapshot.
+///
+/// Two different numbers are in play and must not be conflated:
+/// * the **capacity ratio** MacWake shows — wear, derived from the controller's capacities;
+/// * `MaxCapacity`, which Apple Silicon pins at 100 regardless of wear, so it is only a
+///   last resort for Macs that expose no capacity pair at all.
+enum BatteryHealthMath {
+    struct Ratio: Equatable {
+        let value: Double
+        /// The source drifts between samples, so the display has to damp it.
+        let isLiveEstimate: Bool
+    }
+
+    /// `nominal` is the controller's settled figure and always wins; `liveMax`
+    /// (FullChargeCapacity / AppleRawMaxCapacity) is a re-estimate that moves minute to
+    /// minute and is only used when nothing better is exposed.
+    static func ratio(nominal: Int?, liveMax: Int?, design: Int?) -> Ratio? {
+        guard let design, design > 0 else { return nil }
+        if let nominal {
+            return Ratio(value: min(100, Double(nominal) * 100 / Double(design)), isLiveEstimate: false)
+        }
+        if let liveMax {
+            return Ratio(value: min(100, Double(liveMax) * 100 / Double(design)), isLiveEstimate: true)
+        }
+        return nil
+    }
+
+    /// The headline integer. On the live-estimate path the ratio sits near an integer
+    /// boundary, so requiring a full point of movement stops it flip-flopping (which also
+    /// wrote a battery-health history entry on every sample).
+    static func displayedHealth(current: Int, ratio: Ratio) -> Int {
+        if ratio.isLiveEstimate, abs(ratio.value - Double(current)) < 1.0 {
+            return current
+        }
+        return Int(ratio.value.rounded(.down))
     }
 }
