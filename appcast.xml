@@ -6,6 +6,53 @@
         <description>Wake — Battery Health update feed</description>
         <language>en</language>
         <item>
+            <title>Version 1.49</title>
+            <pubDate>Sat, 08 Aug 2026 11:30:00 +0000</pubDate>
+            <sparkle:version>55</sparkle:version>
+            <sparkle:shortVersionString>1.49</sparkle:shortVersionString>
+            <description><![CDATA[
+                <meta charset="utf-8">
+                <style>
+                    :root { color-scheme: light dark; }
+                    body { font: 13px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; margin: 4px 2px; color: #1d1d1f; }
+                    h1 { font-size: 15px; margin: 0 0 2px; }
+                    .date { font-size: 11px; opacity: .5; margin: 0 0 14px; }
+                    .tag { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; opacity: .55; margin: 16px 0 8px; }
+                    .tag:first-of-type { margin-top: 0; }
+                    ul { margin: 0; padding-left: 18px; }
+                    li { margin-bottom: 8px; }
+                    b { font-weight: 600; }
+                    hr { border: 0; border-top: 1px solid rgba(0,0,0,.1); margin: 16px 0 0; }
+                    @media (prefers-color-scheme: dark) { body { color: #f5f5f7; } hr { border-top-color: rgba(255,255,255,.12); } }
+                </style>
+                <h1>Wake 1.49</h1>
+                <p class="date">8 Ağustos 2026 · 8 August 2026</p>
+                <p class="tag">🔋 Önemli güvenlik düzeltmesi</p>
+                <ul>
+                    <li><b>Kalibrasyon artık %15 güvenlik sınırında duruyor.</b> Sınıra ulaşınca güç bir sonraki kontrol turuna kadar geri verilmiyordu ve pil bu aralıkta %8-9'a kadar inebiliyordu. Kalibrasyon kullanıyorsanız bu güncelleme önerilir.</li>
+                    <li>Adaptörü geri açma komutu başarısız olduğunda uygulama artık "geri geldi" saymıyor — tekrar deniyor, böylece Mac farkında olmadan pilde kalmıyor.</li>
+                    <li>Pil zaten %15'in altındayken kalibrasyon başlatılırsa boşaltma aşaması atlanıyor, doğrudan şarjla başlıyor.</li>
+                </ul>
+                <hr>
+                <p class="tag">🔋 Important safety fix</p>
+                <ul>
+                    <li><b>Calibration now stops at the 15% safety floor.</b> Reaching it didn't restore power until the next control tick, and the battery could keep draining to 8-9% in that window. Recommended if you use calibration.</li>
+                    <li>When the command to re-enable the adapter fails, the app no longer treats it as restored — it retries, so a Mac can't be left silently running on battery.</li>
+                    <li>Starting a calibration while already below 15% now skips the discharge phase and begins by charging.</li>
+                </ul>
+                <p class="tag">🙏</p>
+                <ul><li>Reported by @ssdiwu.</li></ul>
+            ]]></description>
+            <enclosure
+                url="https://github.com/Jarvis322/MacWake/releases/download/v1.49/Wake-1.49.dmg"
+                sparkle:version="55"
+                sparkle:shortVersionString="1.49"
+                length="5048770"
+                type="application/octet-stream"
+                sparkle:edSignature="Ss0Il233A57suRGoCqF1AB9k5l+er8yQgm4jCyZodeeAUJOT5SohafMFd8HZElOBPLVVXRIK9rR6uSFhpQR9Aw=="
+            />
+        </item>
+        <item>
             <title>Version 1.48</title>
             <pubDate>Sat, 08 Aug 2026 10:00:00 +0000</pubDate>
             <sparkle:version>54</sparkle:version>
