@@ -27,7 +27,7 @@ struct MacWakeMenuView: View {
     @StateObject private var fanDiagnosticsCopy = AsyncCopyController()
     @StateObject private var helperReloadCopy = AsyncCopyController()
 
-    private func copyButtonLabel(_ state: AsyncCopyState, idleText: String,
+    private func copyButtonLabel(_ state: AsyncCopyState, idleText: LocalizedStringKey,
                                  idleIcon: String = "doc.on.doc") -> some View {
         Group {
             switch state {
@@ -1218,7 +1218,7 @@ struct MacWakeMenuView: View {
                             }
                         }
                     } label: {
-                        copyButtonLabel(helperReloadCopy.state, idleText: "Reload", idleIcon: "arrow.clockwise")
+                        copyButtonLabel(helperReloadCopy.state, idleText: "Reload Helper", idleIcon: "arrow.clockwise")
                     }
                     .buttonStyle(.bordered).controlSize(.small)
                     .disabled(helperReloadCopy.state == .running)

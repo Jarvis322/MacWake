@@ -965,37 +965,65 @@ final class ChargeLimitManager: ObservableObject {
     /// so this asks the running daemon directly and shows its answer, including the helper
     /// version actually serving XPC versus the one this app expects.
     func copyFanDiagnostics() async -> String {
-        var report = """
+        let header = """
         MacWake fan diagnostics
         app \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?") \
         (build \(Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "?"))
         expects helper v\(kMacWakeHelperVersion)
-        helperStatus=\(helperStatus)
-        fanCount=\(fanCount) min=\(fanMinRPM) max=\(fanMaxRPM)
-        manualEnabled=\(fanControlEnabled) target=\(fanTargetRPM)
 
         """
-        guard let proxy = remoteProxy() else {
-            report += "XPC: no connection to the daemon"
+        guard var proxy = remoteProxy() else {
+            let report = header + "helperStatus=\(helperStatus)\nfanCount=\(fanCount) min=\(fanMinRPM) max=\(fanMaxRPM)\n" +
+                "manualEnabled=\(fanControlEnabled) target=\(fanTargetRPM)\n\nXPC: no connection to the daemon"
             copyToPasteboard(report)
             return report
         }
-        report += processStalenessReport() + "\n"
+        var body = processStalenessReport() + "\n"
         var daemonReport = await askDaemonForDiagnostics(proxy)
         // A stale daemon can't answer, and asking the tester to press Reload first proved
         // unreliable — so remediate here and report both attempts.
         if daemonReport.hasPrefix("XPC:") {
-            report += daemonReport + "\n\nforcing reload…\n"
-            report += await forceReloadHelper() + "\n\n"
-            if let fresh = remoteProxy() {
-                daemonReport = await askDaemonForDiagnostics(fresh)
-            } else {
-                daemonReport = "XPC: no connection after reload"
+            body += daemonReport + "\n\nforcing reload…\n"
+            body += await forceReloadHelper() + "\n\n"
+            guard let fresh = remoteProxy() else {
+                let report = header + "helperStatus=\(helperStatus)\nfanCount=\(fanCount) min=\(fanMinRPM) max=\(fanMaxRPM)\n" +
+                    "manualEnabled=\(fanControlEnabled) target=\(fanTargetRPM)\n\n" + body + "XPC: no connection after reload"
+                copyToPasteboard(report)
+                return report
             }
+            proxy = fresh
+            daemonReport = await askDaemonForDiagnostics(proxy)
         }
-        report += daemonReport
+        // Refresh fanCount/min/max from the daemon we actually just talked to before
+        // printing them. The old code snapshotted these at the top of the function, so a
+        // report captured mid-reload showed the pre-reload (often zeroed) values next to a
+        // daemon dump reporting FNum=2 from the daemon that had just replaced it.
+        await refreshFanInfo(proxy)
+        let summary = "helperStatus=\(helperStatus)\nfanCount=\(fanCount) min=\(fanMinRPM) max=\(fanMaxRPM)\n" +
+            "manualEnabled=\(fanControlEnabled) target=\(fanTargetRPM)\n\n"
+        let report = header + summary + body + daemonReport
         copyToPasteboard(report)
         return report
+    }
+
+    /// Fetches current fan info from a live proxy and updates published state, so both the
+    /// UI and the diagnostics report reflect the daemon actually being talked to right now.
+    private func refreshFanInfo(_ proxy: MacWakeHelperProtocol) async {
+        let (count, minRPM, maxRPM) = await withCheckedContinuation { (cont: CheckedContinuation<(Int, Int, Int), Never>) in
+            var resumed = false
+            proxy.getFanInfo { c, mn, mx in
+                guard !resumed else { return }; resumed = true
+                cont.resume(returning: (c, mn, mx))
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                guard !resumed else { return }; resumed = true
+                cont.resume(returning: (0, 0, 0))
+            }
+        }
+        guard count > 0 else { return }
+        fanCount = count
+        fanMinRPM = minRPM
+        fanMaxRPM = maxRPM
     }
 
     private func askDaemonForDiagnostics(_ proxy: MacWakeHelperProtocol) async -> String {
