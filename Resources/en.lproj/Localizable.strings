@@ -113,3 +113,5 @@
 "UNPLUG_DESC_MACOS_LIMIT_FMT" = "Tracking will start automatically when you unplug the power cable (macOS limit: %d%%).";
 
 "CL_YIELDED_FMT" = "macOS is holding at %d%%. MacWake has yielded charge control to avoid a conflict. Your %d%% MacWake limit remains configured but is not currently enforced. Turn off macOS's Charge Limit to let MacWake resume control.";
+
+"CL_YIELDED_CONFIRMING_FMT" = "macOS's hold at %d%% appears to have cleared. MacWake is confirming before resuming its %d%% limit.";

@@ -1267,9 +1267,15 @@ final class ChargeLimitManager: ObservableObject {
 /// is still in effect.
 enum ChargeControlOwnership: Equatable {
     case enforcing
-    /// MacWake's configured limit is still `enforcing`'s exact configuration — this case
-    /// doesn't carry it because ownership is a runtime-control question, not a settings one.
-    case yielded(toPercent: Int)
+    /// `toPercent` is always the *last confirmed* hold — it never resets to some other value
+    /// during the grace period below, which is what a UI reading the live detector's verdict
+    /// instead of this one got wrong: the moment a single tick came back ambiguous, the raw
+    /// signal fell back to "100, nothing detected" and got shown as "macOS is holding at
+    /// 100%" while still genuinely yielded and waiting to confirm the real hold had cleared.
+    /// `confirmingResume` distinguishes "actively confirmed this tick" from "grace period,
+    /// counting clear samples toward resuming" so the UI can word those two states honestly
+    /// instead of presenting the grace period as if it were still a live, current reading.
+    case yielded(toPercent: Int, confirmingResume: Bool)
 
     /// - Parameters:
     ///   - externalHoldPercent: this tick's detector verdict; `nil` means nothing confirmed.
@@ -1277,9 +1283,10 @@ enum ChargeControlOwnership: Equatable {
     static func next(current: ChargeControlOwnership, externalHoldPercent: Int?,
                      consecutiveClearSamples: Int, resumeAfterClearSamples: Int = 3) -> ChargeControlOwnership {
         if let percent = externalHoldPercent {
-            return .yielded(toPercent: percent)
+            return .yielded(toPercent: percent, confirmingResume: false)
         }
-        guard case .yielded = current else { return .enforcing }
-        return consecutiveClearSamples >= resumeAfterClearSamples ? .enforcing : current
+        guard case .yielded(let lastConfirmed, _) = current else { return .enforcing }
+        if consecutiveClearSamples >= resumeAfterClearSamples { return .enforcing }
+        return .yielded(toPercent: lastConfirmed, confirmingResume: true)
     }
 }

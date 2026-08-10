@@ -446,3 +446,5 @@
 "UNPLUG_DESC_MACOS_LIMIT_FMT" = "전원 케이블을 분리하면 자동으로 기록을 시작합니다(macOS 한도: %d%%).";
 
 "CL_YIELDED_FMT" = "macOS가 %d%%에서 유지하고 있습니다. 충돌을 피하기 위해 MacWake가 충전 제어를 양보했습니다. 설정된 %d%% MacWake 제한은 그대로 유지되지만 현재 적용되지 않습니다. macOS의 충전 제한을 끄면 MacWake가 제어를 다시 시작합니다.";
+
+"CL_YIELDED_CONFIRMING_FMT" = "macOS의 %d%% 유지가 해제된 것으로 보입니다. MacWake는 %d%% 제한을 재개하기 전에 확인 중입니다.";

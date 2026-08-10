@@ -9,46 +9,74 @@ final class ChargeControlOwnershipTests: XCTestCase {
         let next = ChargeControlOwnership.next(
             current: .enforcing, externalHoldPercent: 95, consecutiveClearSamples: 0
         )
-        XCTAssertEqual(next, .yielded(toPercent: 95))
+        XCTAssertEqual(next, .yielded(toPercent: 95, confirmingResume: false))
     }
 
     func testStaysYieldedWhileTheHoldContinues() {
         let next = ChargeControlOwnership.next(
-            current: .yielded(toPercent: 95), externalHoldPercent: 95, consecutiveClearSamples: 0
+            current: .yielded(toPercent: 95, confirmingResume: false),
+            externalHoldPercent: 95, consecutiveClearSamples: 0
         )
-        XCTAssertEqual(next, .yielded(toPercent: 95))
+        XCTAssertEqual(next, .yielded(toPercent: 95, confirmingResume: false))
     }
 
     func testYieldedPercentUpdatesIfTheHoldMoves() {
         // If the external hold itself settles at a different level, the displayed value
         // should track it rather than freeze at the first-observed percent.
         let next = ChargeControlOwnership.next(
-            current: .yielded(toPercent: 95), externalHoldPercent: 90, consecutiveClearSamples: 0
+            current: .yielded(toPercent: 95, confirmingResume: false),
+            externalHoldPercent: 90, consecutiveClearSamples: 0
         )
-        XCTAssertEqual(next, .yielded(toPercent: 90))
+        XCTAssertEqual(next, .yielded(toPercent: 90, confirmingResume: false))
     }
 
-    func testASingleClearSampleDoesNotResumeEnforcement() {
+    func testASingleClearSampleEntersTheGracePeriodRatherThanResuming() {
         // The maintainer's explicit requirement: one missing or ambiguous sample must not
-        // cause a silent takeover.
+        // cause a silent takeover — but the live M5 report showed this needs to be visibly
+        // distinct ("confirming") from a fresh, actively confirmed hold, not just internally
+        // unchanged.
         let next = ChargeControlOwnership.next(
-            current: .yielded(toPercent: 95), externalHoldPercent: nil, consecutiveClearSamples: 1
+            current: .yielded(toPercent: 95, confirmingResume: false),
+            externalHoldPercent: nil, consecutiveClearSamples: 1
         )
-        XCTAssertEqual(next, .yielded(toPercent: 95))
+        XCTAssertEqual(next, .yielded(toPercent: 95, confirmingResume: true))
+    }
+
+    func testTheGracePeriodRetainsTheLastConfirmedPercentThroughout() {
+        // This is the live bug report: the percent shown during the grace period must stay
+        // the last real confirmed value (95), never fall back to a "nothing detected"
+        // placeholder like 100.
+        var state: ChargeControlOwnership = .yielded(toPercent: 95, confirmingResume: false)
+        for clearCount in 1...2 {
+            state = ChargeControlOwnership.next(
+                current: state, externalHoldPercent: nil, consecutiveClearSamples: clearCount
+            )
+            XCTAssertEqual(state, .yielded(toPercent: 95, confirmingResume: true))
+        }
     }
 
     func testResumesOnlyAfterTheConfiguredNumberOfClearSamples() {
         let stillYielded = ChargeControlOwnership.next(
-            current: .yielded(toPercent: 95), externalHoldPercent: nil,
+            current: .yielded(toPercent: 95, confirmingResume: true), externalHoldPercent: nil,
             consecutiveClearSamples: 2, resumeAfterClearSamples: 3
         )
-        XCTAssertEqual(stillYielded, .yielded(toPercent: 95))
+        XCTAssertEqual(stillYielded, .yielded(toPercent: 95, confirmingResume: true))
 
         let resumed = ChargeControlOwnership.next(
-            current: .yielded(toPercent: 95), externalHoldPercent: nil,
+            current: .yielded(toPercent: 95, confirmingResume: true), externalHoldPercent: nil,
             consecutiveClearSamples: 3, resumeAfterClearSamples: 3
         )
         XCTAssertEqual(resumed, .enforcing)
+    }
+
+    func testAConfirmedHoldDuringTheGracePeriodCancelsTheResumeAndStopsConfirming() {
+        // The hold coming back mid-grace-period must be treated as a fresh confirmation —
+        // confirmingResume flips back to false, not left stuck true.
+        let next = ChargeControlOwnership.next(
+            current: .yielded(toPercent: 95, confirmingResume: true),
+            externalHoldPercent: 95, consecutiveClearSamples: 2
+        )
+        XCTAssertEqual(next, .yielded(toPercent: 95, confirmingResume: false))
     }
 
     func testEnforcingStaysEnforcingWithNoHold() {
@@ -63,6 +91,6 @@ final class ChargeControlOwnershipTests: XCTestCase {
         // just the first time.
         var state = ChargeControlOwnership.enforcing
         state = ChargeControlOwnership.next(current: state, externalHoldPercent: 80, consecutiveClearSamples: 0)
-        XCTAssertEqual(state, .yielded(toPercent: 80))
+        XCTAssertEqual(state, .yielded(toPercent: 80, confirmingResume: false))
     }
 }

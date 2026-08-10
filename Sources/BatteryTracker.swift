@@ -1990,10 +1990,14 @@ enum ChargeLimitSource: Equatable {
     /// Neither is enforcing anything below 100%.
     case none
 
+    /// `yieldedPercent` is `ChargeControlOwnership`'s own retained last-confirmed value, not
+    /// a live detector reading — passing the raw current reading here is what previously let
+    /// the grace period display a false "holding at 100%" the moment a single tick came back
+    /// ambiguous, while the real, still-yielded-to hold was at some other percent entirely.
     static func resolve(macWakeEnabled: Bool, macWakeReady: Bool, macWakeLimit: Int,
-                        nativeLimit: Int, isYielded: Bool) -> ChargeLimitSource {
-        if macWakeEnabled, macWakeReady, isYielded {
-            return .yielded(externalPercent: nativeLimit, macWakeLimit: macWakeLimit)
+                        nativeLimit: Int, yieldedPercent: Int?) -> ChargeLimitSource {
+        if macWakeEnabled, macWakeReady, let yieldedPercent {
+            return .yielded(externalPercent: yieldedPercent, macWakeLimit: macWakeLimit)
         }
         if macWakeEnabled, macWakeReady { return .macWake(macWakeLimit) }
         if nativeLimit < 100 { return .macOSNative(nativeLimit) }

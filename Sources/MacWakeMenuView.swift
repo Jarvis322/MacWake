@@ -1028,7 +1028,9 @@ struct MacWakeMenuView: View {
                         HStack(alignment: .top, spacing: 5) {
                             Image(systemName: "arrow.triangle.2.circlepath")
                                 .font(.system(size: 9)).foregroundColor(.blue)
-                            Text(String(format: String(localized: "CL_YIELDED_FMT"), externalPercent, macWakeLimit))
+                            Text(isConfirmingYieldedResume
+                                 ? String(format: String(localized: "CL_YIELDED_CONFIRMING_FMT"), externalPercent, macWakeLimit)
+                                 : String(format: String(localized: "CL_YIELDED_FMT"), externalPercent, macWakeLimit))
                                 .font(.system(size: 10)).foregroundColor(.secondary)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
@@ -1350,15 +1352,31 @@ struct MacWakeMenuView: View {
     /// Resolves which limit is actually in effect and who owns it, so the header never
     /// shows the macOS-native figure (which defaults to 100 when its own policy is inactive)
     /// beside MacWake's own limit as though they were the same unlabeled number.
+    /// While confirming a resume, the underlying detector genuinely reads "no hold this
+    /// tick" — saying "macOS is holding at X%" during that window overclaims a live reading
+    /// MacWake no longer has, so the banner needs to word it as waiting on the last
+    /// confirmed hold instead. Pulled out of the view body: an inline `if case` there gets
+    /// swept into `@ViewBuilder`'s if/else-to-View rewrite, which fails to compile for a
+    /// plain Bool assignment.
+    private var isConfirmingYieldedResume: Bool {
+        if case .yielded(_, let confirming) = chargeLimit.ownership { return confirming }
+        return false
+    }
+
     private var chargeLimitSource: ChargeLimitSource {
-        let isYielded: Bool
-        if case .yielded = chargeLimit.ownership { isYielded = true } else { isYielded = false }
+        // Read the percent from ownership's own retained value, not tracker.chargeLimit —
+        // that display convenience value falls back to 100 the instant a single tick reads
+        // ambiguous, which during the resume grace period produced a false "macOS is
+        // holding at 100%" while still genuinely yielded to the real, last-confirmed hold.
+        let yieldedPercent: Int?
+        if case .yielded(let percent, _) = chargeLimit.ownership { yieldedPercent = percent }
+        else { yieldedPercent = nil }
         return ChargeLimitSource.resolve(
             macWakeEnabled: chargeLimit.isEnabled,
             macWakeReady: chargeLimit.helperStatus == .ready,
             macWakeLimit: chargeLimit.limit,
             nativeLimit: tracker.chargeLimit,
-            isYielded: isYielded
+            yieldedPercent: yieldedPercent
         )
     }
 
