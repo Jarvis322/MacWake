@@ -22,6 +22,10 @@ class BatteryTracker: ObservableObject {
     @Published var currentSession: Session?
     @Published var history: [Session] = []
     @Published var chargeLimit: Int = 100
+    /// Recent samples for ExternalChargeHold, oldest first. ~3 minutes of history at the
+    /// 30s heartbeat cadence — enough for the detector's stability window without holding
+    /// a growing amount of history.
+    private var externalHoldSamples: [ExternalChargeHold.Sample] = []
     @Published var appState: String = "active" // active, screenSleep, systemSleep, charging
     @Published var powerAdapterWatts: Int?
     @Published var dynamicWatts: Double?
@@ -461,34 +465,6 @@ class BatteryTracker: ObservableObject {
                 self.enableNotchShelf = storedNotchShelf
             }
         }
-        
-        // Use UserDefaults to read the value from cfprefsd (memory cache)
-        if let defaults = UserDefaults(suiteName: "com.apple.batteryui.charging.mac") {
-            let priorLimit = defaults.integer(forKey: "com.apple.batteryui.charging.mac.prior.limit")
-            var finalLimit = priorLimit > 0 ? priorLimit : 100
-            
-            // Check if limit is actively enforced by powerd
-            let powerdPath = "/Library/Preferences/com.apple.powerd.charging.plist"
-            if let dict = NSDictionary(contentsOfFile: powerdPath) as? [String: Any],
-               let policiesData = dict["policies"] as? Data {
-                do {
-                    if let unarchived = try NSKeyedUnarchiver.unarchivedObject(ofClasses: [NSArray.self, NSDictionary.self, NSString.self, NSNumber.self, NSDate.self], from: policiesData) as? NSArray {
-                        if unarchived.count == 0 {
-                            finalLimit = 100
-                        }
-                    }
-                } catch {
-                    // If it throws an error (e.g. unknown custom class), it means policies exist and are active.
-                }
-            } else {
-                // If powerd charging plist is missing, we can assume no active policy.
-                finalLimit = 100
-            }
-            
-            self.chargeLimit = finalLimit
-        } else {
-            self.chargeLimit = 100
-        }
     }
 
     /// Rolling "last known-good" backup of data.json, refreshed on every successful save
@@ -648,6 +624,23 @@ class BatteryTracker: ObservableObject {
         CFRunLoopAddSource(CFRunLoopGetMain(), runLoopSource, .defaultMode)
     }
 
+    /// Appends a sample and recomputes `chargeLimit` from the rolling window. Called
+    /// wherever level/plugged are freshly read, so the detector never lags behind the
+    /// values already being shown elsewhere in the UI.
+    private func recordExternalHoldSample(level: Int, plugged: Bool) {
+        let sample = ExternalChargeHold.Sample(
+            externallyConnected: plugged,
+            isCharging: getIsCharging(),
+            percent: level,
+            macWakeIsHolding: ChargeLimitManager.shared.isHoldingChargeOff
+        )
+        externalHoldSamples.append(sample)
+        if externalHoldSamples.count > 6 {
+            externalHoldSamples.removeFirst(externalHoldSamples.count - 6)
+        }
+        chargeLimit = ExternalChargeHold.detect(recentSamples: externalHoldSamples) ?? 100
+    }
+
     private func updatePowerStatus() {
         loadSettings() // reload charge limit in case it changed
         let level = getBatteryLevel()
@@ -658,6 +651,7 @@ class BatteryTracker: ObservableObject {
         self.isPluggedIn = plugged
         updatePowerAdapterDetails()
         recordBatterySample(level: level, timestamp: Date())
+        recordExternalHoldSample(level: level, plugged: plugged)
         ChargeLimitManager.shared.evaluate(batteryLevel: level, isPluggedIn: plugged)
         
         // A charge-limit/sailing/calibration-induced adapter cutoff makes macOS report
@@ -707,6 +701,17 @@ class BatteryTracker: ObservableObject {
             }
         }
         return 100
+    }
+
+    private func getIsCharging() -> Bool {
+        let snapshot = IOPSCopyPowerSourcesInfo().takeRetainedValue()
+        let sources = IOPSCopyPowerSourcesList(snapshot).takeRetainedValue() as Array
+        for source in sources {
+            if let description = IOPSGetPowerSourceDescription(snapshot, source).takeUnretainedValue() as? [String: Any] {
+                return description[kIOPSIsChargingKey] as? Bool ?? false
+            }
+        }
+        return false
     }
 
     private func isACPowerConnected() -> Bool {
@@ -1270,6 +1275,7 @@ class BatteryTracker: ObservableObject {
         
         let level = getBatteryLevel()
         let plugged = isACPowerConnected()
+        recordExternalHoldSample(level: level, plugged: plugged)
 
         if plugged != isPluggedIn {
             currentBatteryLevel = level
@@ -1955,12 +1961,13 @@ enum MenuBarLabel {
 /// two sources can be regression-tested without a running charge-limit manager.
 ///
 /// Two independent limits exist and were being shown as one unlabeled figure: MacWake's own
-/// helper-enforced limit (`ChargeLimitManager.limit`, from `chargeLimitValue`), and the
-/// macOS-native policy MacWake merely *reads* (`BatteryTracker.chargeLimit`, from
-/// `com.apple.batteryui.charging.mac` / powerd). The native reader defaults to 100 when its
-/// policy is inactive, so "MacWake limiting at 80%, native inactive" rendered as "Limit: 100%"
-/// right next to a settings card reading "Stop at 80%" — an unlabeled contradiction on the
-/// same screen, not a wrong number.
+/// helper-enforced limit (`ChargeLimitManager.limit`, from `chargeLimitValue`), and whatever
+/// else appears to be holding the battery (`BatteryTracker.chargeLimit`, from
+/// `ExternalChargeHold` — observed behavior, not a read of Apple's actual configuration).
+/// The external reading defaults to 100 when nothing is detected holding, so "MacWake
+/// limiting at 80%, nothing else detected" rendered as "Limit: 100%" right next to a
+/// settings card reading "Stop at 80%" — an unlabeled contradiction on the same screen, not
+/// a wrong number.
 enum ChargeLimitSource: Equatable {
     /// MacWake's own limit, enforced by the helper. Wins whenever it is actually active.
     case macWake(Int)
@@ -2027,5 +2034,44 @@ final class AsyncCopyController: ObservableObject {
             guard !Task.isCancelled else { return }
             if self.state == .copied { self.state = .idle }
         }
+    }
+}
+
+/// Whether something other than MacWake is currently holding the battery below full,
+/// inferred from public IOKit/IOPS data only — no private preference reads.
+///
+/// This replaces reading `com.apple.batteryui.charging.mac` and `/Library/Preferences/
+/// com.apple.powerd.charging.plist`, which had two problems: neither can be read on the
+/// sandboxed Mac App Store build (no file or shared-preference sandbox exception is
+/// granted, so the signal silently collapsed to "never active" there), and the reading
+/// itself inferred "policy active" from whether decoding an undocumented blob happened to
+/// throw — a signal with no defined meaning, wrong in either direction on any macOS
+/// revision that changes the archive format. This detector uses only APIs the app already
+/// calls successfully on both distribution channels.
+enum ExternalChargeHold {
+    struct Sample: Equatable {
+        let externallyConnected: Bool
+        let isCharging: Bool
+        let percent: Int
+        /// True while MacWake's own limit is the one cutting the adapter — excluded, or
+        /// MacWake would "detect" its own hold as an external one.
+        let macWakeIsHolding: Bool
+    }
+
+    /// A held level only counts once several consecutive samples agree on the *same*
+    /// percent — not just "plugged in and not charging," which a battery that's merely
+    /// draining while unable to charge (bad adapter, thermal fault) would also match.
+    /// Ambiguous or insufficient data always resolves to `nil`: a false positive would
+    /// have MacWake silently stop protecting the battery, a false negative just leaves it
+    /// doing what it already does today, so the failure direction is fixed on purpose.
+    static func detect(recentSamples: [Sample], minimumStableSamples: Int = 3) -> Int? {
+        guard recentSamples.count >= minimumStableSamples else { return nil }
+        let window = recentSamples.suffix(minimumStableSamples)
+        guard let level = window.first?.percent, level > 0, level < 100 else { return nil }
+        let held = window.allSatisfy { sample in
+            sample.externallyConnected && !sample.isCharging
+                && !sample.macWakeIsHolding && sample.percent == level
+        }
+        return held ? level : nil
     }
 }
