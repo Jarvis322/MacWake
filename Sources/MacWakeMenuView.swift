@@ -1017,6 +1017,24 @@ struct MacWakeMenuView: View {
                 .padding(.horizontal, 12).padding(.vertical, 8)
                 .help("CL_HELP")
 
+                // Makes the handoff visible rather than leaving the user to infer it from a
+                // toggle that looks on but a battery that isn't behaving like it. The
+                // configured limit is preserved and restated here on purpose — yielding
+                // means MacWake stepped back from enforcing it this moment, not that the
+                // setting or the user's authorization was cleared.
+                if case .yielded(let externalPercent, let macWakeLimit) = chargeLimitSource {
+                    rowDivider()
+                    sliderBlock {
+                        HStack(alignment: .top, spacing: 5) {
+                            Image(systemName: "arrow.triangle.2.circlepath")
+                                .font(.system(size: 9)).foregroundColor(.blue)
+                            Text(String(format: String(localized: "CL_YIELDED_FMT"), externalPercent, macWakeLimit))
+                                .font(.system(size: 10)).foregroundColor(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                }
+
                 if chargeLimit.isEnabled {
                     rowDivider()
                     sliderBlock {
@@ -1333,11 +1351,14 @@ struct MacWakeMenuView: View {
     /// shows the macOS-native figure (which defaults to 100 when its own policy is inactive)
     /// beside MacWake's own limit as though they were the same unlabeled number.
     private var chargeLimitSource: ChargeLimitSource {
-        ChargeLimitSource.resolve(
+        let isYielded: Bool
+        if case .yielded = chargeLimit.ownership { isYielded = true } else { isYielded = false }
+        return ChargeLimitSource.resolve(
             macWakeEnabled: chargeLimit.isEnabled,
             macWakeReady: chargeLimit.helperStatus == .ready,
             macWakeLimit: chargeLimit.limit,
-            nativeLimit: tracker.chargeLimit
+            nativeLimit: tracker.chargeLimit,
+            isYielded: isYielded
         )
     }
 
@@ -1347,7 +1368,7 @@ struct MacWakeMenuView: View {
         switch chargeLimitSource {
         case .macWake(let value):
             return String(format: String(localized: "LIMIT_FMT"), value)
-        case .macOSNative(let value):
+        case .macOSNative(let value), .yielded(let value, _):
             return String(format: String(localized: "MACOS_LIMIT_FMT"), value)
         case .none:
             return ""
@@ -1501,7 +1522,7 @@ struct MacWakeMenuView: View {
         switch chargeLimitSource {
         case .macWake(let value):
             return String(format: String(localized: "UNPLUG_DESC_LIMIT_FMT"), value)
-        case .macOSNative(let value):
+        case .macOSNative(let value), .yielded(let value, _):
             return String(format: String(localized: "UNPLUG_DESC_MACOS_LIMIT_FMT"), value)
         case .none:
             return String(localized: "UNPLUG_DESC")

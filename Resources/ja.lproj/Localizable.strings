@@ -444,3 +444,5 @@
 "UNPLUG_DESC" = "電源ケーブルを外すと、自動的に記録を開始します。";
 "UNPLUG_DESC_LIMIT_FMT" = "電源ケーブルを外すと、自動的に記録を開始します（上限：%d%%）。";
 "UNPLUG_DESC_MACOS_LIMIT_FMT" = "電源ケーブルを外すと、自動的に記録を開始します（macOS 上限：%d%%）。";
+
+"CL_YIELDED_FMT" = "macOS が %d%% で保持しています。競合を避けるため、MacWake は充電制御を譲りました。設定済みの MacWake の上限 %d%% はそのまま残りますが、現在は適用されていません。macOS の「充電の上限」をオフにすると、MacWake が制御を再開します。";

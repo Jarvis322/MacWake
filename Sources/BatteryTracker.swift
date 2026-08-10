@@ -22,6 +22,10 @@ class BatteryTracker: ObservableObject {
     @Published var currentSession: Session?
     @Published var history: [Session] = []
     @Published var chargeLimit: Int = 100
+    /// This tick's raw ExternalChargeHold verdict — `nil` means nothing confirmed. Distinct
+    /// from `chargeLimit` (which defaults display to 100) so ChargeLimitManager can drive
+    /// its enforcing/yielded decision from the real signal, not a display convenience value.
+    @Published var externalHoldPercent: Int?
     /// Recent samples for ExternalChargeHold, oldest first. ~3 minutes of history at the
     /// 30s heartbeat cadence — enough for the detector's stability window without holding
     /// a growing amount of history.
@@ -638,7 +642,9 @@ class BatteryTracker: ObservableObject {
         if externalHoldSamples.count > 6 {
             externalHoldSamples.removeFirst(externalHoldSamples.count - 6)
         }
-        chargeLimit = ExternalChargeHold.detect(recentSamples: externalHoldSamples) ?? 100
+        let detected = ExternalChargeHold.detect(recentSamples: externalHoldSamples)
+        externalHoldPercent = detected
+        chargeLimit = detected ?? 100
     }
 
     private func updatePowerStatus() {
@@ -652,7 +658,7 @@ class BatteryTracker: ObservableObject {
         updatePowerAdapterDetails()
         recordBatterySample(level: level, timestamp: Date())
         recordExternalHoldSample(level: level, plugged: plugged)
-        ChargeLimitManager.shared.evaluate(batteryLevel: level, isPluggedIn: plugged)
+        ChargeLimitManager.shared.evaluate(batteryLevel: level, isPluggedIn: plugged, externalHoldPercent: externalHoldPercent)
         
         // A charge-limit/sailing/calibration-induced adapter cutoff makes macOS report
         // "on battery" even though the cable is still attached — don't let that reset the
@@ -1160,7 +1166,7 @@ class BatteryTracker: ObservableObject {
                 // calibration state can be stale for the whole sleep duration otherwise —
                 // re-sync immediately instead of waiting up to 30s for the next heartbeat.
                 guard let self else { return }
-                ChargeLimitManager.shared.evaluate(batteryLevel: self.getBatteryLevel(), isPluggedIn: self.isACPowerConnected())
+                ChargeLimitManager.shared.evaluate(batteryLevel: self.getBatteryLevel(), isPluggedIn: self.isACPowerConnected(), externalHoldPercent: self.externalHoldPercent)
             }
         }
         
@@ -1293,7 +1299,7 @@ class BatteryTracker: ObservableObject {
         updatePowerAdapterDetails()
         recordBatterySample(level: level, timestamp: now)
         checkForRapidDrain(now: now)
-        ChargeLimitManager.shared.evaluate(batteryLevel: level, isPluggedIn: plugged)
+        ChargeLimitManager.shared.evaluate(batteryLevel: level, isPluggedIn: plugged, externalHoldPercent: externalHoldPercent)
 
         let delta = now.timeIntervalSince(lastStateChange)
         
@@ -1974,11 +1980,21 @@ enum ChargeLimitSource: Equatable {
     /// The macOS-native policy, shown only when MacWake's own limit isn't the one holding —
     /// otherwise the two would describe the same charge as if they were one setting.
     case macOSNative(Int)
+    /// MacWake's limit is configured and enabled, but a confirmed external hold means
+    /// something else is actively holding the battery right now — kept separate from
+    /// `.macWake` so nothing ever claims MacWake is enforcing while it has deliberately
+    /// stepped back to avoid two controllers fighting over the same key. The user's
+    /// configuration (`macWakeLimit`) is preserved here precisely so the UI can say it's
+    /// still set, just not the one currently in charge.
+    case yielded(externalPercent: Int, macWakeLimit: Int)
     /// Neither is enforcing anything below 100%.
     case none
 
     static func resolve(macWakeEnabled: Bool, macWakeReady: Bool, macWakeLimit: Int,
-                        nativeLimit: Int) -> ChargeLimitSource {
+                        nativeLimit: Int, isYielded: Bool) -> ChargeLimitSource {
+        if macWakeEnabled, macWakeReady, isYielded {
+            return .yielded(externalPercent: nativeLimit, macWakeLimit: macWakeLimit)
+        }
         if macWakeEnabled, macWakeReady { return .macWake(macWakeLimit) }
         if nativeLimit < 100 { return .macOSNative(nativeLimit) }
         return .none

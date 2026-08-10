@@ -1,0 +1,68 @@
+import XCTest
+@testable import MacWake
+
+final class ChargeControlOwnershipTests: XCTestCase {
+    func testYieldsImmediatelyOnAConfirmedHold() {
+        // A single confirmed hold is enough — waiting here would mean MacWake keeps
+        // re-asserting its own enforcement for one more tick while something else already
+        // holds the same key, which is the exact conflict this exists to avoid.
+        let next = ChargeControlOwnership.next(
+            current: .enforcing, externalHoldPercent: 95, consecutiveClearSamples: 0
+        )
+        XCTAssertEqual(next, .yielded(toPercent: 95))
+    }
+
+    func testStaysYieldedWhileTheHoldContinues() {
+        let next = ChargeControlOwnership.next(
+            current: .yielded(toPercent: 95), externalHoldPercent: 95, consecutiveClearSamples: 0
+        )
+        XCTAssertEqual(next, .yielded(toPercent: 95))
+    }
+
+    func testYieldedPercentUpdatesIfTheHoldMoves() {
+        // If the external hold itself settles at a different level, the displayed value
+        // should track it rather than freeze at the first-observed percent.
+        let next = ChargeControlOwnership.next(
+            current: .yielded(toPercent: 95), externalHoldPercent: 90, consecutiveClearSamples: 0
+        )
+        XCTAssertEqual(next, .yielded(toPercent: 90))
+    }
+
+    func testASingleClearSampleDoesNotResumeEnforcement() {
+        // The maintainer's explicit requirement: one missing or ambiguous sample must not
+        // cause a silent takeover.
+        let next = ChargeControlOwnership.next(
+            current: .yielded(toPercent: 95), externalHoldPercent: nil, consecutiveClearSamples: 1
+        )
+        XCTAssertEqual(next, .yielded(toPercent: 95))
+    }
+
+    func testResumesOnlyAfterTheConfiguredNumberOfClearSamples() {
+        let stillYielded = ChargeControlOwnership.next(
+            current: .yielded(toPercent: 95), externalHoldPercent: nil,
+            consecutiveClearSamples: 2, resumeAfterClearSamples: 3
+        )
+        XCTAssertEqual(stillYielded, .yielded(toPercent: 95))
+
+        let resumed = ChargeControlOwnership.next(
+            current: .yielded(toPercent: 95), externalHoldPercent: nil,
+            consecutiveClearSamples: 3, resumeAfterClearSamples: 3
+        )
+        XCTAssertEqual(resumed, .enforcing)
+    }
+
+    func testEnforcingStaysEnforcingWithNoHold() {
+        let next = ChargeControlOwnership.next(
+            current: .enforcing, externalHoldPercent: nil, consecutiveClearSamples: 5
+        )
+        XCTAssertEqual(next, .enforcing)
+    }
+
+    func testReenteringAHoldAfterResumingYieldsAgainImmediately() {
+        // Symmetry check: the fast-yield / slow-resume asymmetry applies every cycle, not
+        // just the first time.
+        var state = ChargeControlOwnership.enforcing
+        state = ChargeControlOwnership.next(current: state, externalHoldPercent: 80, consecutiveClearSamples: 0)
+        XCTAssertEqual(state, .yielded(toPercent: 80))
+    }
+}

@@ -59,6 +59,11 @@ final class ChargeLimitManager: ObservableObject {
 
     @Published private(set) var helperStatus: HelperStatus = .notInstalled
 
+    /// Whether MacWake is actively enforcing its standing limit, or has yielded to a
+    /// confirmed external hold. See `ChargeControlOwnership`.
+    @Published private(set) var ownership: ChargeControlOwnership = .enforcing
+    private var consecutiveClearHoldSamples = 0
+
     @Published var isEnabled: Bool {
         didSet {
             UserDefaults.standard.set(isEnabled, forKey: "chargeLimitEnabled")
@@ -69,6 +74,13 @@ final class ChargeLimitManager: ObservableObject {
                 if calibrationActive { cancelCalibration() }
                 else { Task { await self.restoreCharging() } }
             }
+            // evaluate() returns before reaching the ownership update while disabled, so a
+            // stale `.yielded` from before the toggle was switched off would otherwise
+            // reappear in the UI the instant it's switched back on, up to a tick before the
+            // next evaluate() call could correct it. Every (re-)enable starts from a clean
+            // "assume enforcing" read instead of carrying old state across the gap.
+            ownership = .enforcing
+            consecutiveClearHoldSamples = 0
         }
     }
 
@@ -590,7 +602,7 @@ final class ChargeLimitManager: ObservableObject {
     /// treat that self-induced state as a real unplug, or we'd flip the adapter back
     /// on immediately and oscillate. `lastAdapterEnabled == false` means we are the
     /// ones holding, so the charger is still physically connected.
-    func evaluate(batteryLevel: Int, isPluggedIn: Bool) {
+    func evaluate(batteryLevel: Int, isPluggedIn: Bool, externalHoldPercent: Int? = nil) {
         guard helperStatus == .ready, isEnabled else {
             if lastAdapterEnabled == false { Task { await restoreCharging() } }
             return
@@ -729,6 +741,29 @@ final class ChargeLimitManager: ObservableObject {
                 return
             }
         }
+
+        // Yield runtime enforcement to a confirmed external hold rather than fight it for
+        // the same SMC key — the user's limit/authorization stays configured, only the
+        // active-right-now decision moves. Update ownership before anything else below can
+        // return early, so a transition is never skipped by a return higher up this tick.
+        if externalHoldPercent != nil { consecutiveClearHoldSamples = 0 }
+        else { consecutiveClearHoldSamples += 1 }
+        ownership = ChargeControlOwnership.next(
+            current: ownership,
+            externalHoldPercent: externalHoldPercent,
+            consecutiveClearSamples: consecutiveClearHoldSamples
+        )
+
+        if case .yielded = ownership {
+            // Release MacWake's own prior cut exactly once on the way in (and retry if that
+            // write fails), then touch nothing else — repeatedly re-asserting "charging
+            // allowed" every tick would itself be a second controller fighting the first,
+            // just in the opposite direction.
+            if lastAdapterEnabled == false { Task { await restoreCharging() } }
+            return
+        }
+        // Otherwise `.enforcing` (freshly resumed or unchanged): fall through to normal
+        // limiting below on a fresh read of the current level and band.
 
         let shouldChargeAllowed: Bool
         if batteryLevel >= limit {
@@ -1215,5 +1250,36 @@ final class ChargeLimitManager: ObservableObject {
             message: String(localized: "High temperature — fans returned to automatic."),
             isWarning: true
         ))
+    }
+}
+
+/// Whether MacWake is actively enforcing its own standing charge limit right now, or has
+/// yielded runtime enforcement to a confirmed external hold (typically macOS's native
+/// Charge Limit) while keeping the user's MacWake configuration untouched.
+///
+/// Yielding is prompt: a single confirmed external hold is enough, because letting MacWake's
+/// own CHIE enforcement keep re-asserting while something else already holds the battery is
+/// exactly the two-controllers-fighting outcome this exists to prevent — both mechanisms are
+/// known to use the same SMC key on hardware with no separate inhibit key. Resuming is
+/// deliberately slower: the user's MacWake authorization was never revoked, so control should
+/// only come back once the external hold has reliably ended, not on the first ambiguous or
+/// missing sample the detector's own conservative verdicts can produce even while a real hold
+/// is still in effect.
+enum ChargeControlOwnership: Equatable {
+    case enforcing
+    /// MacWake's configured limit is still `enforcing`'s exact configuration — this case
+    /// doesn't carry it because ownership is a runtime-control question, not a settings one.
+    case yielded(toPercent: Int)
+
+    /// - Parameters:
+    ///   - externalHoldPercent: this tick's detector verdict; `nil` means nothing confirmed.
+    ///   - consecutiveClearSamples: how many ticks in a row have read `nil` while yielded.
+    static func next(current: ChargeControlOwnership, externalHoldPercent: Int?,
+                     consecutiveClearSamples: Int, resumeAfterClearSamples: Int = 3) -> ChargeControlOwnership {
+        if let percent = externalHoldPercent {
+            return .yielded(toPercent: percent)
+        }
+        guard case .yielded = current else { return .enforcing }
+        return consecutiveClearSamples >= resumeAfterClearSamples ? .enforcing : current
     }
 }

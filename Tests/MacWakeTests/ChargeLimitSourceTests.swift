@@ -6,21 +6,24 @@ final class ChargeLimitSourceTests: XCTestCase {
     // macOS policy inactive (so its reader defaults to 100).
     func testReportedContradictionResolvesToMacWakeOnly() {
         let source = ChargeLimitSource.resolve(
-            macWakeEnabled: true, macWakeReady: true, macWakeLimit: 80, nativeLimit: 100
+            macWakeEnabled: true, macWakeReady: true, macWakeLimit: 80, nativeLimit: 100,
+            isYielded: false
         )
         XCTAssertEqual(source, .macWake(80))
     }
 
     func testMacWakeOffNativeOnShowsTheNativeValueLabeled() {
         let source = ChargeLimitSource.resolve(
-            macWakeEnabled: false, macWakeReady: true, macWakeLimit: 80, nativeLimit: 90
+            macWakeEnabled: false, macWakeReady: true, macWakeLimit: 80, nativeLimit: 90,
+            isYielded: false
         )
         XCTAssertEqual(source, .macOSNative(90))
     }
 
     func testNeitherActiveShowsNoLimit() {
         let source = ChargeLimitSource.resolve(
-            macWakeEnabled: false, macWakeReady: true, macWakeLimit: 80, nativeLimit: 100
+            macWakeEnabled: false, macWakeReady: true, macWakeLimit: 80, nativeLimit: 100,
+            isYielded: false
         )
         XCTAssertEqual(source, .none)
     }
@@ -29,7 +32,8 @@ final class ChargeLimitSourceTests: XCTestCase {
         // Two limits can be configured at once; MacWake's is the one actually enforced by
         // the helper, so it must not be shadowed by a lower macOS-reported figure.
         let source = ChargeLimitSource.resolve(
-            macWakeEnabled: true, macWakeReady: true, macWakeLimit: 80, nativeLimit: 60
+            macWakeEnabled: true, macWakeReady: true, macWakeLimit: 80, nativeLimit: 60,
+            isYielded: false
         )
         XCTAssertEqual(source, .macWake(80))
     }
@@ -38,7 +42,8 @@ final class ChargeLimitSourceTests: XCTestCase {
         // Enabled-but-not-ready (e.g. approval pending) means the helper isn't actually
         // enforcing anything yet — falls through to whatever macOS itself reports.
         let source = ChargeLimitSource.resolve(
-            macWakeEnabled: true, macWakeReady: false, macWakeLimit: 80, nativeLimit: 100
+            macWakeEnabled: true, macWakeReady: false, macWakeLimit: 80, nativeLimit: 100,
+            isYielded: false
         )
         XCTAssertEqual(source, .none)
     }
@@ -47,12 +52,57 @@ final class ChargeLimitSourceTests: XCTestCase {
         // The acceptance criterion is that changing the relevant limit updates the header;
         // since resolve() is pure and takes current values, calling it again is that update.
         var source = ChargeLimitSource.resolve(
-            macWakeEnabled: true, macWakeReady: true, macWakeLimit: 80, nativeLimit: 100
+            macWakeEnabled: true, macWakeReady: true, macWakeLimit: 80, nativeLimit: 100,
+            isYielded: false
         )
         XCTAssertEqual(source, .macWake(80))
         source = ChargeLimitSource.resolve(
-            macWakeEnabled: true, macWakeReady: true, macWakeLimit: 60, nativeLimit: 100
+            macWakeEnabled: true, macWakeReady: true, macWakeLimit: 60, nativeLimit: 100,
+            isYielded: false
         )
         XCTAssertEqual(source, .macWake(60))
+    }
+
+    // MARK: - Ownership handoff (yielded)
+
+    func testConfirmedExternalHoldYieldsInsteadOfClaimingMacWakeIsEnforcing() {
+        // The maintainer's product call for #13: MacWake at 80%, a confirmed external hold
+        // at 95% — MacWake must not be described as actively holding at 80% here.
+        let source = ChargeLimitSource.resolve(
+            macWakeEnabled: true, macWakeReady: true, macWakeLimit: 80, nativeLimit: 95,
+            isYielded: true
+        )
+        XCTAssertEqual(source, .yielded(externalPercent: 95, macWakeLimit: 80))
+    }
+
+    func testYieldedPreservesTheConfiguredMacWakeLimit() {
+        // The configured limit must survive the handoff unchanged, since authorization was
+        // never revoked — only enforcement moved.
+        let source = ChargeLimitSource.resolve(
+            macWakeEnabled: true, macWakeReady: true, macWakeLimit: 65, nativeLimit: 90,
+            isYielded: true
+        )
+        guard case .yielded(_, let macWakeLimit) = source else {
+            return XCTFail("expected .yielded, got \(source)")
+        }
+        XCTAssertEqual(macWakeLimit, 65)
+    }
+
+    func testIsYieldedIsIgnoredWhenMacWakeIsNotEnabled() {
+        // Yielding is a statement about MacWake's own enforcement stepping back — with
+        // nothing enabled to step back from, this must read as a plain external hold.
+        let source = ChargeLimitSource.resolve(
+            macWakeEnabled: false, macWakeReady: true, macWakeLimit: 80, nativeLimit: 90,
+            isYielded: true
+        )
+        XCTAssertEqual(source, .macOSNative(90))
+    }
+
+    func testIsYieldedIsIgnoredWhenHelperIsNotReady() {
+        let source = ChargeLimitSource.resolve(
+            macWakeEnabled: true, macWakeReady: false, macWakeLimit: 80, nativeLimit: 90,
+            isYielded: true
+        )
+        XCTAssertEqual(source, .macOSNative(90))
     }
 }

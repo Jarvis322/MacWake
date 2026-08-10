@@ -434,3 +434,5 @@
 "UNPLUG_DESC" = "Güç kablosunu çıkardığında takip otomatik başlar.";
 "UNPLUG_DESC_LIMIT_FMT" = "Güç kablosunu çıkardığında takip otomatik başlar (limit: %%%d).";
 "UNPLUG_DESC_MACOS_LIMIT_FMT" = "Güç kablosunu çıkardığında takip otomatik başlar (macOS limiti: %%%d).";
+
+"CL_YIELDED_FMT" = "macOS %%%d'de tutuyor. MacWake, çakışmayı önlemek için şarj kontrolünü bıraktı. %%%d MacWake limitiniz yapılandırılmış olarak kalıyor ama şu an uygulanmıyor. MacWake'in kontrolü geri alması için macOS'un Şarj Limiti'ni kapatın.";

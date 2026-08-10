@@ -444,3 +444,5 @@
 "UNPLUG_DESC" = "拔下电源线后将自动开始记录。";
 "UNPLUG_DESC_LIMIT_FMT" = "拔下电源线后将自动开始记录（上限：%d%%）。";
 "UNPLUG_DESC_MACOS_LIMIT_FMT" = "拔下电源线后将自动开始记录（macOS 上限：%d%%）。";
+
+"CL_YIELDED_FMT" = "macOS 正保持在 %d%%。为避免冲突，MacWake 已让出充电控制权。你设置的 %d%% MacWake 上限仍然保留，但当前未生效。关闭 macOS 的“充电限制”即可让 MacWake 恢复控制。";
