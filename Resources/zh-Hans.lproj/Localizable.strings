@@ -448,3 +448,11 @@
 "CL_YIELDED_FMT" = "macOS 正保持在 %d%%。为避免冲突，MacWake 已让出充电控制权。你设置的 %d%% MacWake 上限仍然保留，但当前未生效。关闭 macOS 的“充电限制”即可让 MacWake 恢复控制。";
 
 "CL_YIELDED_CONFIRMING_FMT" = "macOS 在 %d%% 的保持似乎已解除。MacWake 正在确认后再恢复其 %d%% 的上限。";
+
+"DURATION_HM_FMT" = "%d时%d分";
+"DURATION_M_FMT" = "%d分";
+
+"CL_ALLOW_DISCHARGE" = "允许主动放电";
+"CL_NOT_AUTHORIZED_FMT" = "你设置的 %d%% 上限已配置但当前未生效——你尚未授权 MacWake 通过放电来维持该上限，而这是此 Mac 唯一能执行上限的方式。请在上方打开“允许主动放电”以启用。";
+
+"DISCHARGE_CONFIRM_FMT" = "MacWake 会在插电状态下主动将电池放电至 %d%%，然后停止。电量百分比会下降，在达到目标之前 Mac 会显示为正在使用电池。";

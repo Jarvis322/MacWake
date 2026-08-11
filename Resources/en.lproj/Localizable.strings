@@ -115,3 +115,11 @@
 "CL_YIELDED_FMT" = "macOS is holding at %d%%. MacWake has yielded charge control to avoid a conflict. Your %d%% MacWake limit remains configured but is not currently enforced. Turn off macOS's Charge Limit to let MacWake resume control.";
 
 "CL_YIELDED_CONFIRMING_FMT" = "macOS's hold at %d%% appears to have cleared. MacWake is confirming before resuming its %d%% limit.";
+
+"DURATION_HM_FMT" = "%dh %dm";
+"DURATION_M_FMT" = "%dm";
+
+"CL_ALLOW_DISCHARGE" = "Allow Active Discharge";
+"CL_NOT_AUTHORIZED_FMT" = "Your %d%% limit is configured but not currently enforced — you haven't authorized MacWake to discharge the battery to hold it, which is the only way this Mac can enforce a limit. Turn on Allow Active Discharge above to enable it.";
+
+"DISCHARGE_CONFIRM_FMT" = "MacWake will actively drain the battery to %d%% while plugged in, then stop. The battery percentage will fall and the Mac will show as running on battery until it reaches the target.";

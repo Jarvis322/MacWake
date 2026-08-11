@@ -1987,6 +1987,11 @@ enum ChargeLimitSource: Equatable {
     /// configuration (`macWakeLimit`) is preserved here precisely so the UI can say it's
     /// still set, just not the one currently in charge.
     case yielded(externalPercent: Int, macWakeLimit: Int)
+    /// MacWake's limit is configured and enabled, but the user has not authorized the only
+    /// mechanism this hardware has to enforce it (or authorization is unconfirmed). The
+    /// limit is genuinely not being enforced right now — this case exists so nothing can
+    /// claim otherwise.
+    case notAuthorized(macWakeLimit: Int)
     /// Neither is enforcing anything below 100%.
     case none
 
@@ -1994,8 +1999,14 @@ enum ChargeLimitSource: Equatable {
     /// a live detector reading — passing the raw current reading here is what previously let
     /// the grace period display a false "holding at 100%" the moment a single tick came back
     /// ambiguous, while the real, still-yielded-to hold was at some other percent entirely.
+    ///
+    /// `isAuthorized` is checked before `yieldedPercent`/enforcement: without it there is
+    /// nothing for MacWake to yield or enforce, so it must not describe either.
     static func resolve(macWakeEnabled: Bool, macWakeReady: Bool, macWakeLimit: Int,
-                        nativeLimit: Int, yieldedPercent: Int?) -> ChargeLimitSource {
+                        nativeLimit: Int, yieldedPercent: Int?, isAuthorized: Bool) -> ChargeLimitSource {
+        if macWakeEnabled, macWakeReady, !isAuthorized {
+            return .notAuthorized(macWakeLimit: macWakeLimit)
+        }
         if macWakeEnabled, macWakeReady, let yieldedPercent {
             return .yielded(externalPercent: yieldedPercent, macWakeLimit: macWakeLimit)
         }

@@ -438,3 +438,11 @@
 "CL_YIELDED_FMT" = "macOS %%%d'de tutuyor. MacWake, çakışmayı önlemek için şarj kontrolünü bıraktı. %%%d MacWake limitiniz yapılandırılmış olarak kalıyor ama şu an uygulanmıyor. MacWake'in kontrolü geri alması için macOS'un Şarj Limiti'ni kapatın.";
 
 "CL_YIELDED_CONFIRMING_FMT" = "macOS'un %%%d'deki tutması bitmiş gibi görünüyor. MacWake, %%%d limitini yeniden uygulamadan önce doğruluyor.";
+
+"DURATION_HM_FMT" = "%dsa %ddk";
+"DURATION_M_FMT" = "%ddk";
+
+"CL_ALLOW_DISCHARGE" = "Aktif Boşaltmaya İzin Ver";
+"CL_NOT_AUTHORIZED_FMT" = "%%%d limitiniz yapılandırılmış ama şu an uygulanmıyor — MacWake'e pili boşaltarak limiti tutma izni vermediniz; bu Mac'in limiti uygulayabildiği tek yol bu. Etkinleştirmek için yukarıdan Aktif Boşaltmaya İzin Ver'i açın.";
+
+"DISCHARGE_CONFIRM_FMT" = "MacWake, fişteyken pili aktif olarak %%%d'ye kadar boşaltıp duracak. Pil yüzdesi düşecek ve Mac, hedefe ulaşana kadar pilde çalışıyormuş gibi görünecek.";

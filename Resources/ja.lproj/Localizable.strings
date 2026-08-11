@@ -448,3 +448,11 @@
 "CL_YIELDED_FMT" = "macOS が %d%% で保持しています。競合を避けるため、MacWake は充電制御を譲りました。設定済みの MacWake の上限 %d%% はそのまま残りますが、現在は適用されていません。macOS の「充電の上限」をオフにすると、MacWake が制御を再開します。";
 
 "CL_YIELDED_CONFIRMING_FMT" = "macOS の %d%% での保持が解除されたようです。MacWake は %d%% の上限を再開する前に確認しています。";
+
+"DURATION_HM_FMT" = "%d時間%d分";
+"DURATION_M_FMT" = "%d分";
+
+"CL_ALLOW_DISCHARGE" = "能動的な放電を許可";
+"CL_NOT_AUTHORIZED_FMT" = "設定済みの上限 %d%% は現在適用されていません — MacWake がバッテリーを放電して上限を維持することをまだ許可していません。これはこの Mac が上限を適用できる唯一の方法です。有効にするには上の「能動的な放電を許可」をオンにしてください。";
+
+"DISCHARGE_CONFIRM_FMT" = "MacWake は電源に接続したまま、バッテリーを %d%% まで能動的に放電してから停止します。バッテリー残量は減少し、目標に達するまで Mac はバッテリー駆動として表示されます。";

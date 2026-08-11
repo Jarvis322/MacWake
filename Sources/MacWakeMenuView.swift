@@ -17,6 +17,7 @@ struct MacWakeMenuView: View {
     @State private var selectedTab: Int = 0
     @State private var isScrolledToBottom = false
     @State private var showCalibrationConfirmation = false
+    @State private var showDischargeConfirmation = false
     #if !APPSTORE
     @State private var isCLIInstalled = CLIInstaller.isInstalled
     #endif
@@ -862,12 +863,25 @@ struct MacWakeMenuView: View {
                         }
                         Spacer(minLength: 8)
                         Button {
-                            chargeLimit.startDischarge()
+                            showDischargeConfirmation = true
                         } label: {
                             Text("\(chargeLimit.dischargeTarget)%").monospacedDigit()
                         }
                         .buttonStyle(.borderedProminent).controlSize(.small).tint(.orange)
                         .disabled(tracker.currentBatteryLevel <= chargeLimit.dischargeTarget)
+                        // Same pattern as calibration (#6): draining the battery on purpose
+                        // is consequential enough to ask first, not just require a target
+                        // to already be selected before the button becomes tappable.
+                        .confirmationDialog(
+                            "Discharge",
+                            isPresented: $showDischargeConfirmation,
+                            titleVisibility: .visible
+                        ) {
+                            Button("Start Discharging", role: .destructive) { chargeLimit.startDischarge() }
+                            Button("Cancel", role: .cancel) {}
+                        } message: {
+                            Text(String(format: String(localized: "DISCHARGE_CONFIRM_FMT"), chargeLimit.dischargeTarget))
+                        }
                     }
                     .padding(.horizontal, 12).padding(.vertical, 9)
                     rowDivider()
@@ -1037,6 +1051,21 @@ struct MacWakeMenuView: View {
                     }
                 }
 
+                // Configured but declined the only mechanism this hardware has to enforce
+                // it — say so plainly rather than leave a toggle that looks on above a
+                // battery that never moves.
+                if case .notAuthorized(let macWakeLimit) = chargeLimitSource {
+                    rowDivider()
+                    sliderBlock {
+                        HStack(alignment: .top, spacing: 5) {
+                            Image(systemName: "pause.circle").font(.system(size: 9)).foregroundColor(.secondary)
+                            Text(String(format: String(localized: "CL_NOT_AUTHORIZED_FMT"), macWakeLimit))
+                                .font(.system(size: 10)).foregroundColor(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                }
+
                 if chargeLimit.isEnabled {
                     rowDivider()
                     sliderBlock {
@@ -1077,6 +1106,22 @@ struct MacWakeMenuView: View {
                                     .fixedSize(horizontal: false, vertical: true)
                             }
                             .padding(.top, 2)
+
+                            // Only this hardware needs the question asked at all — a clean
+                            // inhibit key never discharges to hold, so there's nothing here
+                            // to authorize on M1–M3. Persistent rather than one-shot, and
+                            // separate from Limit Charging itself, per the product direction
+                            // in #17: declining it must not silently disable the limit or
+                            // leave the UI claiming it's enforced.
+                            if cutsAdapter {
+                                HStack(spacing: 8) {
+                                    Toggle(isOn: $chargeLimit.allowActiveDischarge) {
+                                        Text("CL_ALLOW_DISCHARGE").font(.system(size: 10))
+                                    }
+                                    .toggleStyle(.switch).controlSize(.mini)
+                                }
+                                .padding(.top, 4)
+                            }
                         }
                         HStack(alignment: .top, spacing: 5) {
                             Image(systemName: "exclamationmark.triangle.fill").font(.system(size: 9)).foregroundColor(.orange)
@@ -1376,7 +1421,11 @@ struct MacWakeMenuView: View {
             macWakeReady: chargeLimit.helperStatus == .ready,
             macWakeLimit: chargeLimit.limit,
             nativeLimit: tracker.chargeLimit,
-            yieldedPercent: yieldedPercent
+            yieldedPercent: yieldedPercent,
+            isAuthorized: ChargeLimitAuthorization.standingLimitMayEnforce(
+                holdCutsAdapter: chargeLimit.holdCutsAdapter,
+                allowActiveDischarge: chargeLimit.allowActiveDischarge
+            )
         )
     }
 
@@ -1388,7 +1437,10 @@ struct MacWakeMenuView: View {
             return String(format: String(localized: "LIMIT_FMT"), value)
         case .macOSNative(let value), .yielded(let value, _):
             return String(format: String(localized: "MACOS_LIMIT_FMT"), value)
-        case .none:
+        case .notAuthorized, .none:
+            // Nothing is actually enforcing right now — the full explanation lives in the
+            // Settings banner; the compact header just says nothing rather than naming a
+            // limit that isn't in effect.
             return ""
         }
     }
@@ -1542,7 +1594,7 @@ struct MacWakeMenuView: View {
             return String(format: String(localized: "UNPLUG_DESC_LIMIT_FMT"), value)
         case .macOSNative(let value), .yielded(let value, _):
             return String(format: String(localized: "UNPLUG_DESC_MACOS_LIMIT_FMT"), value)
-        case .none:
+        case .notAuthorized, .none:
             return String(localized: "UNPLUG_DESC")
         }
     }
@@ -2013,9 +2065,9 @@ struct MacWakeMenuView: View {
         let hours = Int(duration) / 3600
         let minutes = (Int(duration) % 3600) / 60
         if hours > 0 {
-            return "\(hours)h \(minutes)m"
+            return String(format: String(localized: "DURATION_HM_FMT"), hours, minutes)
         } else {
-            return "\(minutes)m"
+            return String(format: String(localized: "DURATION_M_FMT"), minutes)
         }
     }
     

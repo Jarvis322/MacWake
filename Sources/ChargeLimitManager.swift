@@ -358,6 +358,9 @@ final class ChargeLimitManager: ObservableObject {
         self.scheduledChargeMinutes = savedSchedule.map { min(1439, max(0, $0)) } ?? 540   // default 09:00
         let savedDischarge = d.object(forKey: "dischargeTarget") as? Int
         self.dischargeTarget = savedDischarge.map { min(95, max(20, $0)) } ?? 60
+        // bool(forKey:) reports false for a missing key, which would silently disable
+        // protection for every existing install the first time this ships.
+        self.allowActiveDischarge = (d.object(forKey: "allowActiveDischarge") as? Bool) ?? true
         refreshStatus()
     }
 
@@ -742,6 +745,18 @@ final class ChargeLimitManager: ObservableObject {
             }
         }
 
+        // On adapter-cut-only hardware, the standing limit needs separate authorization to
+        // actually discharge — declining it must not silently disable protection or, worse,
+        // leave the UI claiming a limit is enforced when nothing can enforce it. There's
+        // nothing to yield to here either: MacWake was never going to enforce, so ownership
+        // is left alone rather than manufacturing a state transition that didn't happen.
+        guard ChargeLimitAuthorization.standingLimitMayEnforce(
+            holdCutsAdapter: holdCutsAdapter, allowActiveDischarge: allowActiveDischarge
+        ) else {
+            if lastAdapterEnabled == false { Task { await restoreCharging() } }
+            return
+        }
+
         // Yield runtime enforcement to a confirmed external hold rather than fight it for
         // the same SMC key — the user's limit/authorization stays configured, only the
         // active-right-now decision moves. Update ownership before anything else below can
@@ -947,6 +962,25 @@ final class ChargeLimitManager: ObservableObject {
     /// `nil` until the helper has answered. Detected from SMC key availability per machine,
     /// so it cannot be inferred from the chip name.
     @Published private(set) var holdCutsAdapter: Bool?
+
+    /// User authorization for the *standing limit* to cut adapter input to enforce itself,
+    /// on hardware where that's the only mechanism available. Defaults to true so upgrading
+    /// doesn't silently turn off protection anyone already had configured; the toggle sits
+    /// right next to the existing disclosure that explains what it's authorizing. Manual
+    /// Discharge and calibration are unaffected — they carry their own explicit start
+    /// confirmation and don't read this at all.
+    @Published var allowActiveDischarge: Bool {
+        didSet {
+            UserDefaults.standard.set(allowActiveDischarge, forKey: "allowActiveDischarge")
+            // Release promptly if the standing limit was plausibly the one holding it —
+            // but never touch charging state that belongs to a different, independently
+            // authorized mechanism that happens to be active at the same moment.
+            if !allowActiveDischarge, lastAdapterEnabled == false,
+               !dischargeActive, !calibrationActive, !heatGuardPaused {
+                Task { await self.restoreCharging() }
+            }
+        }
+    }
 
     /// The running daemon's reported version. Surfaced in Settings because a machine on an
     /// outdated helper behaves in ways the current build cannot explain, and until now there
@@ -1288,5 +1322,25 @@ enum ChargeControlOwnership: Equatable {
         guard case .yielded(let lastConfirmed, _) = current else { return .enforcing }
         if consecutiveClearSamples >= resumeAfterClearSamples { return .enforcing }
         return .yielded(toPercent: lastConfirmed, confirmingResume: true)
+    }
+}
+
+/// Whether the standing charge limit may actually cut adapter input to enforce itself.
+///
+/// Enforcing a ceiling on hardware with no clean charge-inhibit key means running the
+/// battery down on AC — a real, sometimes surprising, consequence "limit charging" alone
+/// doesn't convey. This gates only the standing limit's own enforcement, not Manual
+/// Discharge or calibration, which already carry their own explicit start confirmation and
+/// represent the user acting right now rather than a background policy acting on their
+/// behalf indefinitely.
+enum ChargeLimitAuthorization {
+    /// A confirmed clean charge-inhibit key never discharges to hold, so there is nothing to
+    /// authorize — the switch this drives is not even shown on that hardware. Unconfirmed
+    /// (`nil`, e.g. detection hasn't completed yet) is treated the same as adapter-cut: the
+    /// safer assumption until proven otherwise, matching how this codebase already treats
+    /// ambiguity elsewhere (fail toward not enforcing, never toward silently discharging).
+    static func standingLimitMayEnforce(holdCutsAdapter: Bool?, allowActiveDischarge: Bool) -> Bool {
+        if holdCutsAdapter == false { return true }
+        return allowActiveDischarge
     }
 }
