@@ -1941,13 +1941,30 @@ enum MenuBarVisibility {
 /// Compact keeps the same metrics and only spends fewer characters on them. It is opt-in:
 /// the default layout is unchanged, and nothing ever wraps or re-arranges on its own.
 enum MenuBarLabel {
-    /// `"3h 20m"` normally, `"3:20"` compact. Under an hour both read `"20m"` — a bare
-    /// `"0:20"` would be mistaken for 20 hours at a glance.
+    /// Pure hour/minute breakdown, kept separate from the localized formatting below so the
+    /// arithmetic is testable without a running app: `String(localized:)` resolves against
+    /// `Bundle.main`, which only contains `Localizable.strings` in the actual built `.app`
+    /// (`build.sh` copies it in) — the `swift test` runner has no such bundle, so a test
+    /// asserting the localized text directly sees the raw format key, not real output.
+    static func hoursAndMinutes(seconds: Double) -> (hours: Int, minutes: Int) {
+        let totalMinutes = max(0, Int(seconds) / 60)
+        return (totalMinutes / 60, totalMinutes % 60)
+    }
+
+    /// Localized "3h 20m" normally, digit-only "3:20" compact (already language-neutral, so
+    /// left as-is). Under an hour both read as a localized "20m" — a bare "0:20" would be
+    /// mistaken for 20 hours at a glance. Shares its unit strings with `formatDuration` in
+    /// MacWakeMenuView.swift; both were hardcoded to English "h"/"m" regardless of system
+    /// language until a Turkish-locale report caught it in the menu bar, then again in the
+    /// Settings preview that renders this same value.
     static func duration(seconds: Double, compact: Bool) -> String {
-        let minutes = max(0, Int(seconds) / 60)
-        let hours = minutes / 60, rest = minutes % 60
-        guard hours > 0 else { return "\(rest)m" }
-        return compact ? String(format: "%d:%02d", hours, rest) : "\(hours)h \(rest)m"
+        let (hours, rest) = hoursAndMinutes(seconds: seconds)
+        guard hours > 0 else {
+            return String(format: String(localized: "DURATION_M_FMT"), rest)
+        }
+        return compact
+            ? String(format: "%d:%02d", hours, rest)
+            : String(format: String(localized: "DURATION_HM_FMT"), hours, rest)
     }
 
     /// `"12.4W"` normally, `"12W"` compact — a tenth of a watt is not worth two characters

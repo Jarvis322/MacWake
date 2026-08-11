@@ -389,7 +389,7 @@ struct OnboardingView: View {
         var parts: [String] = []
         if mbPercent { parts.append("76%") }
         if mbPower { parts.append("12.4W") }
-        if mbTime { parts.append("~3h 20m") }
+        if mbTime { parts.append("~" + String(format: String(localized: "DURATION_HM_FMT"), 3, 20)) }
         if mbTemp { parts.append("39°") }
         return parts.isEmpty ? (mbIcon ? "" : "—") : parts.joined(separator: "  ")
     }
