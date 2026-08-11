@@ -1033,16 +1033,29 @@ final class ChargeLimitManager: ObservableObject {
 
     @Published private(set) var fanControlUnsupported = false
 
+    // Set right before a failed manual attempt flips fanControlEnabled back to false itself,
+    // so the automatic-restore Task that didSet immediately queues can tell "the switch is
+    // off because activation just failed" apart from "the user turned it off" — the former
+    // must not erase the failure note the previous Task set a moment earlier.
+    private var isRollingBackFanAfterFailure = false
+
     private func applyFan() async {
         guard helperStatus == .ready, fanCount > 0, let proxy = remoteProxy() else { return }
         let manual = fanControlEnabled
         let rpm = min(max(fanTargetRPM, fanMinRPM), fanMaxRPM == 0 ? fanTargetRPM : fanMaxRPM)
         let applied = await xpcBool { reply in proxy.setFanManual(manual, rpm: rpm, reply: reply) }
-        guard manual else { fanControlUnsupported = false; return }
-        // The helper now verifies its own writes by reading the target back, so a false
-        // here means this Mac's SMC refuses fan control — don't pretend it's on.
+        guard manual else {
+            if !isRollingBackFanAfterFailure { fanControlUnsupported = false }
+            isRollingBackFanAfterFailure = false
+            return
+        }
+        // The helper now verifies its own writes by polling the target back, so a false
+        // here means this Mac's SMC genuinely refused fan control — don't pretend it's on.
         fanControlUnsupported = !applied
-        if !applied { fanControlEnabled = false }
+        if !applied {
+            isRollingBackFanAfterFailure = true
+            fanControlEnabled = false
+        }
     }
 
     func restoreFanAuto() {

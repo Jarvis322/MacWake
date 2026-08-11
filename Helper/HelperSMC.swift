@@ -307,6 +307,20 @@ enum HelperSMC {
     /// Control uses, is to raise the fan's MINIMUM (F0Mn): the system controller then
     /// keeps the fan at least that fast. We do both so Intel and Apple Silicon are covered,
     /// and log the full picture so a tester's Console reveals exactly what engaged.
+    /// A write followed by an immediate readback is not proof of failure — a live SMC trace
+    /// against real M5 Pro hardware showed the target key settling roughly 75-250ms after the
+    /// write, not atomically with it. Checking once, right away, misreported a write that was
+    /// genuinely taking effect as rejected. Poll for a bounded window instead of a single check.
+    private static func writeAndVerify(_ conn: io_connect_t, _ key: String, _ value: Int, timeout: TimeInterval = 0.5, interval: TimeInterval = 0.05) -> Bool {
+        guard writeFanRPM(conn, key, value) else { return false }
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            if readFanRPM(conn, key) == value { return true }
+            Thread.sleep(forTimeInterval: interval)
+        }
+        return readFanRPM(conn, key) == value
+    }
+
     static func setFanManual(_ manual: Bool, rpm: Int) -> Bool {
         guard let conn = open() else { fanLog("open() failed"); return false }
         defer { IOServiceClose(conn) }
@@ -325,27 +339,41 @@ enum HelperSMC {
                 // are read-only there); the others are best-effort for Intel, where forced
                 // mode is what matters. Succeed if EITHER path took — gating on F0Mn made
                 // every Apple Silicon call report failure even when the target was set.
-                // Escalate through the known mechanisms and VERIFY each one by reading the
+                // Escalate through the known mechanisms and VERIFY each one by polling the
                 // target back. A write call returning success is not proof: on Apple
                 // Silicon the SMC accepts a fan write and silently discards it, which is
                 // how manual mode looked enabled while the fan never moved.
-                var took = writeFanRPM(conn, "F\(i)Tg", clamped) && readFanRPM(conn, "F\(i)Tg") == clamped
+                var took = writeAndVerify(conn, "F\(i)Tg", clamped)
                 if !took {
                     // Intel path: forced mode first, then the target.
                     if let modeKey = fanModeKey(conn, i) { _ = write(conn, modeKey, 1) }
-                    took = writeFanRPM(conn, "F\(i)Tg", clamped) && readFanRPM(conn, "F\(i)Tg") == clamped
+                    took = writeAndVerify(conn, "F\(i)Tg", clamped)
                 }
                 if !took {
                     // Older Macs gate manual control behind the FS! bitmask (one bit per fan).
                     let mask = read(conn, "FS! ")
                     _ = write(conn, "FS! ", mask | UInt8(1 << i))
-                    took = writeFanRPM(conn, "F\(i)Tg", clamped) && readFanRPM(conn, "F\(i)Tg") == clamped
+                    took = writeAndVerify(conn, "F\(i)Tg", clamped)
                 }
                 if !took {
                     // Some controllers only honour a raised floor.
-                    took = writeFanRPM(conn, "F\(i)Mn", clamped) && readFanRPM(conn, "F\(i)Mn") == clamped
+                    took = writeAndVerify(conn, "F\(i)Mn", clamped)
                 }
                 fanLog("F\(i) target=\(clamped) tookEffect=\(took) actualBefore=\(before)")
+                if !took {
+                    // Every mechanism was polled and none settled — don't leave this fan
+                    // half-manual (a target write that lands after we've already given up).
+                    // Hand it straight back to automatic before reporting failure, so a
+                    // caller that trusts a `false` reply never has to roll back state we
+                    // could have cleaned up ourselves.
+                    _ = writeFanRPM(conn, "F\(i)Tg", 0)
+                    if let hwMin = hardwareMin[i] { _ = writeFanRPM(conn, "F\(i)Mn", hwMin) }
+                    if let modeKey = fanModeKey(conn, i) { _ = write(conn, modeKey, 0) }
+                    let mask = read(conn, "FS! ")
+                    _ = write(conn, "FS! ", mask & ~UInt8(1 << i))
+                    hardwareMin[i] = nil
+                    fanLog("F\(i) rejected — restored automatic")
+                }
                 ok = took || ok
             } else {
                 // A zero target is what these keys hold when the system owns the fan, so

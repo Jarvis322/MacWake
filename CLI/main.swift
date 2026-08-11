@@ -107,7 +107,14 @@ case "fan" where args.count == 2:
     if args[1] == "auto" {
         finish(callBool { p.setFanManual(false, rpm: 0, reply: $0) }, "fan: automatic")
     } else if let rpm = Int(args[1]), rpm >= 0 {
-        finish(callBool { p.setFanManual(true, rpm: rpm, reply: $0) }, "fan: \(rpm) RPM")
+        // A false reply here means the helper answered but the SMC rejected every manual
+        // mechanism it tried — the generic "is the helper running?" message is wrong at
+        // this point (the helper plainly is, we just heard back from it), and now that the
+        // helper itself restores automatic control before replying false, there's nothing
+        // left for a caller to roll back.
+        let ok = callBool { p.setFanManual(true, rpm: rpm, reply: $0) }
+        print(ok ? "fan: \(rpm) RPM" : "fan: rejected by hardware — automatic control restored")
+        exit(ok ? 0 : 1)
     } else {
         usage(); exit(1)
     }
