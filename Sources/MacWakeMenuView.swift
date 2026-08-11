@@ -1121,6 +1121,20 @@ struct MacWakeMenuView: View {
                                     .toggleStyle(.switch).controlSize(.mini)
                                 }
                                 .padding(.top, 4)
+
+                                // Upgraded users had this switch turned on for them without
+                                // asking, so say so once — never shown on a fresh install,
+                                // which defaulted off and has nothing to disclose.
+                                if chargeLimit.showMigrationNotice {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("CL_MIGRATION_NOTICE")
+                                            .font(.system(size: 10)).foregroundColor(.secondary)
+                                            .fixedSize(horizontal: false, vertical: true)
+                                        Button("CL_MIGRATION_DISMISS") { chargeLimit.dismissMigrationNotice() }
+                                            .font(.system(size: 10)).buttonStyle(.link)
+                                    }
+                                    .padding(.top, 4)
+                                }
                             }
                         }
                         HStack(alignment: .top, spacing: 5) {

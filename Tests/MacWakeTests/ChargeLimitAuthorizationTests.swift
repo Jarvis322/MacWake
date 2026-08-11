@@ -32,4 +32,15 @@ final class ChargeLimitAuthorizationTests: XCTestCase {
             holdCutsAdapter: nil, allowActiveDischarge: true
         ))
     }
+
+    func testFreshInstallDefaultsToNotAuthorized() {
+        // Never asked, so never assume — a brand new user hasn't earned an opt-out default.
+        XCTAssertFalse(ChargeLimitAuthorization.defaultAllowActiveDischarge(hasPriorChargeLimitConfig: false))
+    }
+
+    func testUpgradingUserWithPriorConfigDefaultsToAuthorized() {
+        // Preserves whatever protection an existing user already had running before this
+        // switch existed, rather than silently disabling it out from under them.
+        XCTAssertTrue(ChargeLimitAuthorization.defaultAllowActiveDischarge(hasPriorChargeLimitConfig: true))
+    }
 }

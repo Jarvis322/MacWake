@@ -358,9 +358,17 @@ final class ChargeLimitManager: ObservableObject {
         self.scheduledChargeMinutes = savedSchedule.map { min(1439, max(0, $0)) } ?? 540   // default 09:00
         let savedDischarge = d.object(forKey: "dischargeTarget") as? Int
         self.dischargeTarget = savedDischarge.map { min(95, max(20, $0)) } ?? 60
-        // bool(forKey:) reports false for a missing key, which would silently disable
-        // protection for every existing install the first time this ships.
-        self.allowActiveDischarge = (d.object(forKey: "allowActiveDischarge") as? Bool) ?? true
+        // A missing key means either a fresh install (never asked, so default off) or an
+        // existing user upgrading from before this switch existed (default on, to preserve
+        // their already-configured protection) — chargeLimitEnabled predates the split, so
+        // its presence tells the two apart. See ChargeLimitAuthorization.defaultAllowActiveDischarge.
+        let hasPriorChargeLimitConfig = d.object(forKey: "chargeLimitEnabled") != nil
+        let allowActiveDischargeKeyWasMissing = d.object(forKey: "allowActiveDischarge") == nil
+        self.allowActiveDischarge = (d.object(forKey: "allowActiveDischarge") as? Bool)
+            ?? ChargeLimitAuthorization.defaultAllowActiveDischarge(hasPriorChargeLimitConfig: hasPriorChargeLimitConfig)
+        self.showMigrationNotice = hasPriorChargeLimitConfig
+            && allowActiveDischargeKeyWasMissing
+            && !d.bool(forKey: "didShowActiveDischargeMigrationNotice")
         refreshStatus()
     }
 
@@ -964,11 +972,13 @@ final class ChargeLimitManager: ObservableObject {
     @Published private(set) var holdCutsAdapter: Bool?
 
     /// User authorization for the *standing limit* to cut adapter input to enforce itself,
-    /// on hardware where that's the only mechanism available. Defaults to true so upgrading
-    /// doesn't silently turn off protection anyone already had configured; the toggle sits
-    /// right next to the existing disclosure that explains what it's authorizing. Manual
-    /// Discharge and calibration are unaffected — they carry their own explicit start
-    /// confirmation and don't read this at all.
+    /// on hardware where that's the only mechanism available. A fresh install defaults to
+    /// off (never asked); an existing user upgrading with Charge Limit already configured
+    /// defaults to on, so upgrading doesn't silently turn off protection they already had —
+    /// see ChargeLimitAuthorization.defaultAllowActiveDischarge. The toggle sits right next
+    /// to the existing disclosure that explains what it's authorizing. Manual Discharge and
+    /// calibration are unaffected — they carry their own explicit start confirmation and
+    /// don't read this at all.
     @Published var allowActiveDischarge: Bool {
         didSet {
             UserDefaults.standard.set(allowActiveDischarge, forKey: "allowActiveDischarge")
@@ -980,6 +990,17 @@ final class ChargeLimitManager: ObservableObject {
                 Task { await self.restoreCharging() }
             }
         }
+    }
+
+    /// One-time disclosure for the upgrade case above: an existing user's active-discharge
+    /// authorization was just turned on for them without asking, so say so once. Dismissing
+    /// it persists — this never reappears once acknowledged, and never appears at all for a
+    /// fresh install (which defaulted off and has nothing to disclose).
+    @Published var showMigrationNotice: Bool
+
+    func dismissMigrationNotice() {
+        showMigrationNotice = false
+        UserDefaults.standard.set(true, forKey: "didShowActiveDischargeMigrationNotice")
     }
 
     /// The running daemon's reported version. Surfaced in Settings because a machine on an
@@ -1342,5 +1363,14 @@ enum ChargeLimitAuthorization {
     static func standingLimitMayEnforce(holdCutsAdapter: Bool?, allowActiveDischarge: Bool) -> Bool {
         if holdCutsAdapter == false { return true }
         return allowActiveDischarge
+    }
+
+    /// The default for a missing `allowActiveDischarge` key can't be a single constant: a
+    /// fresh install has never earned the right to discharge the battery unasked, but an
+    /// existing user who already had Charge Limit configured before this switch existed
+    /// would otherwise have their protection silently switched off on upgrade. `chargeLimitEnabled`
+    /// predates the authorization split, so its presence in defaults distinguishes the two.
+    static func defaultAllowActiveDischarge(hasPriorChargeLimitConfig: Bool) -> Bool {
+        hasPriorChargeLimitConfig
     }
 }

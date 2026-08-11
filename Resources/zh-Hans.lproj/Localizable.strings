@@ -409,6 +409,7 @@
 "Alerts" = "提醒";
 "More" = "更多";
 "Discharge" = "放电";
+"Start Discharging" = "开始放电";
 "Discharge to" = "放电至";
 "Discharging" = "正在放电";
 "Stop" = "停止";
@@ -453,6 +454,8 @@
 "DURATION_M_FMT" = "%d分";
 
 "CL_ALLOW_DISCHARGE" = "允许主动放电";
+"CL_MIGRATION_NOTICE" = "由于你之前已经配置过充电上限，为了让保护继续像以前一样生效，系统已自动开启“允许主动放电”。如果你希望 MacWake 只跟踪上限而不放电，可以在上方将其关闭。";
+"CL_MIGRATION_DISMISS" = "知道了";
 "CL_NOT_AUTHORIZED_FMT" = "你设置的 %d%% 上限已配置但当前未生效——你尚未授权 MacWake 通过放电来维持该上限，而这是此 Mac 唯一能执行上限的方式。请在上方打开“允许主动放电”以启用。";
 
 "DISCHARGE_CONFIRM_FMT" = "MacWake 会在插电状态下主动将电池放电至 %d%%，然后停止。电量百分比会下降，在达到目标之前 Mac 会显示为正在使用电池。";
