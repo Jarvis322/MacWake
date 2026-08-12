@@ -112,4 +112,18 @@ final class BatteryHealthMathTests: XCTestCase {
         let ratio = BatteryHealthMath.ratio(nominal: 4820, liveMax: nil, design: 4629)
         XCTAssertEqual(ratio?.value, 100)
     }
+
+    func testFallsBackToRawMaxCapacityOnlyBeforeAnyRealSample() {
+        // A Mac that has never once produced a real ratio (old Intel, no capacity pair
+        // exposed) may trust the normalised MaxCapacity as its only option.
+        XCTAssertTrue(BatteryHealthMath.shouldFallBackToRawMaxCapacity(hasEverHadRatioSample: false))
+    }
+
+    func testDoesNotFallBackAfterARealSampleEverExisted() {
+        // A transient nil once a real ratio has already been computed (e.g. BatteryData
+        // briefly missing mid-recalculation) must not overwrite a correct, damped health
+        // figure with the pinned-100 value — a bug that made a single bad IORegistry read
+        // stick for up to 24 hours, since the headline only re-settles once a day.
+        XCTAssertFalse(BatteryHealthMath.shouldFallBackToRawMaxCapacity(hasEverHadRatioSample: true))
+    }
 }

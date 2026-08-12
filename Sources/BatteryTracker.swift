@@ -888,10 +888,14 @@ class BatteryTracker: ObservableObject {
                 batteryHealth = settled
                 healthLastMovedAt = now
             }
-        } else if let reportedMaxCapacity = dict["MaxCapacity"] as? Int,
+        } else if BatteryHealthMath.shouldFallBackToRawMaxCapacity(hasEverHadRatioSample: !healthSamples.isEmpty),
+                  let reportedMaxCapacity = dict["MaxCapacity"] as? Int,
                   (0...100).contains(reportedMaxCapacity) {
             batteryHealth = reportedMaxCapacity
         }
+        // Any other nil-ratio case (a Mac that has produced real samples before) is left
+        // alone: the previous headline stays on screen rather than being overwritten by
+        // the pinned-100 fallback below.
     }
 
     /// Re-reads battery health/cycles on demand and logs a new decay entry if it changed.
@@ -1909,6 +1913,18 @@ enum BatteryHealthMath {
         let sorted = values.sorted()
         let mid = sorted.count / 2
         return sorted.count.isMultiple(of: 2) ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid]
+    }
+
+    /// A nil `ratio()` result is only trustworthy as "this Mac structurally has no capacity
+    /// pair" the first time it happens — before any real sample has ever been taken. Once a
+    /// real ratio has been computed at least once, a later nil is far more likely a transient
+    /// IORegistry read glitch (BatteryData briefly missing mid-recalculation, around sleep/wake,
+    /// etc.) than the fields disappearing. Treating every nil as "fall back to raw MaxCapacity"
+    /// let one glitched read instantly overwrite a correct, damped health figure with the
+    /// pinned-100 value macOS always reports there — and because the headline only re-settles
+    /// after a full day (see `headline`), that single bad read stuck for up to 24 hours.
+    static func shouldFallBackToRawMaxCapacity(hasEverHadRatioSample: Bool) -> Bool {
+        !hasEverHadRatioSample
     }
 }
 
