@@ -514,6 +514,15 @@ class BatteryTracker: ObservableObject {
             self.lastRapidDrainAlert = persisted.lastRapidDrainAlert
             self.fanSpeedHistory = persisted.fanSpeedHistory ?? []
             self.healthHistory = Self.pruneNormalisedHealthEntries(persisted.healthHistory ?? [])
+            // batteryHealth itself is never persisted, only healthLastMovedAt (loaded below) —
+            // so every relaunch otherwise restarted from the compiled 100% default while the
+            // once-a-day damping gate in headline() still thought that default was a real,
+            // recently-settled value worth protecting. That combination could block a correct
+            // fresh reading from ever landing for up to 24 hours after any ordinary relaunch,
+            // not just after an update. Seed from the last thing we actually knew instead.
+            if let lastKnownHealth = self.healthHistory.last?.health {
+                self.batteryHealth = lastKnownHealth
+            }
             self.acPowerStartTime = persisted.acPowerStartTime
 
             // Recovery Check: If there is an active session, check if we rebooted
