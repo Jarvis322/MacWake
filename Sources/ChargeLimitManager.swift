@@ -1232,6 +1232,40 @@ final class ChargeLimitManager: ObservableObject {
         log += "daemon now reports \(reported.isEmpty ? "nothing" : reported)"
         log += reported == kMacWakeHelperVersion ? " — up to date\n" : " — still not current\n"
 
+        // A daemon that never answers even getVersion across 15 fresh-connection retries
+        // isn't outdated — it isn't actually running (crashed, or held down by launchd's
+        // crash-loop backoff) despite SMAppService still reporting it `.enabled`. Asking a
+        // dead process to gracefully exit was the only recovery this had, so it did nothing
+        // and left the daemon unreachable indefinitely — reported live, with "Reload Helper"
+        // producing the same unreachable report every time. unregister()+register() forces
+        // launchd to tear down the stale job registration and spawn a genuinely new process,
+        // the same recovery uninstall() already relies on elsewhere in this file.
+        if reported.isEmpty {
+            log += "daemon unreachable — attempting hard reset (unregister + register)\n"
+            do {
+                try await service.unregister()
+                try service.register()
+                log += "hard reset ok\n"
+            } catch {
+                log += "hard reset FAILED: \(error.localizedDescription)\n"
+            }
+            connection?.invalidate()
+            connection = nil
+            for _ in 0..<15 {
+                try? await Task.sleep(nanoseconds: 200_000_000)
+                reported = await xpcString(timeout: 2) { [weak self] reply in
+                    guard let proxy = self?.remoteProxy() else { return reply("") }
+                    proxy.getVersion(reply: reply)
+                }
+                if !reported.isEmpty { break }
+                connection?.invalidate()
+                connection = nil
+            }
+            log += "after hard reset, daemon reports \(reported.isEmpty ? "nothing" : reported)"
+            log += reported == kMacWakeHelperVersion ? " — up to date\n"
+                : (reported.isEmpty ? " — still unreachable\n" : " — still not current\n")
+        }
+
         log += "final status: \(service.status.rawValue)"
         helperVersion = nil
         refreshStatus()
