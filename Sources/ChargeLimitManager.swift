@@ -326,6 +326,11 @@ final class ChargeLimitManager: ObservableObject {
     private var connection: NSXPCConnection?
     private var lastAdapterEnabled: Bool?
     private var lastToggleAt: Date?
+    /// When the level first reached the ceiling this cycle, on adapter-cut-only hardware —
+    /// so the standing limit can give native-hold detection a short head start before its own
+    /// cut would pre-empt it. See `ChargeControlOwnership.mayEnforceLimitNow`. Cleared whenever
+    /// the level drops back out of the ceiling band or MacWake starts its own hold.
+    private var limitReachedAt: Date?
 
     /// True briefly after we flip the adapter, so BatteryTracker can suppress the
     /// charging animation / Dynamic Island for our own induced power-source changes.
@@ -790,10 +795,25 @@ final class ChargeLimitManager: ObservableObject {
 
         let shouldChargeAllowed: Bool
         if batteryLevel >= limit {
+            // On adapter-cut-only hardware, starting our own cut the instant the level
+            // crosses the ceiling wins the race against native-hold detection by
+            // construction — that detector needs several samples to confirm (checked every
+            // tick, above, before this point is ever reached), and none of those samples can
+            // land once MacWake's own cut is live. Give it its window first; only fall back
+            // to enforcing here if nothing confirms in time.
+            if lastAdapterEnabled != false, !sailingEnabled, holdCutsAdapter != false {
+                let reachedAt = limitReachedAt ?? Date()
+                limitReachedAt = reachedAt
+                guard ChargeControlOwnership.mayEnforceLimitNow(
+                    sinceLimitFirstReached: Date().timeIntervalSince(reachedAt)
+                ) else { return }
+            }
             shouldChargeAllowed = false                       // at/over ceiling → stop
         } else if batteryLevel <= lower {
+            limitReachedAt = nil
             shouldChargeAllowed = true                        // dropped below band → resume
         } else {
+            limitReachedAt = nil
             return                                            // inside band → hold / drift
         }
 
@@ -1390,6 +1410,22 @@ enum ChargeControlOwnership: Equatable {
         guard case .yielded(let lastConfirmed, _) = current else { return .enforcing }
         if consecutiveClearSamples >= resumeAfterClearSamples { return .enforcing }
         return .yielded(toPercent: lastConfirmed, confirmingResume: true)
+    }
+
+    /// Whether the standing limit may cut the adapter *yet* on adapter-cut-only hardware, or
+    /// should still hold off a little longer to give native-hold detection its own chance
+    /// first. `ExternalChargeHold.detect` needs several consecutive samples (3 × the 30s
+    /// heartbeat ≈ 90s) before it will ever confirm a hold — and once MacWake's own cut is
+    /// live, every sample gathered while holding is excluded from that detection (it would
+    /// otherwise "detect" its own hold as external). So enforcing immediately on the very
+    /// first tick the level crosses the ceiling wins the race by construction: a native macOS
+    /// Charge Limit configured at the same threshold never gets the ~90s it needs to prove
+    /// itself, and MacWake drains the battery to its own lower bound before the detector could
+    /// have ever said otherwise. `graceInterval` is set comfortably above that window so the
+    /// detector's verdict — checked earlier in `evaluate()`, every tick — has room to land
+    /// first; this only delays the *first* cut of a cycle, never an already-enforcing hold.
+    static func mayEnforceLimitNow(sinceLimitFirstReached: TimeInterval, graceInterval: TimeInterval = 100) -> Bool {
+        sinceLimitFirstReached >= graceInterval
     }
 }
 

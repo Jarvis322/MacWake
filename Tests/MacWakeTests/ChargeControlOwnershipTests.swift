@@ -93,4 +93,23 @@ final class ChargeControlOwnershipTests: XCTestCase {
         state = ChargeControlOwnership.next(current: state, externalHoldPercent: 80, consecutiveClearSamples: 0)
         XCTAssertEqual(state, .yielded(toPercent: 80, confirmingResume: false))
     }
+
+    // MARK: - mayEnforceLimitNow (issue #19: MacWake's own cut pre-empted native-hold detection)
+
+    func testMustNotEnforceTheInstantTheCeilingIsReached() {
+        // The live bug: cutting on tick zero wins the race against ExternalChargeHold.detect,
+        // which needs several samples (~90s) to ever confirm a native hold — none of which can
+        // land once MacWake's own cut is already live and excludes every sample it gathers.
+        XCTAssertFalse(ChargeControlOwnership.mayEnforceLimitNow(sinceLimitFirstReached: 0))
+    }
+
+    func testStillWithinTheDetectionWindowDoesNotEnforce() {
+        XCTAssertFalse(ChargeControlOwnership.mayEnforceLimitNow(sinceLimitFirstReached: 90, graceInterval: 100))
+    }
+
+    func testEnforcesOnceTheGraceWindowSafelyClearsDetection() {
+        // Comfortably past the detector's own ~90s window, so a Mac with no native hold
+        // configured still gets real protection rather than waiting forever.
+        XCTAssertTrue(ChargeControlOwnership.mayEnforceLimitNow(sinceLimitFirstReached: 100, graceInterval: 100))
+    }
 }
