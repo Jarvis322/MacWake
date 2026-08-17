@@ -1121,6 +1121,18 @@ struct MacWakeMenuView: View {
                                     .toggleStyle(.switch).controlSize(.mini)
                                 }
                                 .padding(.top, 4)
+                                if !chargeLimit.allowActiveDischarge, SystemSettingsDestination.nativeChargeLimitAvailable {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("CL_NATIVE_LIMIT_HELP")
+                                            .font(.system(size: 10)).foregroundColor(.secondary)
+                                            .fixedSize(horizontal: false, vertical: true)
+                                        Button("CL_OPEN_BATTERY_SETTINGS") {
+                                            SystemSettingsDestination.openBattery()
+                                        }
+                                        .font(.system(size: 10)).buttonStyle(.link)
+                                    }
+                                    .padding(.top, 4)
+                                }
 
                                 // Upgraded users had this switch turned on for them without
                                 // asking, so say so once — never shown on a fresh install,
