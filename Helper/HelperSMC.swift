@@ -218,6 +218,33 @@ enum HelperSMC {
         // only: an unknown key is never written to, because writing SMC keys blind can
         // change hardware behaviour in ways we cannot predict.
         out += "--- all CH* keys ---\n" + enumerateChargeKeys(conn) + "--- end ---\n"
+        out += "--- candidate firmware charge-limit keys (probe only, never written) ---\n"
+        out += probeFirmwareChargeLimitKeys(conn)
+        out += "--- end ---\n"
+        return out
+    }
+
+    /// A machine that falls back to cutting adapter input (CHIE/CH0J) drains the battery
+    /// to hold a limit — there is no clean, adapter-powered hold on that path today. Whether
+    /// a firmware-managed alternative exists on some Macs is an open question (see #19): the
+    /// open-source `batt` project documents `bfF0`/`bfD0`/`bfE0` as a distinct charge-limit
+    /// backend on newer firmware, separate from the CH* keys this codebase already knows.
+    /// This probes their presence, type, size, and write attribute ONLY — it never writes
+    /// them. An undocumented key accepting a write is not evidence it is safe to write;
+    /// this codebase's existing boundary (see `enumerateChargeKeys`) is to never write a key
+    /// it doesn't already understand, and that boundary applies here too. Purely diagnostic,
+    /// so a report from affected hardware can inform whether supporting this is worthwhile.
+    private static func probeFirmwareChargeLimitKeys(_ conn: io_connect_t) -> String {
+        var out = ""
+        for key in ["bfF0", "bfD0", "bfE0"] {
+            guard let info = keyInfo(conn, key) else {
+                out += "\(key) ABSENT\n"
+                continue
+            }
+            let writable = accessSuffix(info.dataAttributes)
+            out += "\(key) type=\(typeString(info.dataType)) size=\(info.dataSize)"
+            out += " attr=0x\(String(info.dataAttributes, radix: 16))\(writable) value=\(read(conn, key))\n"
+        }
         return out
     }
 
