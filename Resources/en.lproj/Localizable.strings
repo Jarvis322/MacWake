@@ -122,6 +122,6 @@
 "CL_ALLOW_DISCHARGE" = "Allow Active Discharge";
 "CL_MIGRATION_NOTICE" = "You already had Charge Limit configured, so Allow Active Discharge was turned on to keep your protection working the way it did before. Turn it off above if you'd rather MacWake just track the limit without discharging.";
 "CL_MIGRATION_DISMISS" = "Got it";
-"CL_NOT_AUTHORIZED_FMT" = "Your %d%% limit is configured but not currently enforced — you haven't authorized MacWake to discharge the battery to hold it, which is the only way this Mac can enforce a limit. Turn on Allow Active Discharge above to enable it.";
+"CL_NOT_AUTHORIZED_FMT" = "Your %d%% limit is configured but not currently enforced — you haven't authorized MacWake to discharge the battery to hold it, which is the only way this Mac can enforce a limit. Enable Allow Active Discharge to use this feature.";
 
 "DISCHARGE_CONFIRM_FMT" = "MacWake will actively drain the battery to %d%% while plugged in, then stop. The battery percentage will fall and the Mac will show as running on battery until it reaches the target.";

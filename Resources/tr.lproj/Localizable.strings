@@ -446,6 +446,6 @@
 "CL_ALLOW_DISCHARGE" = "Aktif Boşaltmaya İzin Ver";
 "CL_MIGRATION_NOTICE" = "Zaten Şarj Limiti yapılandırmıştınız, bu yüzden korumanız eskisi gibi çalışmaya devam etsin diye Aktif Boşaltmaya İzin Ver otomatik olarak açıldı. MacWake'in boşaltmadan sadece limiti takip etmesini istiyorsanız yukarıdan kapatabilirsiniz.";
 "CL_MIGRATION_DISMISS" = "Anladım";
-"CL_NOT_AUTHORIZED_FMT" = "%%%d limitiniz yapılandırılmış ama şu an uygulanmıyor — MacWake'e pili boşaltarak limiti tutma izni vermediniz; bu Mac'in limiti uygulayabildiği tek yol bu. Etkinleştirmek için yukarıdan Aktif Boşaltmaya İzin Ver'i açın.";
+"CL_NOT_AUTHORIZED_FMT" = "%%%d limitiniz yapılandırılmış ama şu an uygulanmıyor — MacWake'e pili boşaltarak limiti tutma izni vermediniz; bu Mac'in limiti uygulayabildiği tek yol bu. Bu özelliği kullanmak için Aktif Boşaltmaya İzin Ver'i etkinleştirin.";
 
 "DISCHARGE_CONFIRM_FMT" = "MacWake, fişteyken pili aktif olarak %%%d'ye kadar boşaltıp duracak. Pil yüzdesi düşecek ve Mac, hedefe ulaşana kadar pilde çalışıyormuş gibi görünecek.";
