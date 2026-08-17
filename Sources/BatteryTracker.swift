@@ -1163,12 +1163,19 @@ class BatteryTracker: ObservableObject {
         }
         
         center.addObserver(forName: NSWorkspace.willSleepNotification, object: nil, queue: .main) { [weak self] _ in
-            Task { @MainActor [weak self] in
+            // Synchronous, not `Task { @MainActor in }`: the OS can proceed with actual
+            // suspension immediately after this notification returns, and an async Task
+            // queued here is not guaranteed to run before that happens — that gap is how a
+            // manual fan target was found (#16) surviving real sleep/wake completely
+            // untouched, with the only attempted cleanup never getting a chance to run.
+            // `queue: .main` already guarantees this closure runs on the main thread, which
+            // is the MainActor's executor on Apple platforms, so this assertion is safe.
+            MainActor.assumeIsolated {
                 self?.handleStateTransition(to: "systemSleep")
-                // The app control loop is suspended during sleep. A manual calibration
-                // must synchronously release its forced-discharge state before that gap
-                // can cross the 15% safety floor.
+                // Both release their state with a blocking semaphore before returning here —
+                // see cancelCalibrationBeforeSleep/cancelFanControlBeforeSleep.
                 ChargeLimitManager.shared.cancelCalibrationBeforeSleep()
+                ChargeLimitManager.shared.cancelFanControlBeforeSleep()
             }
         }
         

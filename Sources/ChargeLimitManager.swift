@@ -607,6 +607,15 @@ final class ChargeLimitManager: ObservableObject {
             }
         }
         _ = sem.wait(timeout: .now() + 2)
+        // Manual fan control has no thermal failsafe while the app isn't running to enforce
+        // it — a relaunch silently re-forcing the same target with no fresh safety context
+        // was exactly the surprise boundary reported in #16 ("quit's SMC cleanup works, but
+        // relaunch re-enables manual mode"). Writing the default directly, not through the
+        // @Published setter, since the process is exiting and only the persisted value for
+        // next launch matters — the setter's own async restore Task would be pointless here.
+        if needsFan {
+            UserDefaults.standard.set(false, forKey: "fanControlEnabled")
+        }
     }
 
     // MARK: - Control loop
@@ -1081,6 +1090,24 @@ final class ChargeLimitManager: ObservableObject {
     func restoreFanAuto() {
         guard let proxy = remoteProxy() else { return }
         proxy.setFanManual(false, rpm: 0) { _ in }
+    }
+
+    /// Sleep suspends the app-side control loop the same way it does for charge control
+    /// (see `cancelCalibrationBeforeSleep`) — a manual fan target has no thermal failsafe
+    /// once evaluate()'s heartbeat stops running for the whole sleep duration. Live M5 Pro
+    /// testing (#16) found manual mode surviving real system sleep/wake untouched, because
+    /// the only cleanup attempted was an async Task queued from the willSleep notification —
+    /// not guaranteed to run before the OS actually suspends. Blocks on a semaphore like the
+    /// calibration path, and clears the persisted preference so wake can't silently reapply
+    /// a target that was never re-confirmed safe for whatever comes after sleep.
+    func cancelFanControlBeforeSleep() {
+        guard fanControlEnabled else { return }
+        if let proxy = remoteProxy() {
+            let semaphore = DispatchSemaphore(value: 0)
+            proxy.setFanManual(false, rpm: 0) { _ in semaphore.signal() }
+            _ = semaphore.wait(timeout: .now() + 2)
+        }
+        fanControlEnabled = false
     }
 
     /// Builds a copyable fan report and puts it on the pasteboard. Console logging proved
