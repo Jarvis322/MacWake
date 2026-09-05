@@ -82,7 +82,7 @@ cat <<EOF > "${CONTENTS_DIR}/Info.plist"
     <key>ITSAppUsesNonExemptEncryption</key>
     <false/>
     <key>SUPublicEDKey</key>
-    <string>/2MkiFjUE9FNAkLrnaVSgGmy/kRMG4z5Ax7PaBW3gnM=</string>
+    <string>wZGVOUc0aWD29DwSzAjmOKmGm2deTNLayS08g2URkeY=</string>
     <key>SUFeedURL</key>
     <string>https://raw.githubusercontent.com/Jarvis322/MacWake/main/appcast.xml</string>
 </dict>
@@ -244,7 +244,11 @@ mkdir -p "${FRAMEWORKS_DIR}"
 SPARKLE_SRC=".build/artifacts/sparkle/Sparkle/Sparkle.xcframework/macos-arm64_x86_64/Sparkle.framework"
 cp -R "${SPARKLE_SRC}" "${FRAMEWORKS_DIR}/Sparkle.framework"
 
-SIGN_IDENTITY="Developer ID Application: YIGIT CAN POLAT (6NK6D7LL79)"
+# A SHA-1 hash, not the certificate's common name: the reissued certificate's name carries
+# an unusual double space ("Yigit Can  Polat") straight from Apple's own account records,
+# and codesign's name matching is exact-string, not fuzzy. The hash is exact and immune to
+# a name changing again — `security find-identity -v -p codesigning` lists it.
+SIGN_IDENTITY="B9DB2D80CC21E70EEABE88F65F81803551D45BA3"
 ENTITLEMENTS="$(pwd)/MacWake.entitlements"
 SPARKLE_FW="${FRAMEWORKS_DIR}/Sparkle.framework"
 
