@@ -1,6 +1,155 @@
 import SwiftUI
 import Combine
 
+/// Shared settings-card visual building blocks, factored out so sections that don't need
+/// `tracker` can live in their own View struct — that keeps them out of `MacWakeMenuView`'s
+/// dependency graph, so its 1s wattage timer doesn't force them to redraw every tick.
+enum SettingsBuildingBlocks {
+    static func iconTile(_ icon: String, _ tint: Color) -> some View {
+        RoundedRectangle(cornerRadius: 7, style: .continuous)
+            .fill(tint.gradient)
+            .frame(width: 26, height: 26)
+            .overlay(Image(systemName: icon).font(.system(size: 12.5, weight: .semibold)).foregroundColor(.white))
+    }
+
+    @ViewBuilder
+    static func settingsCard<C: View>(@ViewBuilder _ content: () -> C) -> some View {
+        VStack(spacing: 0) { content() }
+            .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Color.primary.opacity(0.05)))
+            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Color.primary.opacity(0.05), lineWidth: 1))
+    }
+
+    static func rowDivider() -> some View { Divider().padding(.leading, 49) }
+
+    static func sectionLabel(_ title: String, icon: String? = nil) -> some View {
+        HStack(spacing: 5) {
+            if let icon {
+                Image(systemName: icon)
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundColor(.secondary)
+            }
+            Text(LocalizedStringKey(title))
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundColor(.secondary)
+                .textCase(.uppercase)
+            Spacer()
+        }
+        .padding(.leading, 4)
+    }
+}
+
+/// Pure-SwiftUI replacement for `.pickerStyle(.segmented)` inside the popover. The AppKit
+/// bridged NSSegmentedControl re-measured its own frame on every SwiftUI update pass and
+/// landed one pixel off for a single frame — visible as the selected segment constantly
+/// trembling (#22). A native view lays out deterministically, like the tab bar above.
+struct SegmentedControl<Value: Hashable>: View {
+    @Binding var selection: Value
+    let options: [(Value, LocalizedStringKey)]
+
+    var body: some View {
+        HStack(spacing: 2) {
+            ForEach(options, id: \.0) { value, label in
+                Button { selection = value } label: {
+                    Text(label)
+                        .font(.system(size: 11, weight: .medium))
+                        .lineLimit(1)
+                        .padding(.horizontal, 10)
+                        .frame(height: 20)
+                        .frame(maxWidth: .infinity)
+                        .foregroundColor(selection == value ? .white : .primary)
+                        .background(
+                            RoundedRectangle(cornerRadius: 5, style: .continuous)
+                                .fill(selection == value ? Color.accentColor : Color.clear)
+                        )
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(2)
+        .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(Color.primary.opacity(0.08)))
+    }
+}
+
+/// Standalone so macOS Energy Mode changes don't force this segmented control to redraw
+/// every time `MacWakeMenuView`'s body recomputes (e.g. the 1s wattage timer) — that
+/// redraw was visible as a constant flicker on the control (see #22).
+struct EnergyModeSection: View {
+    @ObservedObject private var chargeLimit = ChargeLimitManager.shared
+
+    var body: some View {
+        if chargeLimit.helperStatus == .ready {
+            SettingsBuildingBlocks.sectionLabel("Energy Mode", icon: "leaf")
+            SettingsBuildingBlocks.settingsCard {
+                HStack(spacing: 11) {
+                    SettingsBuildingBlocks.iconTile("leaf.fill", .green)
+                    SegmentedControl(
+                        selection: Binding(
+                            get: { chargeLimit.energyMode },
+                            set: { chargeLimit.setEnergyMode($0) }
+                        ),
+                        options: [(0, "Automatic"), (1, "Low Power")]
+                            + (chargeLimit.highPowerSupported ? [(2, "High Power")] : [])
+                    )
+                }
+                .padding(.horizontal, 12).padding(.vertical, 9)
+                .help("ENERGY_MODE_HELP")
+            }
+        }
+    }
+}
+
+#if !APPSTORE
+/// Standalone for the same reason as `EnergyModeSection` — this segmented duration picker
+/// doesn't depend on `tracker`, so it shouldn't redraw on every wattage tick either (#22).
+struct CleaningModeSection: View {
+    @ObservedObject private var cleaningMode = CleaningModeManager.shared
+    @State private var cleaningDuration: Int = 30
+
+    var body: some View {
+        SettingsBuildingBlocks.sectionLabel("Cleaning Mode", icon: "hand.raised.slash")
+        SettingsBuildingBlocks.settingsCard {
+            HStack(spacing: 11) {
+                SettingsBuildingBlocks.iconTile("hand.raised.slash.fill", .cyan)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Lock keyboard & trackpad").font(.subheadline)
+                    Text("So wiping the screen doesn't type or click anything.")
+                        .font(.system(size: 10)).foregroundColor(.secondary)
+                }
+                Spacer()
+            }
+            .padding(.horizontal, 12).padding(.vertical, 8)
+            .help("CLEANING_MODE_HELP")
+
+            SettingsBuildingBlocks.rowDivider()
+            HStack {
+                Text("Duration").font(.caption).foregroundColor(.secondary)
+                Spacer()
+                SegmentedControl(selection: $cleaningDuration,
+                                 options: [(15, "15s"), (30, "30s"), (60, "60s"), (90, "90s")])
+                    .frame(width: 180)
+            }
+            .padding(.horizontal, 12).padding(.vertical, 8)
+
+            SettingsBuildingBlocks.rowDivider()
+            VStack(alignment: .leading, spacing: 6) {
+                if !cleaningMode.hasAccessibilityPermission {
+                    Text(String(localized: "Needs Accessibility permission — click Start, approve it in System Settings, then click Start again."))
+                        .font(.system(size: 10)).foregroundColor(.secondary)
+                }
+                Button(action: { cleaningMode.start(durationSeconds: cleaningDuration) }) {
+                    HStack { Image(systemName: "lock.fill"); Text("Start Cleaning Mode") }.frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent).controlSize(.small).tint(.cyan)
+                Text(String(localized: "Freezes ALL keyboard/trackpad input, including this app. Hold Escape for 1.5s to unlock early."))
+                    .font(.system(size: 10)).foregroundColor(.secondary)
+            }
+            .padding(.horizontal, 12).padding(.vertical, 8)
+        }
+    }
+}
+#endif
+
 struct MacWakeMenuView: View {
     @ObservedObject var tracker: BatteryTracker
     @ObservedObject private var chargeLimit = ChargeLimitManager.shared
@@ -8,9 +157,7 @@ struct MacWakeMenuView: View {
     // App Store build — their backing types are compiled out there.
     #if !APPSTORE
     @ObservedObject private var processMonitor = ProcessMonitor.shared
-    @ObservedObject private var cleaningMode = CleaningModeManager.shared
     @ObservedObject private var nowPlaying = NowPlayingManager.shared
-    @State private var cleaningDuration: Int = 30
     #endif
     @Environment(\.colorScheme) var colorScheme
     @State private var isLaunchAtLoginEnabled: Bool = LaunchAgentManager.isEnabled
@@ -317,13 +464,8 @@ struct MacWakeMenuView: View {
                     .fontWeight(.bold)
                     .foregroundColor(.secondary)
                 Spacer()
-                Picker("", selection: $processSortMode) {
-                    Text("CPU").tag(0)
-                    Text("RAM").tag(1)
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .frame(width: 110)
+                SegmentedControl(selection: $processSortMode, options: [(0, "CPU"), (1, "RAM")])
+                    .frame(width: 110)
             }
 
             let usages = processSortMode == 0 ? processMonitor.topByCPU : processMonitor.topByMemory
@@ -395,20 +537,15 @@ struct MacWakeMenuView: View {
     // MARK: - Modern settings building blocks
 
     private func iconTile(_ icon: String, _ tint: Color) -> some View {
-        RoundedRectangle(cornerRadius: 7, style: .continuous)
-            .fill(tint.gradient)
-            .frame(width: 26, height: 26)
-            .overlay(Image(systemName: icon).font(.system(size: 12.5, weight: .semibold)).foregroundColor(.white))
+        SettingsBuildingBlocks.iconTile(icon, tint)
     }
 
     @ViewBuilder
     private func settingsCard<C: View>(@ViewBuilder _ content: () -> C) -> some View {
-        VStack(spacing: 0) { content() }
-            .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Color.primary.opacity(0.05)))
-            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Color.primary.opacity(0.05), lineWidth: 1))
+        SettingsBuildingBlocks.settingsCard(content)
     }
 
-    private func rowDivider() -> some View { Divider().padding(.leading, 49) }
+    private func rowDivider() -> some View { SettingsBuildingBlocks.rowDivider() }
 
     private func toggleRow(_ icon: String, _ tint: Color, _ title: String, _ binding: Binding<Bool>, subtitle: String? = nil, help: String? = nil) -> some View {
         HStack(spacing: 11) {
@@ -445,19 +582,7 @@ struct MacWakeMenuView: View {
     }
 
     private func sectionLabel(_ title: String, icon: String? = nil) -> some View {
-        HStack(spacing: 5) {
-            if let icon {
-                Image(systemName: icon)
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundColor(.secondary)
-            }
-            Text(LocalizedStringKey(title))
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundColor(.secondary)
-                .textCase(.uppercase)
-            Spacer()
-        }
-        .padding(.leading, 4)
+        SettingsBuildingBlocks.sectionLabel(title, icon: icon)
     }
 
     private var launchAtLoginBinding: Binding<Bool> {
@@ -580,7 +705,7 @@ struct MacWakeMenuView: View {
             VStack(spacing: 16) {
                 VStack(alignment: .leading, spacing: 7) { chargeLimitSection }
                 VStack(alignment: .leading, spacing: 7) { dischargeSection }
-                VStack(alignment: .leading, spacing: 7) { energyModeSection }
+                VStack(alignment: .leading, spacing: 7) { EnergyModeSection() }
             }
             #else
             EmptyView()
@@ -648,7 +773,7 @@ struct MacWakeMenuView: View {
                 }
                 #if !APPSTORE
                 VStack(alignment: .leading, spacing: 7) { cliSection }
-                VStack(alignment: .leading, spacing: 7) { cleaningModeSection }
+                VStack(alignment: .leading, spacing: 7) { CleaningModeSection() }
                 #endif
             }
 
@@ -779,57 +904,6 @@ struct MacWakeMenuView: View {
     }
     #endif
 
-    #if !APPSTORE
-    @ViewBuilder
-    private var cleaningModeSection: some View {
-        sectionLabel("Cleaning Mode", icon: "hand.raised.slash")
-        settingsCard {
-            HStack(spacing: 11) {
-                iconTile("hand.raised.slash.fill", .cyan)
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("Lock keyboard & trackpad").font(.subheadline)
-                    Text("So wiping the screen doesn't type or click anything.")
-                        .font(.system(size: 10)).foregroundColor(.secondary)
-                }
-                Spacer()
-            }
-            .padding(.horizontal, 12).padding(.vertical, 8)
-            .help("CLEANING_MODE_HELP")
-
-            rowDivider()
-            HStack {
-                Text("Duration").font(.caption).foregroundColor(.secondary)
-                Spacer()
-                Picker("", selection: $cleaningDuration) {
-                    Text("15s").tag(15)
-                    Text("30s").tag(30)
-                    Text("60s").tag(60)
-                    Text("90s").tag(90)
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .frame(width: 180)
-            }
-            .padding(.horizontal, 12).padding(.vertical, 8)
-
-            rowDivider()
-            VStack(alignment: .leading, spacing: 6) {
-                if !cleaningMode.hasAccessibilityPermission {
-                    Text(String(localized: "Needs Accessibility permission — click Start, approve it in System Settings, then click Start again."))
-                        .font(.system(size: 10)).foregroundColor(.secondary)
-                }
-                Button(action: { cleaningMode.start(durationSeconds: cleaningDuration) }) {
-                    HStack { Image(systemName: "lock.fill"); Text("Start Cleaning Mode") }.frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.borderedProminent).controlSize(.small).tint(.cyan)
-                Text(String(localized: "Freezes ALL keyboard/trackpad input, including this app. Hold Escape for 1.5s to unlock early."))
-                    .font(.system(size: 10)).foregroundColor(.secondary)
-            }
-            .padding(.horizontal, 12).padding(.vertical, 8)
-        }
-    }
-    #endif
-
     private var calibrationPhaseText: String {
         switch chargeLimit.calibrationPhase {
         case .discharge: return String(localized: "Calibrating — discharging to 15%…")
@@ -898,32 +972,6 @@ struct MacWakeMenuView: View {
                                in: 20...95, step: 5).tint(.orange)
                     }
                 }
-            }
-        }
-    }
-
-    @ViewBuilder
-    private var energyModeSection: some View {
-        if chargeLimit.helperStatus == .ready {
-            sectionLabel("Energy Mode", icon: "leaf")
-            settingsCard {
-                HStack(spacing: 11) {
-                    iconTile("leaf.fill", .green)
-                    Picker("", selection: Binding(
-                        get: { chargeLimit.energyMode },
-                        set: { chargeLimit.setEnergyMode($0) }
-                    )) {
-                        Text("Automatic").tag(0)
-                        Text("Low Power").tag(1)
-                        if chargeLimit.highPowerSupported {
-                            Text("High Power").tag(2)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .labelsHidden()
-                }
-                .padding(.horizontal, 12).padding(.vertical, 9)
-                .help("ENERGY_MODE_HELP")
             }
         }
     }
@@ -2294,7 +2342,12 @@ struct TimelineBarView: View {
 struct VisualEffectView: NSViewRepresentable {
     func makeNSView(context: Context) -> NSVisualEffectView {
         let view = NSVisualEffectView()
-        view.blendingMode = .behindWindow
+        // .behindWindow continuously re-samples whatever is behind this popover (desktop,
+        // other windows) to keep the live blur in sync — that constant re-sampling is what
+        // made overlaid AppKit controls (segmented pickers especially) visibly flicker.
+        // .withinWindow blends against this window's own content instead, which is what
+        // system menu-bar popovers (Control Center, Wi-Fi, etc.) use for this reason (#22).
+        view.blendingMode = .withinWindow
         view.state = .active
         view.material = .popover
         return view

@@ -6,12 +6,6 @@ APP_DIR="${APP_NAME}.app"
 CONTENTS_DIR="${APP_DIR}/Contents"
 MACOS_DIR="${CONTENTS_DIR}/MacOS"
 RESOURCES_DIR="${CONTENTS_DIR}/Resources"
-# Where `swift build -c release --arch arm64 --arch x86_64` actually puts the universal
-# binaries. This moved from .build/release to .build/apple/Products/Release under the
-# Swift 6.3 toolchain (multi-arch builds now nest under a per-destination "apple" root) —
-# verified against the currently active toolchain rather than assumed, per this Mac's
-# `swift build` layout.
-RELEASE_DIR=".build/apple/Products/Release"
 
 echo "=== Cleaning previous builds ==="
 rm -rf "${APP_DIR}"
@@ -60,9 +54,9 @@ cat <<EOF > "${CONTENTS_DIR}/Info.plist"
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.81</string>
+    <string>1.82</string>
     <key>CFBundleVersion</key>
-    <string>87</string>
+    <string>88</string>
     <key>LSMinimumSystemVersion</key>
     <string>14.0</string>
     <key>LSApplicationCategoryType</key>
@@ -118,6 +112,16 @@ echo "=== Compiling using Swift Package Manager (universal: arm64 + x86_64) ==="
 XCODE_DIR="$(ls -d /Applications/Xcode*.app 2>/dev/null | head -1)/Contents/Developer"
 DEVELOPER_DIR="${DEVELOPER_DIR:-$XCODE_DIR}" swift build -c release --arch arm64 --arch x86_64
 
+# The multi-arch products root has moved between toolchains (.build/release →
+# .build/apple/Products/Release → .build/out/Products/Release) — locate it from the
+# binary that was just built instead of pinning one layout.
+RELEASE_DIR="$(dirname "$(find .build -type f -path '*/Products/Release/MacWake' -o -type f -path '*/release/MacWake' | head -1)")"
+if [ -z "${RELEASE_DIR}" ] || [ ! -f "${RELEASE_DIR}/MacWake" ]; then
+    echo "error: could not locate the built MacWake binary under .build" >&2
+    exit 1
+fi
+echo "Build products: ${RELEASE_DIR}"
+
 echo "=== Copying Binary to App Bundle ==="
 cp ${RELEASE_DIR}/MacWake "${MACOS_DIR}/MacWake"
 
@@ -133,7 +137,7 @@ AI_TMP="$(mktemp -d)"
 ls Sources/*.swift > "${AI_TMP}/sources.txt"
 # One slice only: the universal build emits an identical set per architecture, and
 # feeding the processor both makes every intent appear twice.
-find .build/apple/Intermediates.noindex/MacWake.build/Release/MacWake.build -path "*/arm64/*" -name "*.swiftconstvalues" > "${AI_TMP}/constvals.txt"
+find .build -path "*/Intermediates.noindex/MacWake.build/Release/MacWake*.build/*" -path "*/arm64/*" -name "*.swiftconstvalues" > "${AI_TMP}/constvals.txt"
 if "${TOOLCHAIN}/usr/bin/appintentsmetadataprocessor" \
     --output "${AI_TMP}/out" \
     --toolchain-dir "${TOOLCHAIN}" \
