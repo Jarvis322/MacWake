@@ -550,22 +550,31 @@ final class ChargeLimitManager: ObservableObject {
         }
     }
 
-    /// Apply the desired charging state. Sailing Mode forces the adapter (CHIE) so the
-    /// battery actively discharges to the lower bound; otherwise the chip's best
-    /// charge-stop method is used.
+    /// Apply the desired charging state. Cutting uses whichever method matches the current
+    /// mode (Sailing Mode forces the adapter via CHIE so the battery actively discharges;
+    /// otherwise the chip's best charge-stop method). Resuming always clears *both* — same
+    /// as `restoreCharging()` — because on adapter-cut-only hardware `setForceDischarge`
+    /// and `setAdapterEnabled` proved to be independent switches: clearing only the one that
+    /// matched the current mode left the other one's earlier cut still in effect (reported as
+    /// charging never resuming below the lower bound on its own, only via Top Up/a helper
+    /// reload — both of which happen to go through the same both-keys `restoreCharging()`).
     private func applyChargingAllowed(_ allowed: Bool) async {
         guard let proxy = remoteProxy() else { return }
-        let ok = await xpcBool { reply in
-            if self.sailingEnabled {
-                proxy.setForceDischarge(!allowed, reply: reply)
-            } else {
-                proxy.setAdapterEnabled(allowed, reply: reply)
+        guard allowed else {
+            let ok = await xpcBool { reply in
+                if self.sailingEnabled {
+                    proxy.setForceDischarge(true, reply: reply)
+                } else {
+                    proxy.setAdapterEnabled(false, reply: reply)
+                }
             }
+            if ok {
+                lastAdapterEnabled = false
+                lastToggleAt = Date()
+            }
+            return
         }
-        if ok {
-            lastAdapterEnabled = allowed
-            lastToggleAt = Date()
-        }
+        _ = await restoreCharging()   // sets lastAdapterEnabled/lastToggleAt itself on success
     }
 
     /// Clear every charge block (both CHTE inhibit and CHIE adapter-off) so charging
