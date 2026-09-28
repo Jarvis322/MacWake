@@ -421,23 +421,76 @@ final class ChargeLimitManager: ObservableObject {
             appendHelperReloadLog(from: "unreachable", report: "no XPC proxy")
             return
         }
-        proxy.getVersion { [weak self] version in
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            let version = await self.xpcString(timeout: 4) { reply in proxy.getVersion(reply: reply) }
             guard version != kMacWakeHelperVersion else { return }
-            Task { @MainActor in
-                guard let self else { return }
-                // Reuse the manual path rather than repeating the sequence: unregistering
-                // while our XPC connection still holds the daemon leaves launchd with the
-                // old job, and this copy had the invalidate *after* the re-register, so the
-                // automatic reconcile silently did nothing. A machine could sit on an
-                // outdated daemon indefinitely — which is exactly what the version constant
-                // exists to prevent.
-                let report = await self.forceReloadHelper()
-                self.appendHelperReloadLog(
-                    from: version,
-                    report: "status before reload: \(observedStatus.rawValue)\n" + report
-                )
+            if version.isEmpty {
+                // No answer from a daemon that is running: an update replaced the helper binary
+                // on disk, and the app refuses to talk to a process whose signature no longer
+                // matches the file behind it ("Received message forbidden due to code signing
+                // requirement"). Every update that changes the helper strands the old daemon
+                // this way — the next steps below cannot even reach it, so recycle it through a
+                // connection that skips that check.
+                let report = await self.recycleUnauthenticatedDaemon()
+                self.appendHelperReloadLog(from: "unreachable",
+                                           report: "status before recycle: \(observedStatus.rawValue)\n" + report)
+                return
             }
+            // Reachable but outdated: reuse the manual path rather than repeating the sequence:
+            // unregistering while our XPC connection still holds the daemon leaves launchd with
+            // the old job, and this copy had the invalidate *after* the re-register, so the
+            // automatic reconcile silently did nothing. A machine could sit on an outdated
+            // daemon indefinitely — which is exactly what the version constant exists to prevent.
+            let report = await self.forceReloadHelper()
+            self.appendHelperReloadLog(
+                from: version,
+                report: "status before reload: \(observedStatus.rawValue)\n" + report
+            )
         }
+    }
+
+    /// Asks the running daemon to exit over a connection that does NOT pin its code signature,
+    /// then waits for launchd to start the current binary. The only thing sent is
+    /// `exitForUpdate`, which restores charging and exits — nothing a stand-in could exploit,
+    /// and only root can register the mach service name in the first place. Everything after
+    /// this goes back over the normal pinned connection, which validates the new daemon.
+    private func recycleUnauthenticatedDaemon() async -> String {
+        var log = "daemon not answering on the pinned connection — recycling it unpinned\n"
+        let bare = NSXPCConnection(machServiceName: kMacWakeHelperMachServiceName, options: .privileged)
+        bare.remoteObjectInterface = NSXPCInterface(with: MacWakeHelperProtocol.self)
+        bare.resume()
+        let exited: Bool
+        if let proxy = bare.remoteObjectProxyWithErrorHandler({ _ in }) as? MacWakeHelperProtocol {
+            exited = await xpcBool(timeout: 4) { reply in proxy.exitForUpdate(reply: reply) }
+        } else {
+            exited = false
+        }
+        bare.invalidate()
+        log += exited ? "daemon asked to exit\n" : "daemon did not answer the exit request\n"
+        connection?.invalidate()
+        connection = nil
+
+        var reported = ""
+        for _ in 0..<15 {
+            try? await Task.sleep(nanoseconds: 300_000_000)
+            reported = await xpcString(timeout: 2) { [weak self] reply in
+                guard let proxy = self?.remoteProxy() else { return reply("") }
+                proxy.getVersion(reply: reply)
+            }
+            if !reported.isEmpty { break }
+            connection?.invalidate()
+            connection = nil
+        }
+        log += "daemon now reports \(reported.isEmpty ? "nothing" : reported)"
+        log += reported == kMacWakeHelperVersion ? " — up to date\n" : " — not current\n"
+        helperVersion = reported.isEmpty ? nil : reported
+        if !reported.isEmpty {
+            fanCount = 0
+            loadFanInfo()
+            syncAdapterState()
+        }
+        return log
     }
 
     /// Record what the automatic reconcile did. It runs unattended at launch, so a failure
@@ -1332,6 +1385,10 @@ final class ChargeLimitManager: ObservableObject {
         // producing the same unreachable report every time. unregister()+register() forces
         // launchd to tear down the stale job registration and spawn a genuinely new process,
         // the same recovery uninstall() already relies on elsewhere in this file.
+        if reported.isEmpty {
+            log += await recycleUnauthenticatedDaemon()
+            reported = helperVersion ?? ""
+        }
         if reported.isEmpty {
             log += "daemon unreachable — attempting hard reset (unregister + register)\n"
             do {
