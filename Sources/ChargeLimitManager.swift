@@ -1077,18 +1077,52 @@ final class ChargeLimitManager: ObservableObject {
     // must not erase the failure note the previous Task set a moment earlier.
     private var isRollingBackFanAfterFailure = false
 
+    /// True while a manual request is waiting on the helper. Taking a fan over on M3/M4 means
+    /// asking macOS to let go first, which takes several seconds — the UI says so instead of
+    /// showing a switch that appears to do nothing.
+    @Published private(set) var fanControlEngaging = false
+
+    private var fanApplyInFlight = false
+    private var fanApplyQueued = false
+
+    /// Longest a manual request may take end to end: the helper waits up to 20 s for the
+    /// system to release the fan, plus the target write.
+    private let fanEngageTimeout: TimeInterval = 30
+
     private func applyFan() async {
         guard helperStatus == .ready, fanCount > 0, let proxy = remoteProxy() else { return }
-        let manual = fanControlEnabled
-        let rpm = min(max(fanTargetRPM, fanMinRPM), fanMaxRPM == 0 ? fanTargetRPM : fanMaxRPM)
-        let applied = await xpcBool { reply in proxy.setFanManual(manual, rpm: rpm, reply: reply) }
-        guard manual else {
+
+        guard fanControlEnabled else {
+            // Never queued behind a manual request: the helper treats this call as the
+            // cancel for a takeover still waiting on the system.
+            _ = await xpcBool { reply in proxy.setFanManual(false, rpm: 0, reply: reply) }
             if !isRollingBackFanAfterFailure { fanControlUnsupported = false }
             isRollingBackFanAfterFailure = false
             return
         }
-        // The helper now verifies its own writes by polling the target back, so a false
-        // here means this Mac's SMC genuinely refused fan control — don't pretend it's on.
+
+        // A slider drag re-applies the target on every step. One request at a time; whatever
+        // arrived meanwhile is folded into a single follow-up with the latest target.
+        if fanApplyInFlight { fanApplyQueued = true; return }
+        fanApplyInFlight = true
+        fanControlEngaging = true
+        var applied = false
+        repeat {
+            fanApplyQueued = false
+            let rpm = min(max(fanTargetRPM, fanMinRPM), fanMaxRPM == 0 ? fanTargetRPM : fanMaxRPM)
+            applied = await xpcBool(timeout: fanEngageTimeout) { reply in
+                proxy.setFanManual(true, rpm: rpm, reply: reply)
+            }
+            // Switched off while waiting: the restore call already ran, and the request that
+            // just came back false was cancelled by it — not a failure to report.
+            if !fanControlEnabled { break }
+        } while fanApplyQueued && applied
+        fanApplyInFlight = false
+        fanControlEngaging = false
+        guard fanControlEnabled else { return }
+
+        // The helper confirms manual mode by reading it back, so a false here means this
+        // Mac's SMC genuinely refused fan control — don't pretend it's on.
         fanControlUnsupported = !applied
         if !applied {
             isRollingBackFanAfterFailure = true
@@ -1194,9 +1228,11 @@ final class ChargeLimitManager: ObservableObject {
             }
             // An old daemon has no fanDiagnostics selector: the call fails via the
             // connection's error handler, so don't hang the button forever.
-            DispatchQueue.main.asyncAfter(deadline: .now() + 20) {
+            // Generous: the probe runs the real fan takeover, which on M3/M4 alone can wait
+            // ~20 s for macOS to release each fan before the 4 s response measurement.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 75) {
                 guard !resumed else { return }; resumed = true
-                cont.resume(returning: "XPC: no reply in 20s — the running daemon is OLD (no fanDiagnostics).")
+                cont.resume(returning: "XPC: no reply in 75s — the running daemon is OLD (no fanDiagnostics).")
             }
         }
     }

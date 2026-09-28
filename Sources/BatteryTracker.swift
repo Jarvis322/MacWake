@@ -47,6 +47,15 @@ class BatteryTracker: ObservableObject {
     private var healthLastMovedAt: Date? {
         didSet { UserDefaults.standard.set(healthLastMovedAt, forKey: "healthLastMovedAt") }
     }
+
+    /// Hourly ratio samples spanning ~two weeks; persisted so a relaunch doesn't restart the
+    /// headline's basis from a single charging state (see BatteryHealthMath.headlineBasis).
+    private var healthLongTerm: [Double] = UserDefaults.standard.array(forKey: "healthLongTermSamples") as? [Double] ?? [] {
+        didSet { UserDefaults.standard.set(healthLongTerm, forKey: "healthLongTermSamples") }
+    }
+    private var healthLongTermRecordedAt: Date? = UserDefaults.standard.object(forKey: "healthLongTermRecordedAt") as? Date {
+        didSet { UserDefaults.standard.set(healthLongTermRecordedAt, forKey: "healthLongTermRecordedAt") }
+    }
     @Published var batteryCycles: Int = 0
     @Published var batteryTemperature: Double = 0.0
     @Published var temperatureSamples: [Double] = []
@@ -924,8 +933,15 @@ class BatteryTracker: ObservableObject {
                 healthSamples.removeFirst(healthSamples.count - BatteryHealthMath.sampleWindow)
             }
             let now = Date()
+            if BatteryHealthMath.shouldRecordLongTermSample(lastRecordedAt: healthLongTermRecordedAt, now: now) {
+                healthLongTerm.append(ratio.value)
+                if healthLongTerm.count > BatteryHealthMath.longTermCapacity {
+                    healthLongTerm.removeFirst(healthLongTerm.count - BatteryHealthMath.longTermCapacity)
+                }
+                healthLongTermRecordedAt = now
+            }
             let settled = BatteryHealthMath.headline(
-                samples: healthSamples,
+                samples: BatteryHealthMath.headlineBasis(recent: healthSamples, longTerm: healthLongTerm),
                 current: batteryHealth,
                 lastMoved: healthLastMovedAt,
                 now: now
@@ -1974,8 +1990,35 @@ enum BatteryHealthMath {
         guard let lastMoved else { return candidate }
         // A full point of separation, so a value sitting near a boundary can't flip back.
         guard abs(middle - Double(current)) >= 1.0 else { return current }
+        // Wear only accumulates. The controller's state-dependent recalculation swings the
+        // ratio by ~2.5 points in both directions (a recorded history here ran 100, 98, 100,
+        // 98 at an unchanged cycle count), and once-a-day damping alone just made the headline
+        // flip on a slower clock. A rise therefore has to clear a margin larger than that
+        // swing — real recovery (a replaced battery) is far bigger, a recalculation never is.
+        if candidate > current, middle - Double(current) < minimumRise { return current }
         guard now.timeIntervalSince(lastMoved) >= minimumInterval else { return current }
         return candidate
+    }
+
+    /// How far above the shown value the centre must sit before the headline may go up.
+    static let minimumRise: Double = 3.0
+
+    /// One long-term sample per hour, kept for ~two weeks. The short window above only spans
+    /// an hour or so, i.e. usually a single charging/discharging state — so its median moves
+    /// with that state, which is the very swing the headline is meant to ignore.
+    static let longTermInterval: TimeInterval = 3600
+    static let longTermCapacity = 336
+    static let longTermMinimumSamples = 24
+
+    static func shouldRecordLongTermSample(lastRecordedAt: Date?, now: Date) -> Bool {
+        guard let lastRecordedAt else { return true }
+        return now.timeIntervalSince(lastRecordedAt) >= longTermInterval
+    }
+
+    /// The series the headline is derived from: the long-term record once it spans enough
+    /// states to average them out, the recent window before that.
+    static func headlineBasis(recent: [Double], longTerm: [Double]) -> [Double] {
+        longTerm.count >= longTermMinimumSamples ? longTerm : recent
     }
 
     static func median(_ values: [Double]) -> Double? {

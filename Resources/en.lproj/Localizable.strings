@@ -125,3 +125,8 @@
 "CL_NOT_AUTHORIZED_FMT" = "Your %d%% limit is configured but not currently enforced — you haven't authorized MacWake to discharge the battery to hold it, which is the only way this Mac can enforce a limit. Enable Allow Active Discharge to use this feature.";
 
 "DISCHARGE_CONFIRM_FMT" = "MacWake will actively drain the battery to %d%% while plugged in, then stop. The battery percentage will fall and the Mac will show as running on battery until it reaches the target.";
+
+"ISLAND_HOLDING_FMT" = "Holding at %d%%";
+"ISLAND_LEFT_FMT" = "~%@ left";
+"ISLAND_FULL_FMT" = "~%@ to full";
+"FAN_ENGAGING_NOTE" = "Taking the fans over from macOS — on some Macs this takes up to 20 seconds.";

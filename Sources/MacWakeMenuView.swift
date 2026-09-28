@@ -1013,6 +1013,17 @@ struct MacWakeMenuView: View {
                     .padding(.horizontal, 12).padding(.vertical, 8)
                 }
 
+                if chargeLimit.fanControlEngaging {
+                    rowDivider()
+                    HStack(spacing: 8) {
+                        ProgressView().controlSize(.small)
+                        Text("FAN_ENGAGING_NOTE")
+                            .font(.system(size: 11)).foregroundColor(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(.horizontal, 12).padding(.vertical, 8)
+                }
+
                 if chargeLimit.fanControlEnabled {
                     rowDivider()
                     // Clamp once and reuse it for both the label and the slider's position,

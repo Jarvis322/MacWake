@@ -14,11 +14,11 @@ private func helper() -> MacWakeHelperProtocol? {
     } as? MacWakeHelperProtocol
 }
 
-private func callBool(_ block: (@escaping (Bool) -> Void) -> Void) -> Bool {
+private func callBool(timeout: TimeInterval = 5, _ block: (@escaping (Bool) -> Void) -> Void) -> Bool {
     let sem = DispatchSemaphore(value: 0)
     var result = false
     block { ok in result = ok; sem.signal() }
-    _ = sem.wait(timeout: .now() + 5)
+    _ = sem.wait(timeout: .now() + timeout)
     return result
 }
 
@@ -112,7 +112,12 @@ case "fan" where args.count == 2:
         // this point (the helper plainly is, we just heard back from it), and now that the
         // helper itself restores automatic control before replying false, there's nothing
         // left for a caller to roll back.
-        let ok = callBool { p.setFanManual(true, rpm: rpm, reply: $0) }
+        //
+        // Taking a fan over from macOS can itself take up to ~20 s on M3/M4 Macs (the system
+        // has to release it first), so wait that long rather than reporting a rejection the
+        // helper is still in the middle of resolving.
+        FileHandle.standardError.write("fan: taking control from macOS (up to 20 s on some Macs)…\n".data(using: .utf8)!)
+        let ok = callBool(timeout: 30) { p.setFanManual(true, rpm: rpm, reply: $0) }
         print(ok ? "fan: \(rpm) RPM" : "fan: rejected by hardware — automatic control restored")
         exit(ok ? 0 : 1)
     } else {

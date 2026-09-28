@@ -36,8 +36,11 @@ public let kMacWakeCodeSigningRequirement =
     /// Returns (fanCount, minRPM, maxRPM) for fan 0, or (0,0,0) on fanless Macs.
     func getFanInfo(reply: @escaping (Int, Int, Int) -> Void)
 
-    /// Force fan 0 to a manual target RPM, or return it to automatic system control.
-    /// `manual == false` restores auto (SMC F0Md = 0). `reply` true on success.
+    /// Force the fans to a manual target RPM, or return them to automatic system control.
+    /// `manual == false` restores auto and also cancels a takeover still in progress.
+    /// On M3/M4 the system holds the fans and a manual request first has to wait for it to let
+    /// go, so `reply` can arrive several seconds (up to ~20) after the call; callers must not
+    /// treat that as a hang. `reply` is true once the fan is confirmed in manual mode.
     func setFanManual(_ manual: Bool, rpm: Int, reply: @escaping (Bool) -> Void)
 
     /// Sets the macOS Energy Mode via pmset. 0 = Automatic, 1 = Low Power, 2 = High Power.
@@ -77,4 +80,4 @@ public let kMacWakeCodeSigningRequirement =
 /// without bumping means users keep executing the previous code. That silently
 /// swallowed two Apple Silicon fan fixes (1.43, 1.45) before it was caught; build.sh
 /// now warns when Helper/ changes without a bump.
-public let kMacWakeHelperVersion = "12"
+public let kMacWakeHelperVersion = "13"

@@ -126,4 +126,42 @@ final class BatteryHealthMathTests: XCTestCase {
         // stick for up to 24 hours, since the headline only re-settles once a day.
         XCTAssertFalse(BatteryHealthMath.shouldFallBackToRawMaxCapacity(hasEverHadRatioSample: true))
     }
+
+    func testHeadlineNeverRisesOnItsOwn() {
+        // A recorded history on one Mac ran 100, 98, 100, 98 at an unchanged cycle count —
+        // the controller's recalculation, not wear. Once the headline has dropped, a
+        // reading back near the old value must not lift it again, however long it persists.
+        let samples = Array(repeating: 100.0, count: 30)
+        let muchLater = epoch.addingTimeInterval(10 * 24 * 3600)
+        XCTAssertEqual(
+            BatteryHealthMath.headline(samples: samples, current: 98, lastMoved: epoch, now: muchLater),
+            98
+        )
+    }
+
+    func testHeadlineAcceptsARiseFarLargerThanTheRecalculationSwing() {
+        // A replaced battery is nothing like a 2-point wobble, so it must still get through.
+        let samples = Array(repeating: 99.0, count: 30)
+        let muchLater = epoch.addingTimeInterval(3 * 24 * 3600)
+        XCTAssertEqual(
+            BatteryHealthMath.headline(samples: samples, current: 90, lastMoved: epoch, now: muchLater),
+            99
+        )
+    }
+
+    func testLongTermSampleIsRecordedHourlyAtMost() {
+        XCTAssertTrue(BatteryHealthMath.shouldRecordLongTermSample(lastRecordedAt: nil, now: epoch))
+        XCTAssertFalse(BatteryHealthMath.shouldRecordLongTermSample(
+            lastRecordedAt: epoch, now: epoch.addingTimeInterval(3599)))
+        XCTAssertTrue(BatteryHealthMath.shouldRecordLongTermSample(
+            lastRecordedAt: epoch, now: epoch.addingTimeInterval(3600)))
+    }
+
+    func testHeadlineBasisPrefersTheLongRecordOnceItSpansEnoughStates() {
+        let recent = [95.0, 95.0]
+        let short = Array(repeating: 99.0, count: BatteryHealthMath.longTermMinimumSamples - 1)
+        let long = Array(repeating: 99.0, count: BatteryHealthMath.longTermMinimumSamples)
+        XCTAssertEqual(BatteryHealthMath.headlineBasis(recent: recent, longTerm: short), recent)
+        XCTAssertEqual(BatteryHealthMath.headlineBasis(recent: recent, longTerm: long), long)
+    }
 }

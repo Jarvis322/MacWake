@@ -459,3 +459,8 @@
 "CL_NOT_AUTHORIZED_FMT" = "你设置的 %d%% 上限已配置但当前未生效——你尚未授权 MacWake 通过放电来维持该上限，而这是此 Mac 唯一能执行上限的方式。请启用“允许主动放电”以使用此功能。";
 
 "DISCHARGE_CONFIRM_FMT" = "MacWake 会在插电状态下主动将电池放电至 %d%%，然后停止。电量百分比会下降，在达到目标之前 Mac 会显示为正在使用电池。";
+
+"ISLAND_HOLDING_FMT" = "保持在 %d%%";
+"ISLAND_LEFT_FMT" = "剩余约 %@";
+"ISLAND_FULL_FMT" = "约 %@ 充满";
+"FAN_ENGAGING_NOTE" = "正在从 macOS 接管风扇——在部分 Mac 上最多需要 20 秒。";

@@ -74,6 +74,7 @@ extension NSScreen {
 struct DynamicIslandPanelView: View {
     @ObservedObject var tracker: BatteryTracker
     @ObservedObject private var sm = DynamicIslandStateManager.shared
+    @ObservedObject private var chargeLimit = ChargeLimitManager.shared
     #if !APPSTORE
     @ObservedObject private var nowPlaying = NowPlayingManager.shared
     #endif
@@ -237,57 +238,86 @@ struct DynamicIslandPanelView: View {
         }
     }
 
-    // MARK: - Left Widget (Power) — battery ring gauge and readouts
+    // MARK: - Left Widget (Power) — charge ring, live readout, capacity meter
     private var leftWidget: some View {
         batteryInfoColumn
             .fixedSize(horizontal: true, vertical: false)
     }
 
+    /// The Mac can be physically on the adapter while macOS reports "on battery" — MacWake's
+    /// own limit cuts the adapter to hold the level (see `isHoldingChargeOff`).
+    private var isHoldingAtLimit: Bool { chargeLimit.isEnabled && chargeLimit.isHoldingChargeOff }
+
     private var batteryInfoColumn: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 14) {
-                ZStack {
-                    Circle()
-                        .stroke(Color.white.opacity(0.12), lineWidth: 6)
-                    Circle()
-                        .trim(from: 0, to: CGFloat(tracker.currentBatteryLevel) / 100)
-                        .stroke(batteryColor, style: StrokeStyle(lineWidth: 6, lineCap: .round))
-                        .rotationEffect(.degrees(-90))
-                    Image(systemName: tracker.isPluggedIn ? "bolt.fill" : "battery.100")
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(batteryColor)
-                }
-                .frame(width: 52, height: 52)
+        VStack(alignment: .leading, spacing: 11) {
+            HStack(spacing: 12) {
+                IslandChargeRing(
+                    level: tracker.currentBatteryLevel,
+                    tint: batteryColor,
+                    plugged: tracker.isPluggedIn,
+                    limit: chargeLimit.isEnabled ? chargeLimit.limit : nil,
+                    sailingLower: chargeLimit.isEnabled && chargeLimit.sailingEnabled ? chargeLimit.sailingLower : nil,
+                    animated: tracker.enableAnimations
+                )
 
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 3) {
                     Text("\(tracker.currentBatteryLevel)%")
-                        .font(.system(size: 24, weight: .bold))
+                        .font(.system(size: 26, weight: .bold))
                         .foregroundColor(.white)
-                    Text(tracker.isPluggedIn ? String(localized: "Charging") : String(localized: "On Battery"))
+                    Text(stateText)
                         .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(.white.opacity(0.6))
-
-                    if tracker.isPluggedIn, let dyn = tracker.dynamicWatts {
-                        wattBadge(String(format: "%.1f W", dyn))
-                    } else if tracker.isPluggedIn, let w = tracker.powerAdapterWatts {
-                        wattBadge("\(w) W")
-                    } else if !tracker.isPluggedIn {
-                        let secs = Int(tracker.currentScreenOnSeconds)
-                        let h = secs / 3600, m = (secs % 3600) / 60
-                        Text(h > 0
-                             ? String(format: String(localized: "SCREEN_ON_HM_FMT"), h, m)
-                             : String(format: String(localized: "SCREEN_ON_M_FMT"), m))
-                            .font(.system(size: 11))
-                            .foregroundColor(.white.opacity(0.45))
-                    }
+                        .foregroundColor(isHoldingAtLimit ? .cyan : .white.opacity(0.6))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                    powerReadout
                 }
             }
 
-            HStack(spacing: 8) {
-                statChip(label: "Health", value: "\(tracker.batteryHealth)%", highlight: tracker.batteryHealth < 80)
-                statChip(label: "Cycles", value: "\(tracker.batteryCycles)", highlight: false)
-                Spacer(minLength: 0)
-            }
+            IslandHealthMeter(health: tracker.batteryHealth, cycles: tracker.batteryCycles)
+        }
+    }
+
+    private var stateText: String {
+        if isHoldingAtLimit {
+            return String(format: String(localized: "ISLAND_HOLDING_FMT"), chargeLimit.limit)
+        }
+        return tracker.isPluggedIn ? String(localized: "Charging") : String(localized: "On Battery")
+    }
+
+    @ViewBuilder
+    private var powerReadout: some View {
+        if tracker.isPluggedIn, let dyn = tracker.dynamicWatts {
+            wattBadge(String(format: "%.1f W", dyn))
+        } else if tracker.isPluggedIn, let w = tracker.powerAdapterWatts {
+            wattBadge("\(w) W")
+        }
+
+        // While MacWake holds the adapter off, the battery is draining by design — a
+        // "time left" or screen-on figure would describe a discharge that isn't real use.
+        if !isHoldingAtLimit, let remaining = BatteryTimeEstimate.label(
+            isPluggedIn: tracker.isPluggedIn,
+            timeToFullCharge: tracker.timeToFullCharge,
+            timeToEmpty: tracker.remainingBatteryEstimate
+        ) {
+            Text(String(
+                format: tracker.isPluggedIn ? String(localized: "ISLAND_FULL_FMT") : String(localized: "ISLAND_LEFT_FMT"),
+                MenuBarLabel.duration(seconds: remaining, compact: false)
+            ))
+            .font(.system(size: 10, weight: .medium))
+            .foregroundColor(.white.opacity(0.5))
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+        }
+
+        if !tracker.isPluggedIn, !isHoldingAtLimit {
+            let secs = Int(tracker.currentScreenOnSeconds)
+            let h = secs / 3600, m = (secs % 3600) / 60
+            Text(h > 0
+                 ? String(format: String(localized: "SCREEN_ON_HM_FMT"), h, m)
+                 : String(format: String(localized: "SCREEN_ON_M_FMT"), m))
+                .font(.system(size: 10))
+                .foregroundColor(.white.opacity(0.4))
+                .lineLimit(1)
         }
     }
 
@@ -301,99 +331,28 @@ struct DynamicIslandPanelView: View {
             .cornerRadius(7)
     }
 
-    // MARK: - Right Widget (Temperatures grid)
+    // MARK: - Right Widget (Thermals) — one gauge row per sensor
     private var rightWidget: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 9) {
             Text("TEMPERATURES")
                 .font(.system(size: 9, weight: .bold))
                 .foregroundColor(.white.opacity(0.4))
 
-            HStack(spacing: 6) {
-                tempCell(label: "BATTERY", value: tracker.batteryTemperature, kind: .battery)
-                tempCell(label: "CPU", value: tracker.cpuTemperature, kind: .soc)
-            }
-            HStack(spacing: 6) {
-                tempCell(label: "SSD", value: tracker.ssdTemperature, kind: .soc)
-                // GPU where exposed; otherwise show the fan status as the fourth cell.
-                if let gpu = tracker.gpuTemperature {
-                    tempCell(label: "GPU", value: gpu, kind: .soc)
-                } else {
-                    fanCell
-                }
-            }
-        }
-    }
-
-    private enum TempKind { case battery, soc }
-
-    private func tempColor(_ value: Double, kind: TempKind) -> Color {
-        switch kind {
-        case .battery: return value > 40 ? .red : (value > 35 ? .orange : .cyan)
-        case .soc:     return value > 85 ? .red : (value > 65 ? .orange : .cyan)
-        }
-    }
-
-    private func tempCell(label: String, value: Double?, kind: TempKind) -> some View {
-        let available = value != nil
-        let color = available ? tempColor(value!, kind: kind) : Color.white.opacity(0.25)
-        return VStack(alignment: .leading, spacing: 2) {
-            Text(LocalizedStringKey(label))
-                .font(.system(size: 8, weight: .bold))
-                .foregroundColor(.white.opacity(0.4))
-            HStack(alignment: .firstTextBaseline, spacing: 1) {
-                Text(available ? String(format: "%.0f", value!) : "—")
-                    .font(.system(size: 19, weight: .bold).monospacedDigit())
-                    .foregroundColor(available ? .white : .white.opacity(0.3))
-                if available {
-                    Text("°")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(.white.opacity(0.5))
-                }
-                Spacer(minLength: 0)
-                Circle().fill(color).frame(width: 6, height: 6)
+            IslandThermalRow(label: "BATTERY", value: tracker.batteryTemperature > 0 ? tracker.batteryTemperature : nil, scale: .battery)
+            IslandThermalRow(label: "CPU", value: tracker.cpuTemperature, scale: .soc)
+            IslandThermalRow(label: "SSD", value: tracker.ssdTemperature, scale: .soc)
+            // GPU where exposed; otherwise the fan takes the fourth row.
+            if let gpu = tracker.gpuTemperature {
+                IslandThermalRow(label: "GPU", value: gpu, scale: .soc)
+            } else {
+                IslandFanRow(
+                    hasFans: tracker.hasFans,
+                    rpm: tracker.currentFanSpeed,
+                    maxRPM: Double(chargeLimit.fanMaxRPM),
+                    animated: tracker.enableAnimations
+                )
             }
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 7)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.white.opacity(0.07))
-        .cornerRadius(9)
-    }
-
-    private var fanCell: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text("FAN")
-                .font(.system(size: 8, weight: .bold))
-                .foregroundColor(.white.opacity(0.4))
-            HStack(spacing: 4) {
-                Image(systemName: tracker.hasFans ? "fanblades.fill" : "fanblades")
-                    .font(.system(size: 12))
-                Text(tracker.hasFans ? (tracker.currentFanSpeed.map { "\(Int($0))" } ?? "—") : String(localized: "Fanless"))
-                    .font(.system(size: 14, weight: .bold))
-                Spacer(minLength: 0)
-            }
-            .foregroundColor(.white.opacity(0.6))
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 7)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.white.opacity(0.07))
-        .cornerRadius(9)
-    }
-
-    private func statChip(label: String, value: String, highlight: Bool) -> some View {
-        VStack(spacing: 2) {
-            Text(LocalizedStringKey(label))
-                .font(.system(size: 9, weight: .bold))
-                .foregroundColor(highlight ? .red : .white.opacity(0.4))
-            Text(value)
-                .font(.system(size: 13, weight: .bold))
-                .foregroundColor(highlight ? .red : .white)
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
-        .background(Color.white.opacity(0.08))
-        .cornerRadius(8)
     }
 
     // MARK: - Charging Content
@@ -484,8 +443,8 @@ class DynamicIslandManager {
     // the cells (truncating "Fanless") when it's too small.
     static let columnSpacing: CGFloat = 18
     static let panelSidePadding: CGFloat = 26
-    static let powerColumnWidth: CGFloat = 168
-    static let tempColumnWidth: CGFloat = 236
+    static let powerColumnWidth: CGFloat = 176
+    static let tempColumnWidth: CGFloat = 224
     static let shelfColumnWidth: CGFloat = 168
     static let musicColumnWidth: CGFloat = 190
     /// A divider plus the spacing on each side of it.
@@ -496,7 +455,7 @@ class DynamicIslandManager {
         if !Distribution.isAppStore { width += separatorSpan + tempColumnWidth }
         if musicShown { width += separatorSpan + musicColumnWidth }
         if shelfEnabled { width += separatorSpan + shelfColumnWidth }
-        return CGSize(width: width, height: 188)
+        return CGSize(width: width, height: 204)
     }
     private let hoverInset: CGFloat = -4   // expands the notch hover target a touch
 
@@ -786,5 +745,266 @@ class DynamicIslandManager {
     func dismiss() {
         pendingTrigger = nil
         DynamicIslandStateManager.shared.dismiss()
+    }
+}
+
+// MARK: - Island instruments
+
+/// Where a sensor's reading sits between "cool" and "hot", kept pure so the thresholds the
+/// gauges colour by are testable. The warm/hot cut-offs are the same ones the old tile dots
+/// used, so a reading keeps the colour it always had.
+struct ThermalScale: Equatable {
+    let lower: Double
+    let upper: Double
+    let warm: Double
+    let hot: Double
+
+    static let battery = ThermalScale(lower: 20, upper: 50, warm: 35, hot: 40)
+    static let soc = ThermalScale(lower: 30, upper: 105, warm: 65, hot: 85)
+
+    func fraction(_ value: Double) -> Double {
+        guard upper > lower else { return 0 }
+        return min(1, max(0, (value - lower) / (upper - lower)))
+    }
+
+    var warmStop: Double { fraction(warm) }
+    var hotStop: Double { fraction(hot) }
+}
+
+/// A capsule whose bright part ends where the value sits. The full-width track is drawn
+/// dim in the same colour zones, so the reading shows both its value and its headroom.
+private struct IslandGauge: View {
+    /// `nil` draws only the dim track — no reading, so no bright part either.
+    let fraction: Double?
+    let warmStop: Double
+    let hotStop: Double
+    var height: CGFloat = 4
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        Capsule()
+            .fill(spectrum(opacity: 0.2))
+            .frame(height: height)
+            .overlay(alignment: .leading) {
+                if let fraction {
+                    Capsule()
+                        .fill(spectrum(opacity: 1))
+                        .mask(alignment: .leading) {
+                            Rectangle()
+                                .scaleEffect(x: max(fraction, 0.03), anchor: .leading)
+                                .animation(reduceMotion ? nil : .smooth(duration: 0.6), value: fraction)
+                        }
+                }
+            }
+    }
+
+    private func spectrum(opacity: Double) -> LinearGradient {
+        LinearGradient(
+            stops: [
+                .init(color: .cyan.opacity(opacity), location: 0),
+                .init(color: .cyan.opacity(opacity), location: warmStop),
+                .init(color: .orange.opacity(opacity), location: warmStop),
+                .init(color: .orange.opacity(opacity), location: hotStop),
+                .init(color: .red.opacity(opacity), location: hotStop),
+                .init(color: .red.opacity(opacity), location: 1),
+            ],
+            startPoint: .leading, endPoint: .trailing
+        )
+    }
+}
+
+private struct IslandRowLabel: View {
+    let text: LocalizedStringKey
+    var body: some View {
+        Text(text)
+            .font(.system(size: 8, weight: .bold))
+            .foregroundColor(.white.opacity(0.4))
+    }
+}
+
+struct IslandThermalRow: View {
+    let label: LocalizedStringKey
+    let value: Double?
+    let scale: ThermalScale
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(alignment: .firstTextBaseline, spacing: 1) {
+                IslandRowLabel(text: label)
+                Spacer(minLength: 4)
+                Text(value.map { String(format: "%.0f", $0) } ?? "—")
+                    .font(.system(size: 14, weight: .bold).monospacedDigit())
+                    .foregroundColor(value == nil ? .white.opacity(0.3) : .white)
+                if value != nil {
+                    Text("°")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(.white.opacity(0.5))
+                }
+            }
+            IslandGauge(fraction: value.map(scale.fraction), warmStop: scale.warmStop, hotStop: scale.hotStop)
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+
+struct IslandFanRow: View {
+    let hasFans: Bool
+    let rpm: Double?
+    /// The helper-reported ceiling; 0 when the Mac doesn't expose one.
+    let maxRPM: Double
+    let animated: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private var ceiling: Double { maxRPM > 1000 ? maxRPM : 6500 }
+    private var spinning: Bool { hasFans && animated && !reduceMotion && (rpm ?? 0) > 0 }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(alignment: .center, spacing: 5) {
+                IslandRowLabel(text: "FAN")
+                Spacer(minLength: 4)
+                bladeIcon
+                Text(valueText)
+                    .font(.system(size: 14, weight: .bold).monospacedDigit())
+                    .foregroundColor(hasFans ? .white : .white.opacity(0.5))
+            }
+            IslandGauge(
+                fraction: hasFans ? min(1, (rpm ?? 0) / ceiling) : nil,
+                warmStop: 1, hotStop: 1
+            )
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private var valueText: String {
+        guard hasFans else { return String(localized: "Fanless") }
+        return rpm.map { String(format: "%.0f", $0) } ?? "—"
+    }
+
+    private var bladeIcon: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: !spinning)) { context in
+            // Visual speed only follows the fan's — real rpm would be an unreadable blur.
+            let degreesPerSecond = min(540, max(60, (rpm ?? 0) / 8))
+            let angle = context.date.timeIntervalSinceReferenceDate * degreesPerSecond
+            Image(systemName: hasFans ? "fanblades.fill" : "fanblades")
+                .font(.system(size: 11))
+                .foregroundColor(.white.opacity(hasFans ? 0.6 : 0.35))
+                .rotationEffect(.degrees(spinning ? angle.truncatingRemainder(dividingBy: 360) : 0))
+        }
+    }
+}
+
+/// Charge ring that also draws what MacWake is doing: a tick at the configured limit and,
+/// under Sailing Mode, the inner band the level is allowed to drift through.
+struct IslandChargeRing: View {
+    let level: Int
+    let tint: Color
+    let plugged: Bool
+    let limit: Int?
+    let sailingLower: Int?
+    let animated: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private let size: CGFloat = 60
+    private let stroke: CGFloat = 7
+
+    private var fraction: Double { Double(min(100, max(0, level))) / 100 }
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .inset(by: stroke / 2)
+                .stroke(Color.white.opacity(0.1), lineWidth: stroke)
+
+            Circle()
+                .inset(by: stroke / 2)
+                .trim(from: 0, to: fraction)
+                .stroke(
+                    AngularGradient(
+                        colors: [tint.opacity(0.45), tint],
+                        center: .center, startAngle: .degrees(0), endAngle: .degrees(max(1, 360 * fraction))
+                    ),
+                    style: StrokeStyle(lineWidth: stroke, lineCap: .round)
+                )
+                .rotationEffect(.degrees(-90))
+                .animation(reduceMotion ? nil : .smooth(duration: 0.6), value: level)
+
+            if let sailingLower, let limit, limit > sailingLower {
+                Circle()
+                    .inset(by: stroke + 4)
+                    .trim(from: Double(sailingLower) / 100, to: Double(limit) / 100)
+                    .stroke(Color.white.opacity(0.35), style: StrokeStyle(lineWidth: 2, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+            }
+
+            if let limit {
+                Color.clear
+                    .overlay {
+                        Capsule()
+                            .fill(Color.white)
+                            .frame(width: 2.5, height: stroke + 5)
+                            .offset(y: -(size / 2 - stroke / 2))
+                    }
+                    .rotationEffect(.degrees(Double(limit) * 3.6))
+            }
+
+            Image(systemName: plugged ? "bolt.fill" : batterySymbol)
+                .font(.system(size: 16, weight: .bold))
+                .foregroundColor(tint)
+                .symbolEffect(.pulse, options: .repeating, isActive: plugged && animated && !reduceMotion)
+        }
+        .frame(width: size, height: size)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text("BATTERY"))
+        .accessibilityValue(Text("\(level)%"))
+    }
+
+    private var batterySymbol: String {
+        switch level {
+        case ..<13: return "battery.0"
+        case ..<38: return "battery.25"
+        case ..<63: return "battery.50"
+        case ..<88: return "battery.75"
+        default:    return "battery.100"
+        }
+    }
+}
+
+/// Capacity and cycle count as one compact meter. The figure it shows is the damped headline
+/// (see `BatteryHealthMath.headline`) — it must not move with the controller's recalculation.
+struct IslandHealthMeter: View {
+    let health: Int
+    let cycles: Int
+
+    private var tint: Color { health >= 80 ? .green : (health >= 60 ? .orange : .red) }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(alignment: .firstTextBaseline) {
+                IslandRowLabel(text: "Health")
+                Spacer(minLength: 4)
+                Text("\(health)%")
+                    .font(.system(size: 13, weight: .bold).monospacedDigit())
+                    .foregroundColor(.white)
+            }
+            Capsule()
+                .fill(Color.white.opacity(0.1))
+                .frame(height: 4)
+                .overlay(alignment: .leading) {
+                    Capsule()
+                        .fill(tint)
+                        .mask(alignment: .leading) {
+                            Rectangle().scaleEffect(x: max(0.03, Double(min(100, max(0, health))) / 100), anchor: .leading)
+                        }
+                }
+            HStack(alignment: .firstTextBaseline) {
+                IslandRowLabel(text: "Cycles")
+                Spacer(minLength: 4)
+                Text("\(cycles)")
+                    .font(.system(size: 11, weight: .semibold).monospacedDigit())
+                    .foregroundColor(.white.opacity(0.8))
+            }
+        }
+        .accessibilityElement(children: .combine)
     }
 }

@@ -25,7 +25,9 @@ final class HelperService: NSObject, MacWakeHelperProtocol {
     }
 
     func setFanManual(_ manual: Bool, rpm: Int, reply: @escaping (Bool) -> Void) {
-        reply(HelperSMC.setFanManual(manual, rpm: rpm))
+        // Answers later, from the fan queue: taking a fan over can wait several seconds for
+        // the system to let go, and this call must not hold up the ones behind it.
+        HelperSMC.setFanManual(manual, rpm: rpm, reply: reply)
     }
 
     func setEnergyMode(_ mode: Int, reply: @escaping (Bool) -> Void) {
@@ -33,7 +35,9 @@ final class HelperService: NSObject, MacWakeHelperProtocol {
     }
 
     func fanDiagnostics(reply: @escaping (String) -> Void) {
-        reply("helper v\(kMacWakeHelperVersion)\n" + HelperSMC.fanDiagnostics())
+        HelperSMC.fanDiagnostics { report in
+            reply("helper v\(kMacWakeHelperVersion)\n" + report)
+        }
     }
 
     func chargeControlMethod(reply: @escaping (String) -> Void) {

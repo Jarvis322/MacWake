@@ -449,3 +449,8 @@
 "CL_NOT_AUTHORIZED_FMT" = "%%%d limitiniz yapılandırılmış ama şu an uygulanmıyor — MacWake'e pili boşaltarak limiti tutma izni vermediniz; bu Mac'in limiti uygulayabildiği tek yol bu. Bu özelliği kullanmak için Aktif Boşaltmaya İzin Ver'i etkinleştirin.";
 
 "DISCHARGE_CONFIRM_FMT" = "MacWake, fişteyken pili aktif olarak %%%d'ye kadar boşaltıp duracak. Pil yüzdesi düşecek ve Mac, hedefe ulaşana kadar pilde çalışıyormuş gibi görünecek.";
+
+"ISLAND_HOLDING_FMT" = "Sınırda tutuluyor: %%%d";
+"ISLAND_LEFT_FMT" = "~%@ kaldı";
+"ISLAND_FULL_FMT" = "Dolmasına ~%@";
+"FAN_ENGAGING_NOTE" = "Fanların kontrolü macOS'tan devralınıyor — bazı Mac'lerde 20 saniyeye kadar sürebilir.";
