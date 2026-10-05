@@ -164,4 +164,16 @@ final class BatteryHealthMathTests: XCTestCase {
         XCTAssertEqual(BatteryHealthMath.headlineBasis(recent: recent, longTerm: short), recent)
         XCTAssertEqual(BatteryHealthMath.headlineBasis(recent: recent, longTerm: long), long)
     }
+
+    func testParsesMacOSReportedMaximumCapacity() {
+        let json = #"{"SPPowerDataType":[{"_name":"spbattery_information"},{"sppower_battery_health_info":{"sppower_battery_cycle_count":89,"sppower_battery_health":"Good","sppower_battery_health_maximum_capacity":"98%"}}]}"#
+        XCTAssertEqual(MacOSReportedHealth.parse(json: Data(json.utf8)), 98)
+    }
+
+    func testMissingOrMalformedMacOSReportYieldsNothing() {
+        XCTAssertNil(MacOSReportedHealth.parse(json: Data("{}".utf8)))
+        XCTAssertNil(MacOSReportedHealth.parse(json: Data("not json".utf8)))
+        let zero = #"{"SPPowerDataType":[{"sppower_battery_health_info":{"sppower_battery_health_maximum_capacity":"0%"}}]}"#
+        XCTAssertNil(MacOSReportedHealth.parse(json: Data(zero.utf8)))
+    }
 }

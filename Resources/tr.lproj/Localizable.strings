@@ -416,7 +416,7 @@
 "MENUBAR_HIDDEN" = "Gizli";
 "MENUBAR_HIDDEN_NOTE" = "Menü çubuğu öğesi gizli. İkonu geri getirmek için MacWake'i Uygulamalar'dan tekrar açın ya da buradan herhangi bir parçayı geri açın.";
 
-"HEALTH_ESTIMATE_HELP_FMT" = "Kontrolcü tahmini: %%%.1f\n\nBu, gerçek kapasite oranı — bu yüzden macOS'un kendi gösterdiğinden farklı olabilir. macOS, gerçek yıpranma başladıktan çok sonra bile genelde yuvarlanmış %%100 göstermeye devam eder; burada ise gerçek oran okunur. Yukarıdaki değer aynı okumanın zamana yayılarak yumuşatılmış hali, böylece kontrolcünün yeniden hesaplaması aşınma sanılmaz.";
+"HEALTH_ESTIMATE_HELP_FMT" = "Kontrolcü tahmini: %%%.1f\n\nBu, kontrolcünün kendi kapasite oranı. Başlıktaki değer, MacWake'in okuyabildiği her yerde macOS'un kendi bildirdiği Azami Kapasite'yi izler, yani ikisi aynıdır; okunamadığı yerde başlık, bu oranın zamana yayılmış halidir, böylece kontrolcünün yeniden hesaplaması aşınma sanılmaz.";
 
 "CL_HOLD_ON_POWER" = "Bu Mac sınırı adaptör gücünde tutuyor — şarj duruyor, pil boşaltılmıyor.";
 "CL_HOLD_DISCHARGES" = "Bu Mac'te şarj engelleme anahtarı yok; sınırı tutmak için adaptör girişi kesiliyor ve pil sınıra kadar boşalıyor. Sınırın üstündeyken kablo takılıyken pilde çalıştığını görürsünüz.";

@@ -56,6 +56,11 @@ class BatteryTracker: ObservableObject {
     private var healthLongTermRecordedAt: Date? = UserDefaults.standard.object(forKey: "healthLongTermRecordedAt") as? Date {
         didSet { UserDefaults.standard.set(healthLongTermRecordedAt, forKey: "healthLongTermRecordedAt") }
     }
+    /// The Maximum Capacity figure macOS itself reports (System Settings → Battery), when it can
+    /// be read. It is the headline whenever present, so MacWake and macOS can never disagree.
+    @Published private(set) var macOSReportedHealth: Int?
+    private var macOSHealthCheckedAt: Date?
+    private var macOSHealthReadInFlight = false
     @Published var batteryCycles: Int = 0
     @Published var batteryTemperature: Double = 0.0
     @Published var temperatureSamples: [Double] = []
@@ -922,6 +927,19 @@ class BatteryTracker: ObservableObject {
         batteryHealthPrecise = ratio?.value
         rawBatteryHealth = ratio.map { Int($0.value.rounded(.down)) }
 
+        refreshMacOSReportedHealthIfDue()
+
+        // macOS's own figure wins outright — the point is that the two never differ. Gated
+        // as a whole (not applied after the ratio path) so the headline can't flip to the
+        // ratio-derived value and back on every one-second tick.
+        if let reported = macOSReportedHealth {
+            if reported != batteryHealth {
+                batteryHealth = reported
+                healthLastMovedAt = Date()
+            }
+            return
+        }
+
         // Capacity ratio first. On Apple Silicon AppleSmartBattery's MaxCapacity is a
         // normalised value macOS pins at 100 regardless of wear — trusting it reported
         // 100% health on an 82%-worn battery while the raw ratio right below it was
@@ -958,6 +976,27 @@ class BatteryTracker: ObservableObject {
         // Any other nil-ratio case (a Mac that has produced real samples before) is left
         // alone: the previous headline stays on screen rather than being overwritten by
         // the pinned-100 fallback below.
+    }
+
+    /// Asks macOS for its Maximum Capacity at most every 10 minutes, off the main thread — it
+    /// changes over weeks, and `system_profiler` is a subprocess. The sandboxed App Store build
+    /// cannot spawn one, so there `macOSReportedHealth` stays nil and the ratio path applies.
+    private func refreshMacOSReportedHealthIfDue() {
+        #if !APPSTORE
+        let now = Date()
+        if let checked = macOSHealthCheckedAt, now.timeIntervalSince(checked) < 600 { return }
+        guard !macOSHealthReadInFlight else { return }
+        macOSHealthReadInFlight = true
+        macOSHealthCheckedAt = now
+        Task.detached(priority: .utility) {
+            let value = MacOSReportedHealth.read()
+            await MainActor.run { [weak self] in
+                guard let self else { return }
+                self.macOSHealthReadInFlight = false
+                if let value { self.macOSReportedHealth = value }
+            }
+        }
+        #endif
     }
 
     /// Re-reads battery health/cycles on demand and logs a new decay entry if it changed.
@@ -1938,6 +1977,38 @@ extension BatteryTracker.Session {
 /// * the **capacity ratio** MacWake shows — wear, derived from the controller's capacities;
 /// * `MaxCapacity`, which Apple Silicon pins at 100 regardless of wear, so it is only a
 ///   last resort for Macs that expose no capacity pair at all.
+/// The battery "Maximum Capacity" macOS shows in System Settings, read the same way System
+/// Information does. Kept separate so the parsing is testable without running the tool.
+enum MacOSReportedHealth {
+    /// Extracts the percentage from `system_profiler SPPowerDataType -json` output.
+    static func parse(json: Data) -> Int? {
+        guard let root = try? JSONSerialization.jsonObject(with: json) as? [String: Any],
+              let sections = root["SPPowerDataType"] as? [[String: Any]] else { return nil }
+        for section in sections {
+            guard let info = section["sppower_battery_health_info"] as? [String: Any],
+                  let text = info["sppower_battery_health_maximum_capacity"] as? String else { continue }
+            let digits = text.filter(\.isNumber)
+            if let value = Int(digits), (1...100).contains(value) { return value }
+        }
+        return nil
+    }
+
+    #if !APPSTORE
+    static func read() -> Int? {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/sbin/system_profiler")
+        process.arguments = ["SPPowerDataType", "-json"]
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = Pipe()
+        guard (try? process.run()) != nil else { return nil }
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        process.waitUntilExit()
+        return process.terminationStatus == 0 ? parse(json: data) : nil
+    }
+    #endif
+}
+
 enum BatteryHealthMath {
     struct Ratio: Equatable {
         let value: Double
