@@ -464,3 +464,4 @@
 "ISLAND_LEFT_FMT" = "약 %@ 남음";
 "ISLAND_FULL_FMT" = "완충까지 약 %@";
 "FAN_ENGAGING_NOTE" = "macOS로부터 팬 제어권을 넘겨받는 중입니다 — 일부 Mac에서는 최대 20초가 걸립니다.";
+"CALIBRATION_NEEDS_CHARGER" = "보정하려면 충전기를 연결하세요.";

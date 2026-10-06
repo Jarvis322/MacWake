@@ -454,3 +454,4 @@
 "ISLAND_LEFT_FMT" = "~%@ kaldı";
 "ISLAND_FULL_FMT" = "Dolmasına ~%@";
 "FAN_ENGAGING_NOTE" = "Fanların kontrolü macOS'tan devralınıyor — bazı Mac'lerde 20 saniyeye kadar sürebilir.";
+"CALIBRATION_NEEDS_CHARGER" = "Kalibre etmek için şarj cihazını takın.";

@@ -464,3 +464,4 @@
 "ISLAND_LEFT_FMT" = "剩余约 %@";
 "ISLAND_FULL_FMT" = "约 %@ 充满";
 "FAN_ENGAGING_NOTE" = "正在从 macOS 接管风扇——在部分 Mac 上最多需要 20 秒。";
+"CALIBRATION_NEEDS_CHARGER" = "请连接充电器后再校准。";

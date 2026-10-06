@@ -41,7 +41,7 @@ enum SettingsBuildingBlocks {
 /// Pure-SwiftUI replacement for `.pickerStyle(.segmented)` inside the popover. The AppKit
 /// bridged NSSegmentedControl re-measured its own frame on every SwiftUI update pass and
 /// landed one pixel off for a single frame — visible as the selected segment constantly
-/// trembling (#22). A native view lays out deterministically, like the tab bar above.
+/// trembling. A native view lays out deterministically, like the tab bar above.
 struct SegmentedControl<Value: Hashable>: View {
     @Binding var selection: Value
     let options: [(Value, LocalizedStringKey)]
@@ -73,7 +73,7 @@ struct SegmentedControl<Value: Hashable>: View {
 
 /// Standalone so macOS Energy Mode changes don't force this segmented control to redraw
 /// every time `MacWakeMenuView`'s body recomputes (e.g. the 1s wattage timer) — that
-/// redraw was visible as a constant flicker on the control (see #22).
+/// redraw was visible as a constant flicker on the control.
 struct EnergyModeSection: View {
     @ObservedObject private var chargeLimit = ChargeLimitManager.shared
 
@@ -101,7 +101,7 @@ struct EnergyModeSection: View {
 
 #if !APPSTORE
 /// Standalone for the same reason as `EnergyModeSection` — this segmented duration picker
-/// doesn't depend on `tracker`, so it shouldn't redraw on every wattage tick either (#22).
+/// doesn't depend on `tracker`, so it shouldn't redraw on every wattage tick either.
 struct CleaningModeSection: View {
     @ObservedObject private var cleaningMode = CleaningModeManager.shared
     @State private var cleaningDuration: Int = 30
@@ -163,8 +163,10 @@ struct MacWakeMenuView: View {
     @State private var isLaunchAtLoginEnabled: Bool = LaunchAgentManager.isEnabled
     @State private var selectedTab: Int = 0
     @State private var isScrolledToBottom = false
-    @State private var showCalibrationConfirmation = false
-    @State private var showDischargeConfirmation = false
+    // Two-step confirms are drawn inline: a `confirmationDialog` presented from this
+    // MenuBarExtra(.window) panel never takes clicks, because the panel doesn't become key.
+    @State private var calibrationConfirming = false
+    @State private var dischargeConfirming = false
     #if !APPSTORE
     @State private var isCLIInstalled = CLIInstaller.isInstalled
     #endif
@@ -944,27 +946,32 @@ struct MacWakeMenuView: View {
                         }
                         Spacer(minLength: 8)
                         Button {
-                            showDischargeConfirmation = true
+                            dischargeConfirming = true
                         } label: {
                             Text("\(chargeLimit.dischargeTarget)%").monospacedDigit()
                         }
                         .buttonStyle(.borderedProminent).controlSize(.small).tint(.orange)
-                        .disabled(tracker.currentBatteryLevel <= chargeLimit.dischargeTarget)
-                        // Same pattern as calibration (#6): draining the battery on purpose
-                        // is consequential enough to ask first, not just require a target
-                        // to already be selected before the button becomes tappable.
-                        .confirmationDialog(
-                            "Discharge",
-                            isPresented: $showDischargeConfirmation,
-                            titleVisibility: .visible
-                        ) {
-                            Button("Start Discharging", role: .destructive) { chargeLimit.startDischarge() }
-                            Button("Cancel", role: .cancel) {}
-                        } message: {
-                            Text(String(format: String(localized: "DISCHARGE_CONFIRM_FMT"), chargeLimit.dischargeTarget))
-                        }
+                        .disabled(tracker.currentBatteryLevel <= chargeLimit.dischargeTarget || dischargeConfirming)
                     }
                     .padding(.horizontal, 12).padding(.vertical, 9)
+                    // Draining the battery on purpose is consequential enough to ask first (#6).
+                    if dischargeConfirming {
+                        rowDivider()
+                        sliderBlock {
+                            Text(String(format: String(localized: "DISCHARGE_CONFIRM_FMT"), chargeLimit.dischargeTarget))
+                                .font(.system(size: 10)).foregroundColor(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                            HStack(spacing: 8) {
+                                Button {
+                                    dischargeConfirming = false
+                                    chargeLimit.startDischarge()
+                                } label: { Text("Start Discharging").frame(maxWidth: .infinity) }
+                                    .buttonStyle(.borderedProminent).tint(.orange).controlSize(.small)
+                                Button { dischargeConfirming = false } label: { Text("Cancel").frame(maxWidth: .infinity) }
+                                    .buttonStyle(.bordered).controlSize(.small)
+                            }
+                        }
+                    }
                     rowDivider()
                     sliderBlock {
                         Slider(value: Binding(get: { Double(chargeLimit.dischargeTarget) },
@@ -1320,20 +1327,30 @@ struct MacWakeMenuView: View {
                             }
                             Button(action: { chargeLimit.cancelCalibration() }) { Text("Cancel").frame(maxWidth: .infinity) }
                                 .buttonStyle(.bordered).controlSize(.small)
+                        } else if calibrationConfirming {
+                            HStack(spacing: 8) {
+                                Button {
+                                    calibrationConfirming = false
+                                    chargeLimit.calibrateNow(batteryLevel: tracker.currentBatteryLevel)
+                                } label: { Text("Calibrate Now").frame(maxWidth: .infinity) }
+                                    .buttonStyle(.borderedProminent).tint(.purple).controlSize(.small)
+                                Button { calibrationConfirming = false } label: { Text("Cancel").frame(maxWidth: .infinity) }
+                                    .buttonStyle(.bordered).controlSize(.small)
+                            }
                         } else {
-                            Button(action: { showCalibrationConfirmation = true }) {
+                            // Calibration drains through the adapter cut, so it only makes sense
+                            // on the charger — started on battery it would sit idle until the
+                            // eight-hour timeout, silently.
+                            let onCharger = tracker.isPluggedIn || chargeLimit.isHoldingChargeOff
+                            Button(action: { calibrationConfirming = true }) {
                                 HStack { Image(systemName: "gauge.with.needle"); Text("Calibrate Now") }.frame(maxWidth: .infinity)
                             }
                             .buttonStyle(.bordered).controlSize(.small)
-                            .confirmationDialog(
-                                "Battery Calibration",
-                                isPresented: $showCalibrationConfirmation,
-                                titleVisibility: .visible
-                            ) {
-                                Button("Calibrate Now", role: .destructive) { chargeLimit.calibrateNow(batteryLevel: tracker.currentBatteryLevel) }
-                                Button("Cancel", role: .cancel) {}
-                            } message: {
-                                Text(String(localized: "CALIBRATION_HELP"))
+                            .disabled(!onCharger)
+                            if !onCharger {
+                                Text("CALIBRATION_NEEDS_CHARGER")
+                                    .font(.system(size: 10)).foregroundColor(.secondary)
+                                    .fixedSize(horizontal: false, vertical: true)
                             }
                         }
                     }
@@ -2357,7 +2374,7 @@ struct VisualEffectView: NSViewRepresentable {
         // other windows) to keep the live blur in sync — that constant re-sampling is what
         // made overlaid AppKit controls (segmented pickers especially) visibly flicker.
         // .withinWindow blends against this window's own content instead, which is what
-        // system menu-bar popovers (Control Center, Wi-Fi, etc.) use for this reason (#22).
+        // system menu-bar popovers (Control Center, Wi-Fi, etc.) use for this reason.
         view.blendingMode = .withinWindow
         view.state = .active
         view.material = .popover

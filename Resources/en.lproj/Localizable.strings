@@ -130,3 +130,4 @@
 "ISLAND_LEFT_FMT" = "~%@ left";
 "ISLAND_FULL_FMT" = "~%@ to full";
 "FAN_ENGAGING_NOTE" = "Taking the fans over from macOS — on some Macs this takes up to 20 seconds.";
+"CALIBRATION_NEEDS_CHARGER" = "Connect your charger to calibrate.";

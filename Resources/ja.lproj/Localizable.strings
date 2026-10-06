@@ -464,3 +464,4 @@
 "ISLAND_LEFT_FMT" = "残り約 %@";
 "ISLAND_FULL_FMT" = "満充電まで約 %@";
 "FAN_ENGAGING_NOTE" = "macOS からファンの制御を引き継いでいます — Mac によっては最大 20 秒かかります。";
+"CALIBRATION_NEEDS_CHARGER" = "校正するには充電器を接続してください。";
