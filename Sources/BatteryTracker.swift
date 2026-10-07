@@ -431,6 +431,15 @@ class BatteryTracker: ObservableObject {
             continuousACAlert = false
         }
         
+        // A session restored from disk was opened on battery. If the charger is connected now —
+        // plugged in while the Mac was off or the app wasn't running — no plug-in event will
+        // ever arrive to close it, and the dashboard kept showing it as the live session
+        // (with a shutdown gap and the previous day's start) instead of "charging".
+        if plugged, currentSession != nil {
+            closeCurrentSession(at: Date(), batteryLevel: level)
+            saveData()
+        }
+
         // If we are on battery and don't have a session, start one
         if !plugged && currentSession == nil {
             let now = Date()
@@ -1176,6 +1185,34 @@ class BatteryTracker: ObservableObject {
     }
 
     // Handle plugging/unplugging
+    /// Ends the open battery session because the Mac is on AC power: saved to history unless it
+    /// is trivial, then cleared. Shared by the live plug-in event and by launch, which has to do
+    /// the same when the charger was connected while the app wasn't running.
+    private func closeCurrentSession(at now: Date, batteryLevel: Int) {
+        guard var session = currentSession else { return }
+        session.endTime = now
+        session.endBatteryLevel = batteryLevel
+        session.events.append(Event(timestamp: now, type: "plugged", battery: batteryLevel))
+
+        // Skip trivial sessions: no battery change and barely any time on battery
+        // (e.g. a quick unplug/replug, or an app restart). These only clutter history.
+        let totalDuration = now.timeIntervalSince(session.startTime)
+        let drained = session.startBattery - batteryLevel
+        let isTrivial = drained <= 0 && totalDuration < 120
+
+        if isTrivial {
+            print("Skipped trivial session (\(Int(totalDuration))s, \(drained)% change).")
+        } else {
+            history.insert(session, at: 0)
+            if history.count > 10 {
+                history.removeLast()
+            }
+            print("Session completed and saved. Screen Time: \(session.screenOnDuration)s")
+        }
+
+        self.currentSession = nil
+    }
+
     private func handlePowerSourceChange(toPlugged plugged: Bool, batteryLevel: Int) {
         // Ignore self-induced adapter flips from the charge limiter. CHIE toggling
         // looks like unplug/plug, but the cable never moved — so it must not start or
@@ -1194,29 +1231,7 @@ class BatteryTracker: ObservableObject {
             updatePowerAdapterDetails()
 
             // Transitioned to AC: End battery tracking (save to history or mark complete)
-            if var session = currentSession {
-                session.endTime = now
-                session.endBatteryLevel = batteryLevel
-                session.events.append(Event(timestamp: now, type: "plugged", battery: batteryLevel))
-
-                // Skip trivial sessions: no battery change and barely any time on battery
-                // (e.g. a quick unplug/replug, or an app restart). These only clutter history.
-                let totalDuration = now.timeIntervalSince(session.startTime)
-                let drained = session.startBattery - batteryLevel
-                let isTrivial = drained <= 0 && totalDuration < 120
-
-                if isTrivial {
-                    print("Skipped trivial session (\(Int(totalDuration))s, \(drained)% change).")
-                } else {
-                    history.insert(session, at: 0)
-                    if history.count > 10 {
-                        history.removeLast()
-                    }
-                    print("Session completed and saved. Screen Time: \(session.screenOnDuration)s")
-                }
-
-                self.currentSession = nil
-            }
+            closeCurrentSession(at: now, batteryLevel: batteryLevel)
         } else {
             // Transitioned to Battery: always start a fresh session so each
             // unplug→plug interval is tracked on its own, regardless of charge level.
