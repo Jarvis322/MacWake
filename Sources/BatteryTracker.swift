@@ -61,6 +61,18 @@ class BatteryTracker: ObservableObject {
     @Published private(set) var macOSReportedHealth: Int?
     private var macOSHealthCheckedAt: Date?
     private var macOSHealthReadInFlight = false
+    /// Firmware of the Apple USB-C to MagSafe 3 cable while it is connected ("3.1.12"). macOS
+    /// shows no cable firmware anywhere in System Information, so it is read from the PD
+    /// identity the port controller holds. nil when there is no such cable (and always on the
+    /// sandboxed App Store build, which cannot run the tool).
+    @Published private(set) var magSafeCableFirmware: String?
+    private var magSafeCheckedAt: Date?
+    private var magSafeReadInFlight = false
+    private var magSafeEmptyReads = 0
+    /// Last version read during this uninterrupted plug-in. A rise is only called an update when
+    /// seen across two reads of the same connection — a different (already updated) cable
+    /// being plugged in must not announce one.
+    private var magSafeSessionVersion: String?
     @Published var batteryCycles: Int = 0
     @Published var batteryTemperature: Double = 0.0
     @Published var temperatureSamples: [Double] = []
@@ -1185,6 +1197,52 @@ class BatteryTracker: ObservableObject {
     }
 
     // Handle plugging/unplugging
+    /// Reads the MagSafe 3 cable's firmware while on AC, at most every 10 minutes (the tool takes
+    /// ~0.8 s). Right after plugging in the cable's identity may not be populated yet, so an empty
+    /// read is retried after a minute, a few times, before settling into the slow cadence.
+    private func refreshMagSafeCableFirmwareIfDue(plugged: Bool) {
+        #if !APPSTORE
+        guard plugged else {
+            magSafeSessionVersion = nil
+            magSafeCheckedAt = nil
+            magSafeEmptyReads = 0
+            if magSafeCableFirmware != nil { magSafeCableFirmware = nil }
+            return
+        }
+        let now = Date()
+        if let checked = magSafeCheckedAt, now.timeIntervalSince(checked) < 600 { return }
+        guard !magSafeReadInFlight else { return }
+        magSafeReadInFlight = true
+        magSafeCheckedAt = now
+        Task.detached(priority: .utility) {
+            let version = MagSafeCableFirmware.read()
+            await MainActor.run { [weak self] in self?.applyMagSafeCableFirmware(version) }
+        }
+        #endif
+    }
+
+    private func applyMagSafeCableFirmware(_ version: String?) {
+        magSafeReadInFlight = false
+        guard isPluggedIn else { return }
+        guard let version else {
+            magSafeEmptyReads += 1
+            if magSafeEmptyReads < 3 { magSafeCheckedAt = Date().addingTimeInterval(-540) }
+            if magSafeCableFirmware != nil { magSafeCableFirmware = nil }
+            return
+        }
+        magSafeEmptyReads = 0
+        let previous = magSafeSessionVersion
+        magSafeSessionVersion = version
+        if magSafeCableFirmware != version { magSafeCableFirmware = version }
+        guard let previous, MagSafeCableFirmware.isNewer(version, than: previous) else { return }
+
+        let message = String(format: String(localized: "MAGSAFE_CABLE_UPDATED_FMT"), version, previous)
+        DynamicIslandManager.shared.trigger(.alert(
+            title: String(localized: "MAGSAFE_CABLE_UPDATED_TITLE"), message: message, isWarning: false
+        ))
+        sendNotification(title: String(localized: "MAGSAFE_CABLE_UPDATED_TITLE"), body: message)
+    }
+
     /// Ends the open battery session because the Mac is on AC power: saved to history unless it
     /// is trivial, then cleared. Shared by the live plug-in event and by launch, which has to do
     /// the same when the charger was connected while the app wasn't running.
@@ -1409,6 +1467,7 @@ class BatteryTracker: ObservableObject {
         let level = getBatteryLevel()
         let plugged = isACPowerConnected()
         recordExternalHoldSample(level: level, plugged: plugged)
+        refreshMagSafeCableFirmwareIfDue(plugged: plugged)
 
         if plugged != isPluggedIn {
             currentBatteryLevel = level
@@ -1992,6 +2051,70 @@ extension BatteryTracker.Session {
 /// * the **capacity ratio** MacWake shows — wear, derived from the controller's capacities;
 /// * `MaxCapacity`, which Apple Silicon pins at 100 regardless of wear, so it is only a
 ///   last resort for Macs that expose no capacity pair at all.
+/// Firmware of Apple's USB-C to MagSafe 3 cable. The cable carries an e-marker whose USB-PD
+/// identity includes `bcdDevice`, and the port controller's register dump (`hpmdiagnose`, runs
+/// unprivileged) holds it at 0x49: 1 prefix byte, then the Discover Identity VDOs. The ID header
+/// carries the vendor ID, the Product VDO the product ID (upper half) and bcdDevice (lower half),
+/// little-endian. For Apple's cable (product 0x7800) bcdDevice is BCD: 0x3112 is 3.1.12.
+enum MagSafeCableFirmware {
+    static let appleVendorID = 0x05AC
+    static let magSafe3CableProductID = 0x7800
+
+    /// "3.1.12" for 0x3112, "3.2.0" for 0x3200; nil unless every nibble is a decimal digit.
+    static func decodeVersion(bcdDevice: Int) -> String? {
+        let digits = [(bcdDevice >> 12) & 0xF, (bcdDevice >> 8) & 0xF, (bcdDevice >> 4) & 0xF, bcdDevice & 0xF]
+        guard digits.allSatisfy({ $0 <= 9 }) else { return nil }
+        return "\(digits[0]).\(digits[1]).\(digits[2] * 10 + digits[3])"
+    }
+
+    /// The firmware of the first Apple MagSafe 3 cable found in `hpmdiagnose` output.
+    static func parse(hpmdiagnose output: String) -> String? {
+        for line in output.split(separator: "\n") where line.hasPrefix("0x49\t") {
+            let fields = line.split(separator: "\t", omittingEmptySubsequences: false)
+            guard fields.count >= 3 else { continue }
+            let hex = fields[2].hasPrefix("0x") ? String(fields[2].dropFirst(2)) : String(fields[2])
+            var bytes: [Int] = []
+            var index = hex.startIndex
+            while index < hex.endIndex, let next = hex.index(index, offsetBy: 2, limitedBy: hex.endIndex),
+                  let value = Int(hex[index..<next], radix: 16) {
+                bytes.append(value)
+                index = next
+            }
+            guard bytes.count >= 13, bytes[0] != 0 else { continue }
+            let vendor = (bytes[2] << 8) | bytes[1]
+            let product = (bytes[12] << 8) | bytes[11]
+            let bcdDevice = (bytes[10] << 8) | bytes[9]
+            guard vendor == appleVendorID, product == magSafe3CableProductID,
+                  let version = decodeVersion(bcdDevice: bcdDevice) else { continue }
+            return version
+        }
+        return nil
+    }
+
+    /// Numeric comparison of "major.minor.patch" strings.
+    static func isNewer(_ candidate: String, than other: String) -> Bool {
+        let a = candidate.split(separator: ".").compactMap { Int($0) }
+        let b = other.split(separator: ".").compactMap { Int($0) }
+        guard a.count == 3, b.count == 3 else { return false }
+        return a.lexicographicallyPrecedes(b) == false && a != b
+    }
+
+    #if !APPSTORE
+    static func read() -> String? {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/hpmdiagnose")
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = Pipe()
+        guard (try? process.run()) != nil else { return nil }
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        process.waitUntilExit()
+        guard process.terminationStatus == 0, let text = String(data: data, encoding: .utf8) else { return nil }
+        return parse(hpmdiagnose: text)
+    }
+    #endif
+}
+
 /// The battery "Maximum Capacity" macOS shows in System Settings, read the same way System
 /// Information does. Kept separate so the parsing is testable without running the tool.
 enum MacOSReportedHealth {

@@ -131,3 +131,8 @@
 "ISLAND_FULL_FMT" = "~%@ to full";
 "FAN_ENGAGING_NOTE" = "Taking the fans over from macOS — on some Macs this takes up to 20 seconds.";
 "CALIBRATION_NEEDS_CHARGER" = "Connect your charger to calibrate.";
+"Cable" = "Cable";
+"MAGSAFE_CABLE" = "USB-C to MagSafe 3 Cable";
+"MAGSAFE_CABLE_FIRMWARE_FMT" = "Firmware %@";
+"MAGSAFE_CABLE_UPDATED_TITLE" = "Cable firmware updated";
+"MAGSAFE_CABLE_UPDATED_FMT" = "Your USB-C to MagSafe 3 Cable now runs firmware %@ (was %@).";

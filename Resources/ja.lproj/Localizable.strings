@@ -465,3 +465,8 @@
 "ISLAND_FULL_FMT" = "満充電まで約 %@";
 "FAN_ENGAGING_NOTE" = "macOS からファンの制御を引き継いでいます — Mac によっては最大 20 秒かかります。";
 "CALIBRATION_NEEDS_CHARGER" = "校正するには充電器を接続してください。";
+"Cable" = "ケーブル";
+"MAGSAFE_CABLE" = "USB-C - MagSafe 3 ケーブル";
+"MAGSAFE_CABLE_FIRMWARE_FMT" = "ファームウェア %@";
+"MAGSAFE_CABLE_UPDATED_TITLE" = "ケーブルのファームウェアを更新しました";
+"MAGSAFE_CABLE_UPDATED_FMT" = "USB-C - MagSafe 3 ケーブルがファームウェア %@ になりました（以前は %@）。";

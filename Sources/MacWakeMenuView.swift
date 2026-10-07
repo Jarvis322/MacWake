@@ -422,6 +422,11 @@ struct MacWakeMenuView: View {
         VStack(alignment: .leading, spacing: 11) {
             batteryHealthSection
 
+            if let firmware = tracker.magSafeCableFirmware {
+                Divider()
+                magSafeCableSection(firmware: firmware)
+            }
+
             if tracker.cpuTemperature != nil || tracker.gpuTemperature != nil || tracker.ssdTemperature != nil {
                 Divider()
                 systemTemperaturesSection
@@ -434,6 +439,24 @@ struct MacWakeMenuView: View {
             if !tracker.adapterHistory.isEmpty {
                 Divider()
                 adapterHistorySection
+            }
+        }
+    }
+
+    private func magSafeCableSection(firmware: String) -> some View {
+        VStack(alignment: .leading, spacing: 7) {
+            sectionLabel("Cable", icon: "cable.connector")
+            settingsCard {
+                HStack(spacing: 11) {
+                    iconTile("cable.connector", .blue)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("MAGSAFE_CABLE").font(.subheadline)
+                        Text(String(format: String(localized: "MAGSAFE_CABLE_FIRMWARE_FMT"), firmware))
+                            .font(.system(size: 11).monospacedDigit()).foregroundColor(.secondary)
+                    }
+                    Spacer()
+                }
+                .padding(.horizontal, 12).padding(.vertical, 9)
             }
         }
     }
@@ -708,6 +731,9 @@ struct MacWakeMenuView: View {
                 VStack(alignment: .leading, spacing: 7) { chargeLimitSection }
                 VStack(alignment: .leading, spacing: 7) { dischargeSection }
                 VStack(alignment: .leading, spacing: 7) { EnergyModeSection() }
+                if let firmware = tracker.magSafeCableFirmware {
+                    magSafeCableSection(firmware: firmware)
+                }
             }
             #else
             EmptyView()

@@ -465,3 +465,8 @@
 "ISLAND_FULL_FMT" = "约 %@ 充满";
 "FAN_ENGAGING_NOTE" = "正在从 macOS 接管风扇——在部分 Mac 上最多需要 20 秒。";
 "CALIBRATION_NEEDS_CHARGER" = "请连接充电器后再校准。";
+"Cable" = "线缆";
+"MAGSAFE_CABLE" = "USB-C 转 MagSafe 3 连接线";
+"MAGSAFE_CABLE_FIRMWARE_FMT" = "固件 %@";
+"MAGSAFE_CABLE_UPDATED_TITLE" = "线缆固件已更新";
+"MAGSAFE_CABLE_UPDATED_FMT" = "你的 USB-C 转 MagSafe 3 连接线现已运行固件 %@（此前为 %@）。";

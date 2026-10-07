@@ -455,3 +455,8 @@
 "ISLAND_FULL_FMT" = "Dolmasına ~%@";
 "FAN_ENGAGING_NOTE" = "Fanların kontrolü macOS'tan devralınıyor — bazı Mac'lerde 20 saniyeye kadar sürebilir.";
 "CALIBRATION_NEEDS_CHARGER" = "Kalibre etmek için şarj cihazını takın.";
+"Cable" = "Kablo";
+"MAGSAFE_CABLE" = "USB-C - MagSafe 3 Kablosu";
+"MAGSAFE_CABLE_FIRMWARE_FMT" = "Yazılım %@";
+"MAGSAFE_CABLE_UPDATED_TITLE" = "Kablo yazılımı güncellendi";
+"MAGSAFE_CABLE_UPDATED_FMT" = "USB-C - MagSafe 3 kablonuz artık %@ yazılımında (önceki %@).";
