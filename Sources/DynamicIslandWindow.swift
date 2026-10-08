@@ -194,6 +194,24 @@ struct DynamicIslandPanelView: View {
         .padding(.top, sm.notchHeight + 8)   // clear the camera/notch headline
         .padding(.bottom, 16)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .overlay(alignment: .bottomTrailing) {
+            // With the menu bar emptied on purpose the island is the only thing left to click,
+            // so it carries the way back — nothing else on screen would say how to find Settings.
+            if sm.state == .expanded, !tracker.menuBarItemVisible {
+                Button { tracker.revealMenuBarItem() } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "menubar.rectangle")
+                        Text("SHOW_MENUBAR_ICON")
+                    }
+                    .font(.system(size: 9, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.75))
+                    .padding(.horizontal, 8).padding(.vertical, 4)
+                    .background(Capsule().fill(Color.white.opacity(0.12)))
+                }
+                .buttonStyle(.plain)
+                .padding(.trailing, 22).padding(.bottom, 8)
+            }
+        }
     }
 
     // MARK: - Expanded Content (Power | Thermals, plus an optional Shelf column)

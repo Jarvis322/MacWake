@@ -1852,6 +1852,13 @@ extension BatteryTracker {
         )
     }
 
+    /// Brings a hidden menu-bar item back by switching its icon on — the one route out of an
+    /// empty menu bar, used by relaunching the app and by the Dynamic Island's button.
+    func revealMenuBarItem() {
+        guard !menuBarItemVisible else { return }
+        showMenuBarIcon = true
+    }
+
     /// Whether the user has any menu-bar content switched on — independent of whether that
     /// content has a value at this moment.
     ///

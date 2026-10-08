@@ -61,7 +61,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
             forName: MacWakeApp.revealMenuBarItemNotification, object: nil, queue: .main
         ) { _ in
             Task { @MainActor in
-                BatteryTracker.sharedForIntents?.showMenuBarIcon = true
+                BatteryTracker.sharedForIntents?.revealMenuBarItem()
             }
         }
         #if !APPSTORE
@@ -97,6 +97,18 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         // harmless no-op if we never acquired it. The app only actually drops back to a
         // pure menu-bar app once every other holder (e.g. onboarding) has also released.
         RegularModeCoordinator.shared.release("sparkle")
+    }
+
+    /// Opening an already-running MacWake again (Spotlight, Launchpad, Finder) does not start a
+    /// second process — macOS sends this "reopen" event instead — so the duplicate-launch check
+    /// in `MacWakeApp.init` never runs for it. That left the "open it again to bring the icon
+    /// back" recovery promised in Settings doing nothing, and a menu bar emptied on purpose
+    /// became a lock-out.
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        Task { @MainActor in
+            BatteryTracker.sharedForIntents?.revealMenuBarItem()
+        }
+        return true
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {

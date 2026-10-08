@@ -136,3 +136,4 @@
 "MAGSAFE_CABLE_FIRMWARE_FMT" = "Firmware %@";
 "MAGSAFE_CABLE_UPDATED_TITLE" = "Cable firmware updated";
 "MAGSAFE_CABLE_UPDATED_FMT" = "Your USB-C to MagSafe 3 Cable now runs firmware %@ (was %@).";
+"SHOW_MENUBAR_ICON" = "Show menu bar icon";
