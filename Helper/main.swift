@@ -8,5 +8,9 @@ let listener = NSXPCListener(machServiceName: kMacWakeHelperMachServiceName)
 listener.delegate = delegate
 listener.resume()
 
+// A firmware charge limit this daemon applied before it died (crash, kill) has no owner now.
+// Release it; the app re-applies it on its next evaluation if it still wants it.
+_ = HelperSMC.releaseFirmwareLimit()
+
 // Keep the daemon alive for incoming connections.
 dispatchMain()

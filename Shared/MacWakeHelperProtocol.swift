@@ -63,6 +63,25 @@ public let kMacWakeCodeSigningRequirement =
     /// detected from key availability, not from the chip model.
     func chargeControlMethod(reply: @escaping (String) -> Void)
 
+    /// Whether this Mac exposes the firmware-managed charge limit: `bfF0`, `bfD0` and `bfE0` all
+    /// present, non-empty and readable. Read-only — nothing is written to answer it. Absent on
+    /// most Macs, and gated behind a privilege the SMC user client withholds on newer macOS
+    /// builds, in which case this is simply false.
+    func firmwareLimitSupported(reply: @escaping (Bool) -> Void)
+
+    /// Hold the battery between `lower` and `upper` percent using the firmware's own limit,
+    /// with the adapter left connected. Writes `bfF0=0`, the two bounds, then `bfF0=2`, and
+    /// replies true only if reading all three back shows exactly that; on any mismatch it
+    /// releases the limit again and replies false, so a caller can fall back to another method.
+    /// The limit is enforced by firmware and outlives this process until released.
+    func setFirmwareLimit(upper: Int, lower: Int, reply: @escaping (Bool) -> Void)
+
+    /// Whether the firmware limit currently reads back as active with exactly these bounds.
+    func verifyFirmwareLimit(upper: Int, lower: Int, reply: @escaping (Bool) -> Void)
+
+    /// Release the firmware limit (`bfF0=0`) and confirm it by reading back.
+    func releaseFirmwareLimit(reply: @escaping (Bool) -> Void)
+
     /// Ask the daemon to exit so launchd starts the *current* binary on the next connection.
     ///
     /// This is how a stale daemon is replaced. Unregistering and re-registering cannot do it:
@@ -80,4 +99,4 @@ public let kMacWakeCodeSigningRequirement =
 /// without bumping means users keep executing the previous code. That silently
 /// swallowed two Apple Silicon fan fixes (1.43, 1.45) before it was caught; build.sh
 /// now warns when Helper/ changes without a bump.
-public let kMacWakeHelperVersion = "13"
+public let kMacWakeHelperVersion = "14"

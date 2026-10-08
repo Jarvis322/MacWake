@@ -137,3 +137,7 @@
 "MAGSAFE_CABLE_UPDATED_TITLE" = "Cable firmware updated";
 "MAGSAFE_CABLE_UPDATED_FMT" = "Your USB-C to MagSafe 3 Cable now runs firmware %@ (was %@).";
 "SHOW_MENUBAR_ICON" = "Show menu bar icon";
+"CL_USE_FIRMWARE" = "Use firmware limit (experimental)";
+"CL_USE_FIRMWARE_NOTE" = "Holds the limit with the firmware's own charge limit, so the Mac stays on adapter power and Sailing needs no active discharge. Uses undocumented SMC keys; the limit is released when you turn this off, disable the limit or quit MacWake.";
+"CL_FIRMWARE_FAILED" = "The firmware limit could not be confirmed on this Mac, so MacWake is using the adapter-cut method instead.";
+"CL_HOLD_FIRMWARE" = "The firmware is holding this limit on adapter power — MacWake is not cutting the adapter. While above the upper limit the Mac may still run on battery until it is back in range.";

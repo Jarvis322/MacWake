@@ -44,6 +44,50 @@ final class HelperService: NSObject, MacWakeHelperProtocol {
         reply(HelperSMC.chargeControlMethod())
     }
 
+    func firmwareLimitSupported(reply: @escaping (Bool) -> Void) {
+        reply(HelperSMC.firmwareLimitSupported())
+    }
+
+    // The connection that holds the firmware limit. The limit is enforced by firmware and would
+    // outlive an app that crashed or was force-quit, so when this connection goes away without
+    // releasing, the daemon releases for it (see `connectionEnded`).
+    private let ownerLock = NSLock()
+    private weak var firmwareOwner: NSXPCConnection?
+
+    private func setFirmwareOwner(_ connection: NSXPCConnection?) {
+        ownerLock.lock(); defer { ownerLock.unlock() }
+        firmwareOwner = connection
+    }
+
+    func setFirmwareLimit(upper: Int, lower: Int, reply: @escaping (Bool) -> Void) {
+        let applied = HelperSMC.setFirmwareLimit(upper: upper, lower: lower)
+        if applied { setFirmwareOwner(NSXPCConnection.current()) }
+        reply(applied)
+    }
+
+    func verifyFirmwareLimit(upper: Int, lower: Int, reply: @escaping (Bool) -> Void) {
+        let intact = HelperSMC.verifyFirmwareLimit(upper: upper, lower: lower)
+        // A reconnected app that finds its limit still in place takes the limit back over.
+        if intact, HelperSMC.firmwareLimitOwned { setFirmwareOwner(NSXPCConnection.current()) }
+        reply(intact)
+    }
+
+    /// Called when any client connection ends. Only the one that applied the limit matters, and
+    /// a replacement connection that already took over is left alone.
+    func connectionEnded(_ connection: NSXPCConnection) {
+        ownerLock.lock()
+        let wasOwner = firmwareOwner === connection
+        if wasOwner { firmwareOwner = nil }
+        ownerLock.unlock()
+        if wasOwner { _ = HelperSMC.releaseFirmwareLimit() }
+    }
+
+    func releaseFirmwareLimit(reply: @escaping (Bool) -> Void) {
+        let released = HelperSMC.releaseFirmwareLimit()
+        if released { setFirmwareOwner(nil) }
+        reply(released)
+    }
+
     func exitForUpdate(reply: @escaping (Bool) -> Void) {
         reply(true)
         // Answer first, then step aside: launchd owns this job and will start the newer
@@ -52,6 +96,7 @@ final class HelperService: NSObject, MacWakeHelperProtocol {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             _ = HelperSMC.setForceDischarge(false)
             _ = HelperSMC.setAdapterEnabled(true)
+            _ = HelperSMC.releaseFirmwareLimit()   // enforced by firmware: must not outlive us
             exit(0)
         }
     }
@@ -60,6 +105,7 @@ final class HelperService: NSObject, MacWakeHelperProtocol {
         // Always restore charging before the app tears the helper down,
         // so we never leave the machine discharging on AC.
         _ = HelperSMC.setAdapterEnabled(true)
+        _ = HelperSMC.releaseFirmwareLimit()
         reply(true)
     }
 }
@@ -75,6 +121,10 @@ final class HelperListenerDelegate: NSObject, NSXPCListenerDelegate {
 
         newConnection.exportedInterface = NSXPCInterface(with: MacWakeHelperProtocol.self)
         newConnection.exportedObject = service
+        newConnection.invalidationHandler = { [weak service, weak newConnection] in
+            guard let service, let newConnection else { return }
+            service.connectionEnded(newConnection)
+        }
         newConnection.resume()
         return true
     }

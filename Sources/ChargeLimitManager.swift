@@ -3,6 +3,19 @@ import AppKit
 import ServiceManagement
 import MacWakeShared
 
+/// The band handed to the firmware-managed limit, kept pure so it can be tested without an SMC.
+enum FirmwareChargeLimit {
+    /// `upper` is the configured limit. `lower` is where the firmware lets charging resume: the
+    /// Sailing floor when Sailing Mode is on (no active discharge involved any more), otherwise
+    /// the usual hysteresis below the limit. Always a valid band — at least 1 and strictly below
+    /// `upper` — whatever the stored values are.
+    static func bounds(limit: Int, sailingEnabled: Bool, sailingLower: Int, hysteresis: Int) -> (upper: Int, lower: Int) {
+        let upper = min(100, max(2, limit))
+        let wanted = sailingEnabled ? sailingLower : limit - hysteresis
+        return (upper, min(upper - 1, max(1, wanted)))
+    }
+}
+
 /// Pure safety rules shared by the calibration state machine and its regression tests.
 enum CalibrationRecovery {
     static func shouldRestoreImmediately(batteryLevel: Int, dischargeFloor: Int) -> Bool {
@@ -73,6 +86,7 @@ final class ChargeLimitManager: ObservableObject {
                 // timeout backstop stops firing. Cancelling also restores charging.
                 if calibrationActive { cancelCalibration() }
                 else { Task { await self.restoreCharging() } }
+                if firmwareLimitActive { Task { await self.releaseFirmwareLimit() } }
             }
             // evaluate() returns before reaching the ownership update while disabled, so a
             // stale `.yielded` from before the toggle was switched off would otherwise
@@ -322,6 +336,36 @@ final class ChargeLimitManager: ObservableObject {
     /// Minimum time between adapter toggles, a hard backstop against oscillation.
     private let minToggleInterval: TimeInterval = 90
 
+    // MARK: - Firmware-managed limit (experimental)
+
+    /// Opt-in. Holds the limit with the firmware's own charge limit instead of cutting the
+    /// adapter, so the Mac stays on adapter power. Writes undocumented SMC keys and the limit
+    /// outlives the app until released — see `releaseFirmwareLimit` — hence off by default.
+    @Published var useFirmwareLimit: Bool {
+        didSet {
+            UserDefaults.standard.set(useFirmwareLimit, forKey: "useFirmwareLimit")
+            if !useFirmwareLimit {
+                firmwareLimitFailed = false
+                Task { await releaseFirmwareLimit() }
+            }
+        }
+    }
+    /// nil until the helper has answered; true only if all three firmware keys are readable.
+    @Published private(set) var firmwareLimitSupported: Bool?
+    /// True while MacWake has the firmware limit engaged and confirmed.
+    @Published private(set) var firmwareLimitActive = false
+    /// The helper could not confirm the firmware limit on this Mac, so MacWake went back to
+    /// the adapter-cut path for this session.
+    @Published private(set) var firmwareLimitFailed = false
+    private var firmwareApplied: (upper: Int, lower: Int)?
+    private var firmwareRequestInFlight = false
+    private var firmwareVerifiedAt: Date?
+    private let firmwareVerifyInterval: TimeInterval = 300
+
+    /// Hold mechanism as the UI should describe it: while the firmware limit is engaged nothing
+    /// is cutting the adapter, whatever the Mac's own charge-stop key would otherwise do.
+    var holdCutsAdapterNow: Bool? { firmwareLimitActive ? false : holdCutsAdapter }
+
     private let plistName = "com.jarvisit.macwake.helper.plist"
     private var connection: NSXPCConnection?
     private var lastAdapterEnabled: Bool?
@@ -374,6 +418,7 @@ final class ChargeLimitManager: ObservableObject {
         self.showMigrationNotice = hasPriorChargeLimitConfig
             && allowActiveDischargeKeyWasMissing
             && !d.bool(forKey: "didShowActiveDischargeMigrationNotice")
+        self.useFirmwareLimit = d.bool(forKey: "useFirmwareLimit")
         refreshStatus()
     }
 
@@ -393,6 +438,7 @@ final class ChargeLimitManager: ObservableObject {
             if lastAdapterEnabled == nil { syncAdapterState() }
             if holdCutsAdapter == nil { loadChargeControlMethod() }
             if fanCount == 0 { loadFanInfo() }
+            if firmwareLimitSupported == nil { loadFirmwareLimitSupport() }
             readEnergyMode()
         case .requiresApproval:
             helperStatus = .requiresApproval
@@ -486,6 +532,7 @@ final class ChargeLimitManager: ObservableObject {
         log += reported == kMacWakeHelperVersion ? " — up to date\n" : " — not current\n"
         helperVersion = reported.isEmpty ? nil : reported
         if !reported.isEmpty {
+            forgetFirmwareLimit()
             fanCount = 0
             loadFanInfo()
             syncAdapterState()
@@ -572,11 +619,13 @@ final class ChargeLimitManager: ObservableObject {
             let conn = NSXPCConnection(machServiceName: kMacWakeHelperMachServiceName, options: .privileged)
             conn.remoteObjectInterface = NSXPCInterface(with: MacWakeHelperProtocol.self)
             conn.setCodeSigningRequirement(kMacWakeCodeSigningRequirement)
+            // The helper releases a firmware limit when the connection that applied it goes away,
+            // so whatever this side believed about it is no longer true.
             conn.invalidationHandler = { [weak self] in
-                Task { @MainActor in self?.connection = nil }
+                Task { @MainActor in self?.connection = nil; self?.forgetAppliedFirmwareLimit() }
             }
             conn.interruptionHandler = { [weak self] in
-                Task { @MainActor in self?.connection = nil }
+                Task { @MainActor in self?.connection = nil; self?.forgetAppliedFirmwareLimit() }
             }
             conn.resume()
             connection = conn
@@ -661,11 +710,17 @@ final class ChargeLimitManager: ObservableObject {
         guard let proxy = remoteProxy() else { return }
         let needsCharge = (lastAdapterEnabled == false)
         let needsFan = fanControlEnabled
-        guard needsCharge || needsFan else { return }
+        let needsFirmware = firmwareLimitActive
+        guard needsCharge || needsFan || needsFirmware else { return }
         let sem = DispatchSemaphore(value: 0)
         proxy.setFanManual(false, rpm: 0) { _ in
             proxy.setForceDischarge(false) { _ in
-                proxy.setAdapterEnabled(true) { _ in sem.signal() }
+                proxy.setAdapterEnabled(true) { _ in
+                    // The firmware limit is enforced outside this process and would otherwise
+                    // keep capping charge, unexplained, after the app is gone.
+                    if needsFirmware { proxy.releaseFirmwareLimit { _ in sem.signal() } }
+                    else { sem.signal() }
+                }
             }
         }
         _ = sem.wait(timeout: .now() + 2)
@@ -692,6 +747,7 @@ final class ChargeLimitManager: ObservableObject {
     func evaluate(batteryLevel: Int, isPluggedIn: Bool, externalHoldPercent: Int? = nil) {
         guard helperStatus == .ready, isEnabled else {
             if lastAdapterEnabled == false { Task { await restoreCharging() } }
+            if firmwareLimitActive { Task { await releaseFirmwareLimit() } }
             return
         }
 
@@ -701,6 +757,11 @@ final class ChargeLimitManager: ObservableObject {
             if lastAdapterEnabled == false { Task { await restoreCharging() } }
             return
         }
+
+        // The firmware limit, when engaged, is the whole standing limit: nothing below it
+        // should also cut the adapter. Any mode that needs the battery to move past the limit
+        // releases it first and carries on with the paths below.
+        if manageFirmwareLimit(batteryLevel: batteryLevel, externalHoldPercent: externalHoldPercent) { return }
 
         // Deep calibration takes priority: drain to ~15%, charge to 100%, hold 1 hour.
         // Manual discharge outranks everything below: the user asked for a specific level
@@ -902,6 +963,107 @@ final class ChargeLimitManager: ObservableObject {
         }
 
         Task { await applyChargingAllowed(shouldChargeAllowed) }
+    }
+
+    // MARK: - Firmware limit
+
+    private func loadFirmwareLimitSupport() {
+        guard let proxy = remoteProxy() else { return }
+        proxy.firmwareLimitSupported { [weak self] supported in
+            Task { @MainActor in self?.firmwareLimitSupported = supported }
+        }
+    }
+
+    /// Returns true while the firmware is the thing holding the limit, so the caller skips
+    /// every other enforcement path. Anything that needs the battery to go past the limit
+    /// (calibration, Top Up, manual discharge, a scheduled full charge, Heat Guard) or a
+    /// confirmed macOS-native hold releases it and returns false.
+    private func manageFirmwareLimit(batteryLevel: Int, externalHoldPercent: Int?) -> Bool {
+        let eligible = useFirmwareLimit && firmwareLimitSupported == true && !firmwareLimitFailed
+        let overridden = dischargeActive || calibrationActive || topUpActive || heatGuardPaused
+            || externalHoldPercent != nil || scheduledChargeWindow(batteryLevel: batteryLevel)
+        guard eligible, !overridden else {
+            if firmwareLimitActive || firmwareApplied != nil { Task { await releaseFirmwareLimit() } }
+            return false
+        }
+
+        let wanted = FirmwareChargeLimit.bounds(
+            limit: limit, sailingEnabled: sailingEnabled, sailingLower: sailingLower, hysteresis: hysteresis
+        )
+        guard !firmwareRequestInFlight else { return true }
+
+        if let applied = firmwareApplied, applied == wanted {
+            // Re-check periodically: firmware state can be reset (sleep, a reboot of the SMC
+            // endpoint) without this process hearing about it.
+            if let checked = firmwareVerifiedAt, Date().timeIntervalSince(checked) < firmwareVerifyInterval { return true }
+            firmwareRequestInFlight = true
+            Task { await verifyFirmwareLimit(wanted) }
+            return true
+        }
+
+        firmwareRequestInFlight = true
+        Task { await applyFirmwareLimit(wanted) }
+        return true
+    }
+
+    private func applyFirmwareLimit(_ bounds: (upper: Int, lower: Int)) async {
+        defer { firmwareRequestInFlight = false }
+        guard let proxy = remoteProxy() else { return }
+        // A cut left over from the adapter-cut path would keep the Mac on battery regardless.
+        if lastAdapterEnabled == false { _ = await restoreCharging() }
+        let confirmed = await xpcBool { reply in
+            proxy.setFirmwareLimit(upper: bounds.upper, lower: bounds.lower, reply: reply)
+        }
+        if confirmed {
+            firmwareApplied = bounds
+            firmwareLimitActive = true
+            firmwareVerifiedAt = Date()
+        } else {
+            firmwareApplied = nil
+            firmwareLimitActive = false
+            firmwareLimitFailed = true   // this session: use the adapter-cut path instead
+        }
+    }
+
+    private func verifyFirmwareLimit(_ bounds: (upper: Int, lower: Int)) async {
+        defer { firmwareRequestInFlight = false }
+        guard let proxy = remoteProxy() else { return }
+        let intact = await xpcBool { reply in
+            proxy.verifyFirmwareLimit(upper: bounds.upper, lower: bounds.lower, reply: reply)
+        }
+        if intact { firmwareVerifiedAt = Date() }
+        else {
+            // Drifted: forget it so the next evaluation applies it again from scratch.
+            firmwareApplied = nil
+            firmwareLimitActive = false
+        }
+    }
+
+    @discardableResult
+    private func releaseFirmwareLimit() async -> Bool {
+        guard let proxy = remoteProxy() else { return false }
+        let released = await xpcBool { reply in proxy.releaseFirmwareLimit(reply: reply) }
+        if released {
+            firmwareApplied = nil
+            firmwareLimitActive = false
+        }
+        return released
+    }
+
+    private func forgetAppliedFirmwareLimit() {
+        firmwareApplied = nil
+        firmwareLimitActive = false
+        firmwareVerifiedAt = nil
+    }
+
+    /// A recycled daemon releases the firmware limit on its way out, so what this process
+    /// remembers about it is no longer true.
+    private func forgetFirmwareLimit() {
+        firmwareApplied = nil
+        firmwareLimitActive = false
+        firmwareVerifiedAt = nil
+        firmwareLimitSupported = nil
+        loadFirmwareLimitSupport()
     }
 
     // MARK: - Calibration
@@ -1418,6 +1580,7 @@ final class ChargeLimitManager: ObservableObject {
         log += "final status: \(service.status.rawValue)"
         helperVersion = nil
         refreshStatus()
+        forgetFirmwareLimit()
         fanCount = 0
         loadFanInfo()
         return log

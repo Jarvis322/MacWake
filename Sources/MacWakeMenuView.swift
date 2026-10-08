@@ -1195,12 +1195,26 @@ struct MacWakeMenuView: View {
                         // Two mechanisms feel very different, so name the one this Mac uses:
                         // inhibiting charge keeps it on adapter power, whereas cutting
                         // adapter input means the battery really drains down to the limit.
-                        if let cutsAdapter = chargeLimit.holdCutsAdapter {
+                        if chargeLimit.firmwareLimitSupported == true {
+                            HStack(spacing: 8) {
+                                Toggle(isOn: $chargeLimit.useFirmwareLimit) {
+                                    Text("CL_USE_FIRMWARE").font(.system(size: 10))
+                                }
+                                .toggleStyle(.switch).controlSize(.mini)
+                            }
+                            .padding(.top, 4)
+                            Text(String(localized: chargeLimit.firmwareLimitFailed ? "CL_FIRMWARE_FAILED" : "CL_USE_FIRMWARE_NOTE"))
+                                .font(.system(size: 10))
+                                .foregroundColor(chargeLimit.firmwareLimitFailed ? .orange : .secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        if let cutsAdapter = chargeLimit.holdCutsAdapterNow {
                             HStack(alignment: .top, spacing: 5) {
                                 Image(systemName: cutsAdapter ? "battery.50" : "powerplug.fill")
                                     .font(.system(size: 9))
                                     .foregroundColor(cutsAdapter ? .orange : .green)
-                                Text(String(localized: cutsAdapter ? "CL_HOLD_DISCHARGES" : "CL_HOLD_ON_POWER"))
+                                Text(String(localized: cutsAdapter ? "CL_HOLD_DISCHARGES"
+                                            : (chargeLimit.firmwareLimitActive ? "CL_HOLD_FIRMWARE" : "CL_HOLD_ON_POWER")))
                                     .font(.system(size: 10)).foregroundColor(.secondary)
                                     .fixedSize(horizontal: false, vertical: true)
                             }
@@ -1546,7 +1560,7 @@ struct MacWakeMenuView: View {
             nativeLimit: tracker.chargeLimit,
             yieldedPercent: yieldedPercent,
             isAuthorized: ChargeLimitAuthorization.standingLimitMayEnforce(
-                holdCutsAdapter: chargeLimit.holdCutsAdapter,
+                holdCutsAdapter: chargeLimit.holdCutsAdapterNow,
                 allowActiveDischarge: chargeLimit.allowActiveDischarge
             )
         )

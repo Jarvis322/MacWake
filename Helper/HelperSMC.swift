@@ -254,6 +254,144 @@ enum HelperSMC {
         return out
     }
 
+    // MARK: - Firmware-managed charge limit (bfF0 / bfD0 / bfE0)
+    //
+    // On some firmware the SMC carries its own charge limit: `bfF0` is the mode (0 = off,
+    // 2 = limit active), `bfD0` the upper bound and `bfE0` the lower, both percent as
+    // little-endian ui32. The firmware then holds the battery in that band with the adapter
+    // still connected — the one thing the adapter-cut path cannot do. The layout comes from
+    // the open-source `batt` project and a live trace on an M4 Pro; none of it is documented by
+    // Apple, so every step is read back and anything unexpected is released again.
+
+    private static let firmwareModeKey = "bfF0"
+    private static let firmwareUpperKey = "bfD0"
+    private static let firmwareLowerKey = "bfE0"
+    private static let firmwareModeActive: UInt8 = 2
+
+    private static func readBytes(_ conn: io_connect_t, _ key: String) -> [UInt8]? {
+        guard let info = keyInfo(conn, key), info.dataSize > 0, info.dataSize <= 32 else { return nil }
+        var inp = SMCParamStruct()
+        inp.key = fourCC(key); inp.keyInfo.dataSize = info.dataSize; inp.data8 = 5
+        var out = SMCParamStruct(); var sz = MemoryLayout<SMCParamStruct>.stride
+        let r = IOConnectCallStructMethod(conn, 2, &inp, MemoryLayout<SMCParamStruct>.stride, &out, &sz)
+        guard r == kIOReturnSuccess && out.result == 0 else { return nil }
+        return withUnsafeBytes(of: out.bytes) { Array($0.prefix(Int(info.dataSize))) }
+    }
+
+    /// Writes exactly `bytes` — its length must equal the key's size, so a wrong-sized value is
+    /// refused here instead of being half-applied.
+    private static func writeBytes(_ conn: io_connect_t, _ key: String, _ bytes: [UInt8]) -> Bool {
+        guard let info = keyInfo(conn, key), Int(info.dataSize) == bytes.count, bytes.count <= 32 else { return false }
+        var inp = SMCParamStruct()
+        inp.key = fourCC(key)
+        inp.keyInfo.dataSize = info.dataSize
+        inp.keyInfo.dataType = info.dataType
+        inp.data8 = 6
+        withUnsafeMutableBytes(of: &inp.bytes) { raw in
+            for (i, b) in bytes.enumerated() { raw[i] = b }
+        }
+        var out = SMCParamStruct(); var sz = MemoryLayout<SMCParamStruct>.stride
+        let r = IOConnectCallStructMethod(conn, 2, &inp, MemoryLayout<SMCParamStruct>.stride, &out, &sz)
+        return r == kIOReturnSuccess && out.result == 0
+    }
+
+    private static func littleEndian32(_ value: Int) -> [UInt8] {
+        let v = UInt32(clamping: value)
+        return [UInt8(v & 0xFF), UInt8((v >> 8) & 0xFF), UInt8((v >> 16) & 0xFF), UInt8((v >> 24) & 0xFF)]
+    }
+
+    private static func firmwareLimitReadback(_ conn: io_connect_t) -> (mode: UInt8, upper: Int, lower: Int)? {
+        guard let mode = readBytes(conn, firmwareModeKey)?.first,
+              let upper = readBytes(conn, firmwareUpperKey), upper.count == 4,
+              let lower = readBytes(conn, firmwareLowerKey), lower.count == 4 else { return nil }
+        func value(_ b: [UInt8]) -> Int { Int(b[0]) | Int(b[1]) << 8 | Int(b[2]) << 16 | Int(b[3]) << 24 }
+        return (mode, value(upper), value(lower))
+    }
+
+    // The firmware limit outlives the process that set it (it clears only on reboot), so this
+    // daemon records that IT applied it. /private/var/run is emptied at boot, the same moment
+    // the firmware state goes away, so the record can never outlive what it describes. Only a
+    // limit carrying this record is ever released or touched — another tool's limit (batt,
+    // AlDente) is none of this daemon's business.
+    private static let firmwareOwnershipMarker = "/private/var/run/com.jarvisit.macwake.firmware-limit"
+
+    static var firmwareLimitOwned: Bool { FileManager.default.fileExists(atPath: firmwareOwnershipMarker) }
+
+    private static func markFirmwareLimitOwned() {
+        FileManager.default.createFile(atPath: firmwareOwnershipMarker, contents: nil, attributes: [.posixPermissions: 0o600])
+    }
+
+    private static func clearFirmwareOwnership() {
+        try? FileManager.default.removeItem(atPath: firmwareOwnershipMarker)
+    }
+
+    static func firmwareLimitSupported() -> Bool {
+        guard let conn = open() else { return false }
+        defer { IOServiceClose(conn) }
+        return firmwareLimitReadback(conn) != nil
+    }
+
+    static func verifyFirmwareLimit(upper: Int, lower: Int) -> Bool {
+        guard let conn = open() else { return false }
+        defer { IOServiceClose(conn) }
+        guard let state = firmwareLimitReadback(conn) else { return false }
+        return state.mode == firmwareModeActive && state.upper == upper && state.lower == lower
+    }
+
+    /// Polls for the state to settle: a write and its readback are not atomic on this SMC.
+    private static func awaitFirmwareState(_ conn: io_connect_t, timeout: TimeInterval = 0.6,
+                                           _ matches: ((mode: UInt8, upper: Int, lower: Int)) -> Bool) -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        repeat {
+            if let state = firmwareLimitReadback(conn), matches(state) { return true }
+            Thread.sleep(forTimeInterval: 0.05)
+        } while Date() < deadline
+        if let state = firmwareLimitReadback(conn) { return matches(state) }
+        return false
+    }
+
+    static func setFirmwareLimit(upper: Int, lower: Int) -> Bool {
+        guard (2...100).contains(upper), (1..<upper).contains(lower), let conn = open() else { return false }
+        defer { IOServiceClose(conn) }
+        guard let before = firmwareLimitReadback(conn) else { return false }
+        // Something else already holds a firmware limit: taking it over would also erase it on
+        // release. Leave it alone and let the caller fall back to another method.
+        if before.mode != 0 && !firmwareLimitOwned {
+            fanLog("firmware limit already active and not ours — left alone")
+            return false
+        }
+        markFirmwareLimitOwned()
+        let applied = writeBytes(conn, firmwareModeKey, [0])
+            && writeBytes(conn, firmwareUpperKey, littleEndian32(upper))
+            && writeBytes(conn, firmwareLowerKey, littleEndian32(lower))
+            && writeBytes(conn, firmwareModeKey, [firmwareModeActive])
+            && awaitFirmwareState(conn) { $0.mode == firmwareModeActive && $0.upper == upper && $0.lower == lower }
+        if !applied {
+            // Anything short of exactly the requested state: leave nothing half-set behind.
+            _ = writeBytes(conn, firmwareModeKey, [0])
+            clearFirmwareOwnership()
+            fanLog("firmware limit \(lower)-\(upper) not confirmed — released")
+        }
+        return applied
+    }
+
+    /// Releases a firmware limit this daemon applied — and only that. True when there is nothing
+    /// of ours left to release; false when it could not be confirmed released, in which case
+    /// the record stays so a later call (or the next launch) tries again.
+    @discardableResult
+    static func releaseFirmwareLimit() -> Bool {
+        guard firmwareLimitOwned else { return true }
+        guard let conn = open() else { return false }
+        defer { IOServiceClose(conn) }
+        guard let state = firmwareLimitReadback(conn) else { return false }
+        if state.mode != 0 {
+            guard writeBytes(conn, firmwareModeKey, [0]),
+                  awaitFirmwareState(conn, { $0.mode == 0 }) else { return false }
+        }
+        clearFirmwareOwnership()
+        return true
+    }
+
     /// A machine that falls back to cutting adapter input (CHIE/CH0J) drains the battery
     /// to hold a limit — there is no clean, adapter-powered hold on that path today. Whether
     /// a firmware-managed alternative exists on some Macs is an open question (see #19): the
@@ -274,6 +412,9 @@ enum HelperSMC {
             let writable = accessSuffix(info.dataAttributes)
             out += "\(key) type=\(typeString(info.dataType)) size=\(info.dataSize)"
             out += " attr=0x\(String(info.dataAttributes, radix: 16))\(writable) value=\(read(conn, key))\n"
+        }
+        if let state = firmwareLimitReadback(conn) {
+            out += "firmware limit state: mode=\(state.mode) upper=\(state.upper) lower=\(state.lower)\n"
         }
         return out
     }

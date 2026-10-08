@@ -85,6 +85,12 @@ case "status":
         _ = sem.wait(timeout: .now() + 3)
         let suffix = reported == kMacWakeHelperVersion ? "" : "  ⚠️ app expects \(kMacWakeHelperVersion)"
         print("helper v\(reported)\(suffix)")
+        // Whether this Mac exposes the firmware-managed charge limit (read-only check). Absent
+        // on most Macs and withheld on newer macOS builds.
+        if reported == kMacWakeHelperVersion {
+            let available = callBool(timeout: 3) { p.firmwareLimitSupported(reply: $0) }
+            print("firmware charge limit: \(available ? "available" : "not available")")
+        }
     }
 
 case "charging" where args.count == 2 && (args[1] == "on" || args[1] == "off"):
