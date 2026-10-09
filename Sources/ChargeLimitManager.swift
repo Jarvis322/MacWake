@@ -1,7 +1,40 @@
 import Foundation
 import AppKit
+import IOKit
 import ServiceManagement
 import MacWakeShared
+
+/// Holding the limit by cutting the adapter on a Mac running with its lid closed and an
+/// external display attached is the one case where the cut can take the display down: a single
+/// USB-C cable often carries both the monitor's power and its DisplayPort video, and cutting
+/// the adapter forces a power renegotiation that drops the video link — again each time power
+/// is restored. Kept pure so the rule can be tested without a lid or a monitor.
+enum ClamshellGuard {
+    static func shouldSuppressAdapterCut(lidClosed: Bool, externalDisplayAttached: Bool, allowOverride: Bool) -> Bool {
+        lidClosed && externalDisplayAttached && !allowOverride
+    }
+}
+
+enum LidAndDisplay {
+    /// `AppleClamshellState` on the power-management root domain; false if it can't be read.
+    static func lidIsClosed() -> Bool {
+        let service = IOServiceGetMatchingService(kIOMainPortDefault, IOServiceMatching("IOPMrootDomain"))
+        guard service != 0 else { return false }
+        defer { IOObjectRelease(service) }
+        let value = IORegistryEntryCreateCFProperty(service, "AppleClamshellState" as CFString, kCFAllocatorDefault, 0)?
+            .takeRetainedValue()
+        return (value as? Bool) ?? false
+    }
+
+    @MainActor
+    static func externalDisplayAttached() -> Bool {
+        NSScreen.screens.contains { screen in
+            guard let id = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? CGDirectDisplayID
+            else { return false }
+            return CGDisplayIsBuiltin(id) == 0
+        }
+    }
+}
 
 /// The band handed to the firmware-managed limit, kept pure so it can be tested without an SMC.
 enum FirmwareChargeLimit {
@@ -362,6 +395,16 @@ final class ChargeLimitManager: ObservableObject {
     private var firmwareVerifiedAt: Date?
     private let firmwareVerifyInterval: TimeInterval = 300
 
+    /// Opt-out of the clamshell guard (see `ClamshellGuard`): cut the adapter even with the lid
+    /// closed and a display attached, accepting that the display may drop.
+    @Published var allowCutInClamshell: Bool {
+        didSet { UserDefaults.standard.set(allowCutInClamshell, forKey: "allowCutInClamshell") }
+    }
+    /// True while the standing limit is deliberately not cutting the adapter because the lid is
+    /// closed with a display attached — the battery charges past the limit meanwhile, and the
+    /// UI says so.
+    @Published private(set) var clamshellHoldSuppressed = false
+
     /// Hold mechanism as the UI should describe it: while the firmware limit is engaged nothing
     /// is cutting the adapter, whatever the Mac's own charge-stop key would otherwise do.
     var holdCutsAdapterNow: Bool? { firmwareLimitActive ? false : holdCutsAdapter }
@@ -419,6 +462,7 @@ final class ChargeLimitManager: ObservableObject {
             && allowActiveDischargeKeyWasMissing
             && !d.bool(forKey: "didShowActiveDischargeMigrationNotice")
         self.useFirmwareLimit = d.bool(forKey: "useFirmwareLimit")
+        self.allowCutInClamshell = d.bool(forKey: "allowCutInClamshell")
         refreshStatus()
     }
 
@@ -924,6 +968,26 @@ final class ChargeLimitManager: ObservableObject {
         }
         // Otherwise `.enforcing` (freshly resumed or unchanged): fall through to normal
         // limiting below on a fresh read of the current level and band.
+
+        // Lid closed with a display attached: the adapter cut can drop that display, so the
+        // standing limit steps back — power is restored if we had cut it — until the lid opens
+        // or the display goes. Explicit actions (calibration, manual discharge) and Heat Guard
+        // are the user's or a safety's call and are handled above, untouched.
+        if holdCutsAdapter != false {
+            let suppress = ClamshellGuard.shouldSuppressAdapterCut(
+                lidClosed: LidAndDisplay.lidIsClosed(),
+                externalDisplayAttached: LidAndDisplay.externalDisplayAttached(),
+                allowOverride: allowCutInClamshell
+            )
+            if clamshellHoldSuppressed != suppress { clamshellHoldSuppressed = suppress }
+            if suppress {
+                limitReachedAt = nil
+                if lastAdapterEnabled == false { Task { await restoreCharging() } }
+                return
+            }
+        } else if clamshellHoldSuppressed {
+            clamshellHoldSuppressed = false
+        }
 
         let shouldChargeAllowed: Bool
         if batteryLevel >= limit {

@@ -1235,6 +1235,22 @@ struct MacWakeMenuView: View {
                                 }
                                 .padding(.top, 4)
 
+                                HStack(spacing: 8) {
+                                    Toggle(isOn: $chargeLimit.allowCutInClamshell) {
+                                        Text("CL_ALLOW_CLAMSHELL_CUT").font(.system(size: 10))
+                                    }
+                                    .toggleStyle(.switch).controlSize(.mini)
+                                }
+                                if chargeLimit.clamshellHoldSuppressed {
+                                    HStack(alignment: .top, spacing: 5) {
+                                        Image(systemName: "display")
+                                            .font(.system(size: 9)).foregroundColor(.orange)
+                                        Text("CL_CLAMSHELL_SUPPRESSED")
+                                            .font(.system(size: 10)).foregroundColor(.secondary)
+                                            .fixedSize(horizontal: false, vertical: true)
+                                    }
+                                }
+
                                 // Upgraded users had this switch turned on for them without
                                 // asking, so say so once — never shown on a fresh install,
                                 // which defaulted off and has nothing to disclose.

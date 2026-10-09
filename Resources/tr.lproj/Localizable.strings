@@ -465,3 +465,5 @@
 "CL_USE_FIRMWARE_NOTE" = "Limiti firmware'in kendi şarj limitiyle tutar; Mac adaptör gücünde kalır ve Süzülme aktif boşaltma gerektirmez. Belgelenmemiş SMC anahtarları kullanır; bunu kapattığınızda, limiti devre dışı bıraktığınızda ya da MacWake'ten çıktığınızda limit serbest bırakılır.";
 "CL_FIRMWARE_FAILED" = "Firmware limiti bu Mac'te doğrulanamadı, bu yüzden MacWake adaptör kesme yöntemini kullanıyor.";
 "CL_HOLD_FIRMWARE" = "Bu limiti firmware adaptör gücünde tutuyor — MacWake adaptörü kesmiyor. Üst limitin üzerindeyken Mac, aralığa dönene kadar yine de pilden çalışabilir.";
+"CL_ALLOW_CLAMSHELL_CUT" = "Kapak kapalı ve ekran bağlıyken de adaptörü kes";
+"CL_CLAMSHELL_SUPPRESSED" = "Kapak kapalı ve harici ekran bağlı: MacWake adaptörü kesmiyor, çünkü monitör aynı kablodan güç de sağlıyorsa bu, ekranın sinyalini düşürebilir. Kapak açılana ya da ekran çıkarılana kadar pil limitinizin ötesine şarj oluyor. macOS'un kendi Şarj Limiti (Sistem Ayarları → Pil) gücü kesmeden limit tutar.";
