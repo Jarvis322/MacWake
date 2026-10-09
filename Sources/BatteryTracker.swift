@@ -125,6 +125,15 @@ class BatteryTracker: ObservableObject {
             ClipboardWatcher.shared.setEnabled(enableDynamicIsland && enableNotchShelf)
         }
     }
+    /// Hides the island while an external display is attached. Off by default: with a monitor
+    /// next to an open MacBook the island still belongs on the built-in notch. Meant for
+    /// clamshell, where the monitor is the only screen and would otherwise get the island.
+    @Published var hideIslandOnExternalDisplay: Bool = UserDefaults.standard.bool(forKey: "hideIslandOnExternalDisplay") {
+        didSet {
+            UserDefaults.standard.set(hideIslandOnExternalDisplay, forKey: "hideIslandOnExternalDisplay")
+            DynamicIslandManager.shared.applyVisibility()
+        }
+    }
     /// Off by default — a trackpad click "thud" with no visible cause the first time you
     /// hover the notch is confusing for anyone who doesn't already know what it is.
     @Published var enableDynamicIslandHaptics: Bool = false {

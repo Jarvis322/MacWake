@@ -748,6 +748,8 @@ struct MacWakeMenuView: View {
                     toggleRow("oval.portrait.tophalf.filled", .indigo, "Dynamic Island Overlay", $tracker.enableDynamicIsland, subtitle: "DYNAMIC_ISLAND_HELP")
                     if tracker.enableDynamicIsland {
                         rowDivider()
+                        toggleRow("display", .gray, "Hide on External Display", $tracker.hideIslandOnExternalDisplay, subtitle: "ISLAND_HIDE_EXTERNAL_HELP")
+                        rowDivider()
                         toggleRow("hand.tap", .pink, "Dynamic Island Haptics", $tracker.enableDynamicIslandHaptics, subtitle: "HAPTICS_HELP")
                         rowDivider()
                         toggleRow("tray.and.arrow.down", .teal, "Dynamic Island Shelf", $tracker.enableNotchShelf, subtitle: "NOTCH_SHELF_HELP")

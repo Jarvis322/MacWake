@@ -480,6 +480,13 @@ class DynamicIslandManager {
     private var islandWindow: NSPanel?
     private weak var tracker: BatteryTracker?
     private(set) var isEnabled = true
+
+    /// What the user asked for is `isEnabled`; whether the island is actually on screen also
+    /// depends on `hideOnExternalDisplay` — with a monitor attached (clamshell above all, where
+    /// the monitor is the only screen) the island would otherwise be drawn on that monitor.
+    private var isShown: Bool {
+        isEnabled && !(tracker?.hideIslandOnExternalDisplay == true && LidAndDisplay.externalDisplayAttached())
+    }
     private var cancellables = Set<AnyCancellable>()
     private var globalMonitor: Any?
     private var localMonitor: Any?
@@ -574,8 +581,7 @@ class DynamicIslandManager {
         islandWindow = panel
 
         positionWindow()
-        panel.orderFrontRegardless()
-        setupMouseMonitors()
+        setupMouseMonitors()   // shown or kept hidden by applyVisibility() below
 
         // Make the panel clickable only while expanded (controls); pass clicks
         // through to the menu bar otherwise.
@@ -601,13 +607,18 @@ class DynamicIslandManager {
         #endif
 
         screenObserver = NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { [weak self] _ in
-            Task { @MainActor in self?.positionWindow() }
+            Task { @MainActor in
+                self?.positionWindow()
+                self?.applyVisibility()
+            }
         }
+
+        applyVisibility()
 
         // Replay anything that tried to trigger before the panel existed.
         if let pending = pendingTrigger {
             pendingTrigger = nil
-            DynamicIslandStateManager.shared.trigger(pending)
+            if isShown { DynamicIslandStateManager.shared.trigger(pending) }
         }
     }
 
@@ -646,7 +657,7 @@ class DynamicIslandManager {
     /// panel so a file can reach the Shelf's drop tray — gated on the Shelf being enabled
     /// so ordinary window-drags near the menu bar don't pop the island open.
     private func handleMouseDragged() {
-        guard isEnabled, tracker?.enableNotchShelf == true else { return }
+        guard isShown, tracker?.enableNotchShelf == true else { return }
         let mouse = NSEvent.mouseLocation
         let state = DynamicIslandStateManager.shared.state
 
@@ -665,7 +676,7 @@ class DynamicIslandManager {
     }
 
     private func handleMouseDown() {
-        guard isEnabled else { return }
+        guard isShown else { return }
         let mouse = NSEvent.mouseLocation
         switch DynamicIslandStateManager.shared.state {
         case .compact:
@@ -684,7 +695,7 @@ class DynamicIslandManager {
     }
 
     private func handleMouseMoved() {
-        guard isEnabled else { return }
+        guard isShown else { return }
         let mouse = NSEvent.mouseLocation
         let state = DynamicIslandStateManager.shared.state
 
@@ -735,11 +746,20 @@ class DynamicIslandManager {
 
     func updateSettings(enabled: Bool) {
         self.isEnabled = enabled
-        if enabled {
-            if islandWindow == nil, let t = tracker { buildWindow(for: t) }
-            else { islandWindow?.orderFrontRegardless() }
+        if enabled, islandWindow == nil, let t = tracker { buildWindow(for: t) }
+        applyVisibility()
+    }
+
+    /// Shows or hides the panel to match `isShown`. The window is kept while merely hidden so the
+    /// screen-change observer lives on and can bring the island back when the display goes.
+    func applyVisibility() {
+        guard let window = islandWindow else { return }
+        if isShown {
+            window.orderFrontRegardless()
         } else {
-            islandWindow?.orderOut(nil)
+            DynamicIslandStateManager.shared.dismiss()
+            pendingTrigger = nil
+            window.orderOut(nil)
         }
     }
 
@@ -750,7 +770,7 @@ class DynamicIslandManager {
     }
 
     func trigger(_ state: DynamicIslandState) {
-        guard isEnabled else { return }
+        guard isShown else { return }
         guard islandWindow != nil else {
             // setup()/buildWindow() hasn't run yet — queue it instead of starting an
             // auto-dismiss timer against a state nothing can render.

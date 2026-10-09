@@ -143,3 +143,5 @@
 "CL_HOLD_FIRMWARE" = "The firmware is holding this limit on adapter power — MacWake is not cutting the adapter. While above the upper limit the Mac may still run on battery until it is back in range.";
 "CL_ALLOW_CLAMSHELL_CUT" = "Cut the adapter even with the lid closed and a display attached";
 "CL_CLAMSHELL_SUPPRESSED" = "Lid closed with an external display: MacWake isn't cutting the adapter, because that can drop the display's signal when the monitor also supplies power over the same cable. The battery charges past your limit until the lid is opened or the display is detached. macOS's own Charge Limit (System Settings → Battery) holds a limit without cutting power.";
+"Hide on External Display" = "Hide on External Display";
+"ISLAND_HIDE_EXTERNAL_HELP" = "Hides the island while an external display is connected — useful with the lid closed, where the monitor would otherwise get it. It returns when the display is disconnected.";

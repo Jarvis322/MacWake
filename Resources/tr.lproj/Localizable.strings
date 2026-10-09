@@ -467,3 +467,5 @@
 "CL_HOLD_FIRMWARE" = "Bu limiti firmware adaptör gücünde tutuyor — MacWake adaptörü kesmiyor. Üst limitin üzerindeyken Mac, aralığa dönene kadar yine de pilden çalışabilir.";
 "CL_ALLOW_CLAMSHELL_CUT" = "Kapak kapalı ve ekran bağlıyken de adaptörü kes";
 "CL_CLAMSHELL_SUPPRESSED" = "Kapak kapalı ve harici ekran bağlı: MacWake adaptörü kesmiyor, çünkü monitör aynı kablodan güç de sağlıyorsa bu, ekranın sinyalini düşürebilir. Kapak açılana ya da ekran çıkarılana kadar pil limitinizin ötesine şarj oluyor. macOS'un kendi Şarj Limiti (Sistem Ayarları → Pil) gücü kesmeden limit tutar.";
+"Hide on External Display" = "Harici Ekranda Gizle";
+"ISLAND_HIDE_EXTERNAL_HELP" = "Harici bir ekran bağlıyken adayı gizler — kapak kapalıyken, yoksa ada monitörde görünürdü. Ekran çıkarılınca geri gelir.";
