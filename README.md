@@ -1,6 +1,6 @@
 # 🔋 MacWake
 
-[English](README.md) | [简体中文](README.zh-Hans.md) | [Türkçe](README.tr.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
+[English](README.md) | [简体中文](README.zh-Hans.md) | [Türkçe](README.tr.md) | [日本語](README.ja.md) | [한국어](README.ko.md) · [🌐 Website](https://macwake.yigitech.dev/)
 
 **MacWake** is an elegant menu bar and desktop widget application designed for macOS to track detailed battery health, usage analytics, and charging habits. Built with Swift and SwiftUI, it faithfully embraces modern macOS design guidelines (glassmorphism, vibrant effects).
 
@@ -13,10 +13,10 @@
 ## 🧊 A Live 3D Model of Your Mac
 
 <p align="center">
-  <a href="https://jarvis322.github.io/MacWake/media/macwake-3d.mp4"><img src="Screenshots/macwake-3d.gif" alt="MacWake 3D Mac model" width="720"></a>
+  <a href="https://macwake.yigitech.dev/media/macwake-3d.mp4"><img src="Screenshots/macwake-3d.gif" alt="MacWake 3D Mac model" width="720"></a>
 </p>
 
-<p align="center"><a href="https://jarvis322.github.io/MacWake/media/macwake-3d.mp4">▶️ Watch the full video</a></p>
+<p align="center"><a href="https://macwake.yigitech.dev/media/macwake-3d.mp4">▶️ Watch the full video</a></p>
 
 New in 1.94: the panel opens on a **3D model of your own Mac**. Battery cells fill with the charge, the chip and SSD glow by temperature, the fan spins at its real speed, and MagSafe shows the cable, its LED and current flowing in while charging. **Click a part** to fly in and read it live; **drag** to turn the model.
 

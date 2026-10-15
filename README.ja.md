@@ -1,6 +1,6 @@
 # 🔋 MacWake
 
-[English](README.md) | [简体中文](README.zh-Hans.md) | [Türkçe](README.tr.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
+[English](README.md) | [简体中文](README.zh-Hans.md) | [Türkçe](README.tr.md) | [日本語](README.ja.md) | [한국어](README.ko.md) · [🌐 ウェブサイト](https://macwake.yigitech.dev/)
 
 **MacWake** は、バッテリーの詳細な健全性、使用状況の分析、充電習慣を追跡するために macOS 向けに設計された、洗練されたメニューバーおよびデスクトップウィジェットアプリケーションです。Swift と SwiftUI で構築され、現代的な macOS デザインガイドライン（グラスモーフィズム、鮮やかなエフェクト）を忠実に採用しています。
 
@@ -13,10 +13,10 @@
 ## 🧊 Mac のライブ 3D モデル
 
 <p align="center">
-  <a href="https://jarvis322.github.io/MacWake/media/macwake-3d.mp4"><img src="Screenshots/macwake-3d.gif" alt="MacWake 3D Mac model" width="720"></a>
+  <a href="https://macwake.yigitech.dev/media/macwake-3d.mp4"><img src="Screenshots/macwake-3d.gif" alt="MacWake 3D Mac model" width="720"></a>
 </p>
 
-<p align="center"><a href="https://jarvis322.github.io/MacWake/media/macwake-3d.mp4">▶️ 動画をすべて見る</a></p>
+<p align="center"><a href="https://macwake.yigitech.dev/media/macwake-3d.mp4">▶️ 動画をすべて見る</a></p>
 
 1.94 の新機能：パネルが**お使いの Mac の 3D モデル**で開くようになりました。バッテリーセルは充電量に応じて満ち、チップと SSD は温度に応じて光り、ファンは実際の速度で回転し、充電中は MagSafe のケーブル、LED、流れ込む電流が表示されます。**パーツをクリック**するとズームしてリアルタイムの値を表示し、**ドラッグ**でモデルを回転できます。
 

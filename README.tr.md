@@ -1,6 +1,6 @@
 # 🔋 MacWake
 
-[English](README.md) | [简体中文](README.zh-Hans.md) | [Türkçe](README.tr.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
+[English](README.md) | [简体中文](README.zh-Hans.md) | [Türkçe](README.tr.md) | [日本語](README.ja.md) | [한국어](README.ko.md) · [🌐 Web sitesi](https://macwake.yigitech.dev/)
 
 **MacWake**, ayrıntılı pil sağlığını, kullanım analizlerini ve şarj alışkanlıklarını izlemek için macOS'e yönelik tasarlanmış zarif bir menü çubuğu ve masaüstü araç takımı uygulamasıdır. Swift ve SwiftUI ile geliştirilen uygulama, modern macOS tasarım yönergelerini (cam morfizmi, canlı efektler) aslına uygun biçimde benimser.
 
@@ -13,10 +13,10 @@
 ## 🧊 Mac'inin Canlı 3D Modeli
 
 <p align="center">
-  <a href="https://jarvis322.github.io/MacWake/media/macwake-3d.mp4"><img src="Screenshots/macwake-3d.gif" alt="MacWake 3D Mac model" width="720"></a>
+  <a href="https://macwake.yigitech.dev/media/macwake-3d.mp4"><img src="Screenshots/macwake-3d.gif" alt="MacWake 3D Mac model" width="720"></a>
 </p>
 
-<p align="center"><a href="https://jarvis322.github.io/MacWake/media/macwake-3d.mp4">▶️ Videonun tamamını izle</a></p>
+<p align="center"><a href="https://macwake.yigitech.dev/media/macwake-3d.mp4">▶️ Videonun tamamını izle</a></p>
 
 1.94'te yeni: panel artık **kendi Mac'inin 3D modeliyle** açılıyor. Pil hücreleri şarjla doluyor, çip ve SSD sıcaklığa göre parlıyor, fan gerçek hızında dönüyor ve şarj olurken MagSafe kablosu, ledi ve içeri akan enerji görünüyor. **Bir parçaya tıkla**, kamera yaklaşıp canlı değerini göstersin; modeli **sürükleyerek** çevir.
 

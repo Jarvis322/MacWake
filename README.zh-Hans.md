@@ -1,6 +1,6 @@
 # 🔋 MacWake
 
-[English](README.md) | [简体中文](README.zh-Hans.md) | [Türkçe](README.tr.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
+[English](README.md) | [简体中文](README.zh-Hans.md) | [Türkçe](README.tr.md) | [日本語](README.ja.md) | [한국어](README.ko.md) · [🌐 网站](https://macwake.yigitech.dev/)
 
 **MacWake** 是一款优雅的 macOS 菜单栏与桌面小组件应用，用于跟踪详细的电池健康状况、使用分析和充电习惯。它使用 Swift 和 SwiftUI 构建，忠实遵循现代 macOS 设计准则（玻璃拟态、鲜明效果）。
 
@@ -13,10 +13,10 @@
 ## 🧊 你的 Mac 的实时 3D 模型
 
 <p align="center">
-  <a href="https://jarvis322.github.io/MacWake/media/macwake-3d.mp4"><img src="Screenshots/macwake-3d.gif" alt="MacWake 3D Mac model" width="720"></a>
+  <a href="https://macwake.yigitech.dev/media/macwake-3d.mp4"><img src="Screenshots/macwake-3d.gif" alt="MacWake 3D Mac model" width="720"></a>
 </p>
 
-<p align="center"><a href="https://jarvis322.github.io/MacWake/media/macwake-3d.mp4">▶️ 观看完整视频</a></p>
+<p align="center"><a href="https://macwake.yigitech.dev/media/macwake-3d.mp4">▶️ 观看完整视频</a></p>
 
 1.94 新功能：面板现在以**你自己的 Mac 的 3D 模型**打开。电池电芯随电量充满，芯片和 SSD 按温度发光，风扇以真实转速旋转，充电时 MagSafe 会显示线缆、指示灯和流入的电流。**点击部件**即可放大查看实时读数；**拖动**可旋转模型。
 
