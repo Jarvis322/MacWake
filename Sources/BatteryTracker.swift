@@ -19,6 +19,9 @@ class BatteryTracker: ObservableObject {
 
     @Published var currentBatteryLevel: Int = 100
     @Published var isPluggedIn: Bool = false
+    /// Current is actually flowing into the battery — false while plugged in but held at a
+    /// limit (by MacWake or by macOS), which `isPluggedIn` alone can't tell apart.
+    @Published private(set) var isCharging: Bool = false
     @Published var currentSession: Session?
     @Published var history: [Session] = []
     @Published var chargeLimit: Int = 100
@@ -697,6 +700,7 @@ class BatteryTracker: ObservableObject {
             percent: level,
             macWakeIsHolding: ChargeLimitManager.shared.isHoldingChargeOff
         )
+        if isCharging != sample.isCharging { isCharging = sample.isCharging }
         externalHoldSamples.append(sample)
         if externalHoldSamples.count > 6 {
             externalHoldSamples.removeFirst(externalHoldSamples.count - 6)
