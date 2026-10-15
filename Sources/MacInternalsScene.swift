@@ -380,39 +380,57 @@ final class MacInternalsScene {
     }
 
     func focus(on part: MacPart?, animated: Bool) {
+        model.removeAction(forKey: "sway")
         var (eye, target) = home
         if let part {
             if profile.isLaptop, let tuned = Self.focus[part] {
-                (eye, target) = tuned
-                let scale = footprintScale
-                eye.x *= scale.x; eye.z *= scale.z
-                target.x *= scale.x; target.z *= scale.z
+                (eye, target) = (frontFacing(tuned.0), frontFacing(tuned.1))
                 // The reading card covers the lower part of the view, so aim below the
                 // part to lift it into the clear area above the card.
                 target.y -= 1.6
             } else if let node = model.childNode(withName: part.rawValue, recursively: true) {
                 (eye, target) = desktopFocus(on: node, part: part)
             }
+            // Close-ups are framed for the model facing front, so turn it back as the
+            // camera flies in. This runs as an action, not an implicit animation: the
+            // turn is owned by actions (sway, this), and an implicit eulerAngles change
+            // lost to them, leaving a turned model that sent the port shot into the lid.
+            if animated {
+                let face = SCNAction.rotateTo(x: 0, y: 0, z: 0, duration: 0.75, usesShortestUnitArc: true)
+                face.timingMode = .easeInEaseOut
+                model.runAction(face, forKey: "face")
+            } else {
+                model.removeAction(forKey: "face")
+                model.eulerAngles = SCNVector3Zero
+            }
         }
-        // Looking inside lifts the see-through keyboard deck off the parts.
+        // Looking inside clears the keyboard deck away entirely: a lifted, faded deck sat
+        // between the close-up camera and the parts as a dark veil.
         let opened = part != nil && part != .display
         SCNTransaction.begin()
         SCNTransaction.animationDuration = animated ? 0.75 : 0
         SCNTransaction.animationTimingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
         cameraNode.position = eye
         lookTarget.position = target
-        deck.position.y = opened ? 7 : 0
-        deck.opacity = opened ? 0.12 : 1
-        if part != nil { model.eulerAngles.y = 0 }
+        deck.position.y = opened ? 3 : 0
+        deck.opacity = opened ? 0 : 1
         SCNTransaction.commit()
 
-        model.removeAction(forKey: "sway")
         if part == nil, animated, motion { startSway() }
         if let part, animated, let node = model.childNode(withName: part.rawValue, recursively: true) {
             let pop = SCNAction.sequence([.scale(to: 1.06, duration: 0.15), .scale(to: 1, duration: 0.25)])
             pop.timingMode = .easeOut
             node.runAction(pop)
         }
+    }
+
+    /// Where a point in the model's own space ends up once the model faces front: just
+    /// the footprint stretch, no turn. Close-ups are computed against this pose because
+    /// that is where `focus` brings the model.
+    private func frontFacing(_ local: SCNVector3) -> SCNVector3 {
+        SCNVector3(local.x * model.scale.x + model.position.x,
+                   local.y * model.scale.y + model.position.y,
+                   local.z * model.scale.z + model.position.z)
     }
 
     /// Desktops have no tuned table: frame whatever the part's bounds turn out to be.
@@ -422,7 +440,7 @@ final class MacInternalsScene {
             return (SCNVector3(eye.x, target.y + (eye.y - target.y) * 0.8, target.z + (eye.z - target.z) * 0.8), target)
         }
         let (center, radius) = node.boundingSphere
-        let world = node.convertPosition(center, to: nil)
+        let world = frontFacing(node.convertPosition(center, to: model))
         let reach = max(CGFloat(radius) * 3.2, CGFloat(profile.width) * 0.35)
         let iMacAngle = profile.family == .iMac
         let eye = iMacAngle
@@ -433,11 +451,13 @@ final class MacInternalsScene {
 
     func rotate(by radians: CGFloat) {
         model.removeAction(forKey: "sway")
+        model.removeAction(forKey: "face")
         model.eulerAngles.y = max(-0.9, min(0.9, model.eulerAngles.y + radians))
     }
 
     func startSway() {
         guard motion else { return }
+        model.removeAction(forKey: "face")
         let left = SCNAction.rotateTo(x: 0, y: -0.18, z: 0, duration: 5, usesShortestUnitArc: true)
         let right = SCNAction.rotateTo(x: 0, y: 0.18, z: 0, duration: 5, usesShortestUnitArc: true)
         left.timingMode = .easeInEaseOut
@@ -454,7 +474,8 @@ final class MacInternalsScene {
 
         let camera = SCNCamera()
         camera.fieldOfView = 30
-        camera.zNear = 1
+        // Close-ups bring the camera within a few units of the parts.
+        camera.zNear = 0.2
         camera.zFar = 200
         camera.wantsHDR = true
         // Exposure adaptation is temporal: it keeps requesting frames forever, which would
