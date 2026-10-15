@@ -115,6 +115,7 @@ struct DynamicIslandPanelView: View {
         }
         .monospacedDigit()
         .preferredColorScheme(.dark)
+        .environment(\.depthMotionEnabled, tracker.enableAnimations)
         .animation(DynamicIslandStateManager.springAnimation, value: sm.state)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
@@ -280,8 +281,10 @@ struct DynamicIslandPanelView: View {
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text("\(tracker.currentBatteryLevel)%")
-                        .font(.system(size: 26, weight: .bold))
-                        .foregroundColor(.white)
+                        .font(.system(size: 26, weight: .bold, design: .rounded))
+                        .foregroundStyle(LinearGradient(colors: [.white, .white.opacity(0.72)],
+                                                        startPoint: .top, endPoint: .bottom))
+                        .rollingDigits(tracker.currentBatteryLevel)
                     Text(stateText)
                         .font(.system(size: 11, weight: .medium))
                         .foregroundColor(isHoldingAtLimit ? .cyan : .white.opacity(0.6))
@@ -343,10 +346,16 @@ struct DynamicIslandPanelView: View {
         Text(text)
             .font(.system(size: 12, weight: .bold).monospacedDigit())
             .foregroundColor(.cyan)
+            .rollingDigits(text)
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
-            .background(Color.cyan.opacity(0.15))
-            .cornerRadius(7)
+            .background(
+                Capsule().fill(LinearGradient(colors: [Color.cyan.opacity(0.28), Color.cyan.opacity(0.1)],
+                                              startPoint: .top, endPoint: .bottom))
+            )
+            .overlay(Capsule().strokeBorder(LinearGradient(colors: [Color.cyan.opacity(0.55), Color.cyan.opacity(0.05)],
+                                                           startPoint: .top, endPoint: .bottom), lineWidth: 0.75))
+            .shadow(color: .cyan.opacity(0.3), radius: 4)
     }
 
     // MARK: - Right Widget (Thermals) — one gauge row per sensor
@@ -376,14 +385,7 @@ struct DynamicIslandPanelView: View {
     // MARK: - Charging Content
     private var chargingContent: some View {
         HStack(spacing: 20) {
-            ZStack {
-                Circle()
-                    .fill(Color.blue.opacity(0.2))
-                    .frame(width: 64, height: 64)
-                Image(systemName: "bolt.fill")
-                    .font(.system(size: 32))
-                    .foregroundColor(.blue)
-            }
+            DepthOrb(symbol: "bolt.fill", tint: .blue, size: 60, ripples: true)
             VStack(alignment: .leading, spacing: 4) {
                 Text("Charging Connected")
                     .font(.system(size: 20, weight: .bold))
@@ -399,14 +401,8 @@ struct DynamicIslandPanelView: View {
     // MARK: - Alert Content
     private func alertContent(title: String, message: String, isWarning: Bool) -> some View {
         HStack(spacing: 20) {
-            ZStack {
-                Circle()
-                    .fill((isWarning ? Color.orange : Color.red).opacity(0.2))
-                    .frame(width: 64, height: 64)
-                Image(systemName: isWarning ? "exclamationmark.triangle.fill" : "flame.fill")
-                    .font(.system(size: 32))
-                    .foregroundColor(isWarning ? .orange : .red)
-            }
+            DepthOrb(symbol: isWarning ? "exclamationmark.triangle.fill" : "flame.fill",
+                     tint: isWarning ? .orange : .red, size: 60, ripples: !isWarning)
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.system(size: 20, weight: .bold))
@@ -827,13 +823,16 @@ private struct IslandGauge: View {
                 if let fraction {
                     Capsule()
                         .fill(spectrum(opacity: 1))
+                        .overlay(IslandGloss())
                         .mask(alignment: .leading) {
                             Rectangle()
                                 .scaleEffect(x: max(fraction, 0.03), anchor: .leading)
                                 .animation(reduceMotion ? nil : .smooth(duration: 0.6), value: fraction)
                         }
+                        .shadow(color: .white.opacity(0.18), radius: 2)
                 }
             }
+            .overlay(Capsule().strokeBorder(Color.white.opacity(0.08), lineWidth: 0.5))
     }
 
     private func spectrum(opacity: Double) -> LinearGradient {
@@ -848,6 +847,21 @@ private struct IslandGauge: View {
             ],
             startPoint: .leading, endPoint: .trailing
         )
+    }
+}
+
+/// Top-lit sheen laid over a filled capsule so bars read as glass tubes, not flat paint.
+private struct IslandGloss: View {
+    var body: some View {
+        LinearGradient(
+            stops: [
+                .init(color: .white.opacity(0.5), location: 0),
+                .init(color: .white.opacity(0), location: 0.55),
+                .init(color: .black.opacity(0.2), location: 1),
+            ],
+            startPoint: .top, endPoint: .bottom
+        )
+        .clipShape(Capsule())
     }
 }
 
@@ -871,8 +885,9 @@ struct IslandThermalRow: View {
                 IslandRowLabel(text: label)
                 Spacer(minLength: 4)
                 Text(value.map { String(format: "%.0f", $0) } ?? "—")
-                    .font(.system(size: 14, weight: .bold).monospacedDigit())
+                    .font(.system(size: 14, weight: .bold, design: .rounded).monospacedDigit())
                     .foregroundColor(value == nil ? .white.opacity(0.3) : .white)
+                    .rollingDigits(value.map { Int($0.rounded()) })
                 if value != nil {
                     Text("°")
                         .font(.system(size: 10, weight: .bold))
@@ -948,11 +963,18 @@ struct IslandChargeRing: View {
 
     private var fraction: Double { Double(min(100, max(0, level))) / 100 }
 
+    private var cometRuns: Bool { plugged && animated && !reduceMotion }
+
     var body: some View {
         ZStack {
+            // Recessed track: dark groove with a lit lower lip.
             Circle()
                 .inset(by: stroke / 2)
-                .stroke(Color.white.opacity(0.1), lineWidth: stroke)
+                .stroke(Color.white.opacity(0.08), lineWidth: stroke)
+            Circle()
+                .inset(by: stroke / 2)
+                .stroke(LinearGradient(colors: [.black.opacity(0.5), .white.opacity(0.1)],
+                                       startPoint: .top, endPoint: .bottom), lineWidth: stroke - 2)
 
             Circle()
                 .inset(by: stroke / 2)
@@ -965,7 +987,33 @@ struct IslandChargeRing: View {
                     style: StrokeStyle(lineWidth: stroke, lineCap: .round)
                 )
                 .rotationEffect(.degrees(-90))
+                .shadow(color: tint.opacity(0.6), radius: 4)
                 .animation(reduceMotion ? nil : .smooth(duration: 0.6), value: level)
+
+            // Specular highlight riding the top of the tube.
+            Circle()
+                .inset(by: stroke / 2 - 1.5)
+                .trim(from: 0, to: fraction)
+                .stroke(Color.white.opacity(0.35), style: StrokeStyle(lineWidth: 1.2, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+                .blendMode(.plusLighter)
+                .animation(reduceMotion ? nil : .smooth(duration: 0.6), value: level)
+
+            if cometRuns {
+                // A bead of light orbiting inside the filled arc: current flowing in.
+                TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { context in
+                    let period = 2.4
+                    let phase = context.date.timeIntervalSinceReferenceDate
+                        .truncatingRemainder(dividingBy: period) / period
+                    Circle()
+                        .inset(by: stroke / 2)
+                        .trim(from: max(0, phase * fraction - 0.08), to: phase * fraction)
+                        .stroke(Color.white.opacity(0.85), style: StrokeStyle(lineWidth: stroke - 3, lineCap: .round))
+                        .rotationEffect(.degrees(-90))
+                        .blur(radius: 1.2)
+                        .blendMode(.plusLighter)
+                }
+            }
 
             if let sailingLower, let limit, limit > sailingLower {
                 Circle()
@@ -981,15 +1029,26 @@ struct IslandChargeRing: View {
                         Capsule()
                             .fill(Color.white)
                             .frame(width: 2.5, height: stroke + 5)
+                            .shadow(color: .white.opacity(0.6), radius: 2)
                             .offset(y: -(size / 2 - stroke / 2))
                     }
                     .rotationEffect(.degrees(Double(limit) * 3.6))
             }
 
+            // Glass core.
+            Circle()
+                .fill(RadialGradient(colors: [tint.opacity(0.28), .black.opacity(0)],
+                                     center: UnitPoint(x: 0.4, y: 0.35), startRadius: 0, endRadius: size * 0.32))
+                .overlay(Circle().strokeBorder(LinearGradient(colors: [.white.opacity(0.18), .clear],
+                                                              startPoint: .top, endPoint: .bottom), lineWidth: 0.75))
+                .padding(stroke + 3)
+
             Image(systemName: plugged ? "bolt.fill" : batterySymbol)
                 .font(.system(size: 16, weight: .bold))
-                .foregroundColor(tint)
+                .foregroundStyle(LinearGradient(colors: [.white, tint], startPoint: .top, endPoint: .bottom))
+                .shadow(color: tint.opacity(0.7), radius: 3)
                 .symbolEffect(.pulse, options: .repeating, isActive: plugged && animated && !reduceMotion)
+                .symbolEffect(.bounce, value: plugged)
         }
         .frame(width: size, height: size)
         .accessibilityElement(children: .ignore)
@@ -1018,7 +1077,10 @@ struct IslandHealthMeter: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            HStack(alignment: .firstTextBaseline) {
+            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                Image(systemName: "heart.fill")
+                    .font(.system(size: 8, weight: .bold))
+                    .foregroundStyle(tint.gradient)
                 IslandRowLabel(text: "Health")
                 Spacer(minLength: 4)
                 Text("\(health)%")
@@ -1030,7 +1092,9 @@ struct IslandHealthMeter: View {
                 .frame(height: 4)
                 .overlay(alignment: .leading) {
                     Capsule()
-                        .fill(tint)
+                        .fill(tint.gradient)
+                        .overlay(IslandGloss())
+                        .shadow(color: tint.opacity(0.5), radius: 2)
                         .mask(alignment: .leading) {
                             Rectangle().scaleEffect(x: max(0.03, Double(min(100, max(0, health))) / 100), anchor: .leading)
                         }
