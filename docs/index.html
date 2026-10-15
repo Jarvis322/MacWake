@@ -3,13 +3,142 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MacWake — Battery Health Monitor for Mac</title>
-  <meta name="description" content="Keep your MacBook battery healthy for the long run. Charge limit, temperature, fan speed, and charge history — right from your menu bar.">
+  <title>MacWake — Free Battery Health &amp; Charge Limit App for Mac</title>
+  <meta name="description" content="Free macOS menu bar app that protects your MacBook battery: charge limit, Sailing Mode, temperature and fan monitoring, and a live 3D model of your Mac.">
   <link rel="canonical" href="https://macwake.yigitech.dev/">
-  <meta property="og:title" content="MacWake — Battery Health Monitor for Mac">
-  <meta property="og:description" content="Charge limit, temperature, fan speed — and a live 3D model of your Mac. Free for macOS 14+.">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-video-preview:-1">
+  <meta name="theme-color" content="#1db954">
+  <meta name="author" content="Yiğit Can Polat">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="MacWake">
+  <meta property="og:url" content="https://macwake.yigitech.dev/">
+  <meta property="og:title" content="MacWake — Free Battery Health &amp; Charge Limit App for Mac">
+  <meta property="og:description" content="Charge limit, Sailing Mode, temperature and fan monitoring — and a live 3D model of your Mac. Free for macOS 14+.">
+  <meta property="og:image" content="https://macwake.yigitech.dev/media/og-image.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="MacWake menu panel with a live 3D model of a MacBook Air">
   <meta property="og:video" content="https://macwake.yigitech.dev/media/macwake-3d.mp4">
-  <meta property="og:image" content="https://macwake.yigitech.dev/screenshots/menubar-popover.png?v=194">
+  <meta property="og:video:type" content="video/mp4">
+  <meta property="og:video:width" content="1280">
+  <meta property="og:video:height" content="720">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:creator" content="@yigitech">
+  <meta name="twitter:title" content="MacWake — Free Battery Health &amp; Charge Limit App for Mac">
+  <meta name="twitter:description" content="Charge limit, temperature, fan control — and a live 3D model of your Mac. Free for macOS 14+.">
+  <meta name="twitter:image" content="https://macwake.yigitech.dev/media/og-image.jpg">
+
+  <script type="application/ld+json">
+[
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "MacWake",
+    "alternateName": "Wake",
+    "url": "https://macwake.yigitech.dev/",
+    "description": "Free macOS menu bar app for battery health: charge limit, Sailing Mode, temperature and fan monitoring, a Dynamic Island, and a live 3D model of your Mac.",
+    "applicationCategory": "UtilitiesApplication",
+    "operatingSystem": "macOS 14 or later",
+    "softwareVersion": "1.94",
+    "downloadUrl": "https://github.com/Jarvis322/MacWake/releases/download/v1.94/Wake-1.94.dmg",
+    "installUrl": "https://github.com/Jarvis322/MacWake/releases/latest",
+    "screenshot": [
+      "https://macwake.yigitech.dev/screenshots/menubar-popover.png",
+      "https://macwake.yigitech.dev/screenshots/dynamic-island.png",
+      "https://macwake.yigitech.dev/screenshots/settings.png"
+    ],
+    "image": "https://macwake.yigitech.dev/media/og-image.jpg",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "author": {
+      "@type": "Person",
+      "name": "Yiğit Can Polat",
+      "url": "https://yigitech.dev"
+    },
+    "sameAs": [
+      "https://github.com/Jarvis322/MacWake"
+    ]
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "VideoObject",
+    "name": "MacWake — a live 3D model of your Mac",
+    "description": "The MacWake menu panel showing a live 3D model of a MacBook Air: battery cells, Apple silicon temperature, MagSafe 3 and colour selection.",
+    "thumbnailUrl": "https://macwake.yigitech.dev/media/macwake-3d-poster.jpg",
+    "contentUrl": "https://macwake.yigitech.dev/media/macwake-3d.mp4",
+    "uploadDate": "2026-10-15",
+    "duration": "PT40S"
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Is MacWake free?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. MacWake is free to download and use, with no account, no subscription and no ads. The source code is on GitHub."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Which Macs does MacWake support?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Any Mac running macOS 14 Sonoma or later, Apple Silicon or Intel — the download is a Universal build. Charge control (charge limit, Sailing Mode, manual discharge, calibration) needs Apple Silicon; monitoring, health history, sessions and the widget work everywhere."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How does the charge limit work on M4 Macs?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Where the Mac exposes a charge-inhibit key, MacWake simply pauses charging and the Mac stays on adapter power. On M4 and later, the only mechanism is cutting adapter input, so the battery runs down to the limit while the cable stays attached. Settings shows which method your Mac uses."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does MacWake need an administrator password?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No password prompts. Charge control uses a small notarized background helper that you approve once in System Settings. Battery monitoring needs no special permission at all."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is the 3D Mac model?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Since version 1.94 the menu panel opens on a live 3D model of your own Mac — detected automatically and drawn to Apple's published dimensions. Battery cells, chip and SSD temperature, fan speed and MagSafe charging are all driven by real readings. Click a part to zoom in, drag to turn it."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does MacWake collect my data?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Your battery data stays on your Mac. The direct-download version sends anonymous usage signals through TelemetryDeck, with no personal data and no advertising identifiers; the Mac App Store version sends nothing. Details are in the privacy policy."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How do I install MacWake?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Run brew tap Jarvis322/tap and brew install --cask macwake, or download the notarized DMG and drag MacWake to Applications. Existing users get new versions through Check for Updates."
+        }
+      }
+    ]
+  }
+]
+  </script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -40,33 +169,65 @@
       overflow-x: hidden;
     }
 
-    /* NAV */
-    nav {
+    /* HEADER */
+    .skip { position: absolute; left: -999px; top: 8px; z-index: 200; background: var(--text); color: #fff; padding: 8px 14px; border-radius: 8px; text-decoration: none; font-size: 14px; }
+    .skip:focus { left: 12px; }
+    .site-header {
       position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 0 40px; height: 54px;
       background: rgba(255,255,255,0.72);
-      backdrop-filter: blur(20px) saturate(180%);
+      backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%);
       border-bottom: 1px solid var(--border);
     }
-    .nav-brand { display: flex; align-items: center; gap: 9px; font-weight: 600; font-size: 16px; letter-spacing: -.01em; }
+    .header-inner { max-width: 1120px; margin: 0 auto; height: 58px; padding: 0 28px; display: flex; align-items: center; gap: 28px; }
+    .nav-brand { display: flex; align-items: center; gap: 9px; font-weight: 650; font-size: 16px; letter-spacing: -.01em; color: var(--text); text-decoration: none; }
     .nav-brand img { width: 26px; height: 26px; border-radius: 7px; }
-    .nav-right { display: flex; align-items: center; gap: 10px; }
+    .nav-links { display: flex; align-items: center; gap: 2px; list-style: none; margin: 0 auto; }
+    .nav-links a {
+      display: block; padding: 7px 12px; border-radius: 8px;
+      color: var(--text2); text-decoration: none; font-size: 13.5px; font-weight: 500;
+      transition: color .15s, background .15s;
+    }
+    .nav-links a:hover { color: var(--text); background: var(--bg-soft); }
+    .nav-links a[aria-current="true"] { color: var(--text); }
+    .nav-links a[aria-current="true"]::after { content: ''; display: block; height: 2px; margin-top: 3px; border-radius: 2px; background: var(--accent); }
+    .nav-new { font-size: 10px; font-weight: 700; color: var(--accent-deep); background: var(--accent-soft); border-radius: 980px; padding: 2px 6px; margin-left: 4px; vertical-align: 1px; }
+    .nav-right { display: flex; align-items: center; gap: 8px; }
     .nav-gh {
       display: flex; align-items: center; gap: 6px;
       color: var(--text2); text-decoration: none; font-size: 13px;
-      padding: 6px 12px; border-radius: 8px;
-      transition: color .15s, background .15s;
+      padding: 7px 12px; border-radius: 8px; transition: color .15s, background .15s;
     }
     .nav-gh:hover { color: var(--text); background: var(--bg-soft); }
     .nav-dl {
       background: var(--accent); color: #fff;
-      border-radius: 980px; padding: 7px 18px;
+      border-radius: 980px; padding: 8px 18px;
       font-size: 13px; font-weight: 600; text-decoration: none;
       transition: transform .15s, box-shadow .15s;
       box-shadow: 0 2px 8px rgba(29,185,84,.25);
     }
     .nav-dl:hover { transform: scale(1.04); }
+    .nav-toggle { display: none; width: 38px; height: 38px; border: 0; border-radius: 10px; background: transparent; cursor: pointer; color: var(--text); }
+    .nav-toggle:hover { background: var(--bg-soft); }
+    .nav-toggle svg { display: block; margin: auto; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    @media (max-width: 860px) {
+      .header-inner { gap: 12px; padding: 0 16px; }
+      .nav-gh span { display: none; }
+      .nav-toggle { display: block; order: 3; }
+      .nav-links {
+        display: none; position: absolute; top: 58px; left: 0; right: 0; margin: 0;
+        flex-direction: column; align-items: stretch; gap: 0; padding: 8px 12px 14px;
+        background: #fff; border-bottom: 1px solid var(--border);
+        box-shadow: 0 16px 30px rgba(0,0,0,.08);
+      }
+      .site-header.open { background: #fff; backdrop-filter: none; -webkit-backdrop-filter: none; }
+      .site-header.open .nav-links { display: flex; }
+      .nav-links a { padding: 12px; font-size: 16px; }
+      .nav-links a[aria-current="true"]::after { display: none; }
+      .nav-right { margin-left: auto; }
+    }
+    section[id], div[id] { scroll-margin-top: 72px; }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { animation: none !important; transition: none !important; } }
 
     /* HERO */
     .hero {
@@ -151,7 +312,8 @@
     .install-footer .ck { color: var(--accent); font-weight: 700; }
 
     /* SCREENSHOT */
-    .ss-wrap { margin-top: 60px; max-width: 760px; width: 100%; }
+    .ss-wrap { margin-top: 60px; max-width: 380px; width: 100%; }
+    .ss-wrap img { height: auto; }
     .ss-wrap img {
       width: 100%; border-radius: var(--radius);
       border: 1px solid var(--border);
@@ -168,7 +330,7 @@
     .section-p { font-size: 18px; color: var(--text2); margin-top: 14px; max-width: 520px; line-height: 1.6; }
 
     .di-img {
-      width: 100%; border-radius: var(--radius); margin-top: 40px;
+      width: 100%; height: auto; border-radius: var(--radius); margin-top: 40px;
       border: 1px solid var(--border); box-shadow: var(--shadow-md);
     }
 
@@ -210,6 +372,17 @@
     .feat h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
     .feat p { font-size: 14px; color: var(--text2); line-height: 1.6; }
 
+    /* FAQ */
+    .faq { max-width: 820px; margin: 0 auto; padding: 40px 24px 110px; }
+    .faq h2 { font-size: clamp(30px, 4vw, 46px); font-weight: 700; letter-spacing: -0.025em; text-align: center; margin-bottom: 40px; color: #1d1d1f; }
+    .faq details { border-bottom: 1px solid var(--border); }
+    .faq summary { list-style: none; cursor: pointer; padding: 22px 36px 22px 0; font-size: 18px; font-weight: 600; position: relative; }
+    .faq summary::-webkit-details-marker { display: none; }
+    .faq summary::after { content: '+'; position: absolute; right: 4px; top: 18px; font-size: 24px; font-weight: 400; color: var(--text3); transition: transform .2s; }
+    .faq details[open] summary::after { transform: rotate(45deg); }
+    .faq details p { padding: 0 0 22px; color: var(--text2); font-size: 16px; line-height: 1.65; }
+    .faq code { font-family: "SF Mono", monospace; font-size: 14px; background: var(--bg-soft); border: 1px solid var(--border); padding: 1px 6px; border-radius: 5px; }
+
     /* CTA */
     .cta {
       padding: 120px 24px; text-align: center;
@@ -247,29 +420,42 @@
 </head>
 <body>
 
-<!-- NAV -->
-<nav>
-  <div class="nav-brand">
-    <img src="icon.png" alt="MacWake icon">
-    MacWake
-  </div>
-  <div class="nav-right">
-    <a class="nav-gh" href="https://github.com/Jarvis322/MacWake" target="_blank">
-      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-      GitHub
-    </a>
-    <a class="nav-dl" href="https://github.com/Jarvis322/MacWake/releases/download/v1.94/Wake-1.94.dmg">Download</a>
-  </div>
-</nav>
+<a class="skip" href="#main">Skip to content</a>
 
+<header class="site-header" id="top">
+  <div class="header-inner">
+    <a class="nav-brand" href="#top" aria-label="MacWake home">
+      <img src="icon.png" alt="" width="26" height="26">
+      MacWake
+    </a>
+    <nav aria-label="Main">
+      <ul class="nav-links" id="nav-links">
+        <li><a href="#model-3d">3D Model<span class="nav-new">New</span></a></li>
+        <li><a href="#dynamic-island">Dynamic Island</a></li>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#faq">FAQ</a></li>
+        <li><a href="#download">Install</a></li>
+      </ul>
+    </nav>
+    <div class="nav-right">
+      <a class="nav-gh" href="https://github.com/Jarvis322/MacWake" target="_blank" rel="noopener" aria-label="MacWake on GitHub"><svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg><span>GitHub</span></a>
+      <a class="nav-dl" href="https://github.com/Jarvis322/MacWake/releases/download/v1.94/Wake-1.94.dmg">Download</a>
+    </div>
+    <button class="nav-toggle" type="button" aria-label="Menu" aria-expanded="false" aria-controls="nav-links">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 6h14M3 10h14M3 14h14"/></svg>
+    </button>
+  </div>
+</header>
+
+<main id="main">
 <!-- HERO -->
-<section class="hero">
+<section class="hero" aria-labelledby="hero-title">
   <div class="hero-badge">
     <span class="hero-badge-dot"></span>
     New in 1.94 · A live 3D model of your Mac
   </div>
-  <h1>Your Mac's battery,<br><em>finally visible.</em></h1>
-  <p class="hero-sub">MacWake lives in your menu bar and looks after your battery — charge limit, sailing mode, energy mode, temperature, fan control, and more, all in one quiet place.</p>
+  <h1 id="hero-title">Your Mac's battery,<br><em>finally visible.</em></h1>
+  <p class="hero-sub">MacWake is a free battery health and charge limit app for macOS. It lives in your menu bar — charge limit, Sailing Mode, energy mode, temperature, fan control and a live 3D model of your Mac, in one quiet place.</p>
 
   <div class="install-card">
     <div class="install-tabs">
@@ -292,23 +478,27 @@
       </div>
       <p style="font-size:12px;color:var(--text3);margin-top:12px;">Open the DMG and drag MacWake to your Applications folder.</p>
     </div>
-    <div class="install-footer"><span class="ck">✓</span> Free forever &nbsp;·&nbsp; No account &nbsp;·&nbsp; No telemetry</div>
+    <div class="install-footer"><span class="ck">✓</span> Free &nbsp;·&nbsp; No account &nbsp;·&nbsp; Battery data stays on your Mac</div>
   </div>
 
   <div class="ss-wrap">
-    <img src="screenshots/menubar-popover.png?v=194" alt="MacWake panel">
+    <picture>
+      <source srcset="screenshots/menubar-popover.webp?v=194" type="image/webp">
+      <img src="screenshots/menubar-popover.png?v=194" width="720" height="1360" fetchpriority="high"
+           alt="MacWake menu bar panel showing a 3D MacBook Air model, battery level and current session">
+    </picture>
   </div>
 </section>
 
 <!-- 3D MODEL -->
-<div class="model3d">
+<section class="model3d" id="model-3d" aria-labelledby="model-3d-title">
   <div class="section">
     <div class="label">New in 1.94</div>
-    <h2 class="section-h">Your Mac, inside out.</h2>
+    <h2 class="section-h" id="model-3d-title">Your Mac, inside out.</h2>
     <p class="section-p">The panel opens on a live 3D model of your own Mac. Battery cells fill with the charge, the chip and SSD glow by temperature, the fan spins at its real speed, and MagSafe lights up while charging. Click a part to fly in; drag to turn it.</p>
     <div class="model3d-media">
-      <video class="wide" src="media/macwake-3d.mp4" poster="media/macwake-3d-poster.jpg" autoplay muted loop playsinline preload="metadata" aria-label="MacWake 3D Mac model demo"></video>
-      <video class="vertical" src="media/macwake-3d-vertical.mp4" poster="media/macwake-3d-poster.jpg" autoplay muted loop playsinline preload="metadata" aria-label="MacWake 3D Mac model, vertical demo"></video>
+      <video class="wide" width="1280" height="720" src="media/macwake-3d.mp4" poster="media/macwake-3d-poster.jpg" autoplay muted loop playsinline preload="metadata" aria-label="MacWake 3D Mac model demo"></video>
+      <video class="vertical" width="540" height="960" src="media/macwake-3d-vertical.mp4" poster="media/macwake-3d-poster.jpg" autoplay muted loop playsinline preload="metadata" aria-label="MacWake 3D Mac model, vertical demo"></video>
     </div>
     <div class="model3d-points">
       <div><h3>🔋 Every part is live</h3><p>Charge, health, cycles, chip and SSD temperature, fan speed and MagSafe power — read straight from your Mac.</p></div>
@@ -316,21 +506,25 @@
       <div><h3>🎨 Your colour</h3><p>macOS doesn't record the enclosure colour, so click the display and pick the finish you actually own.</p></div>
     </div>
   </div>
-</div>
+</section>
 
 <!-- DYNAMIC ISLAND -->
-<div class="section" style="padding-top:40px;">
+<section class="section" id="dynamic-island" style="padding-top:90px;" aria-labelledby="di-title">
   <div class="label">Dynamic Island</div>
-  <h2 class="section-h">Lives in your notch.</h2>
+  <h2 class="section-h" id="di-title">Lives in your notch.</h2>
   <p class="section-p">On notch MacBooks, MacWake blends into the hardware. Hover to expand — live power, battery health, temperatures, and a Shelf you can drop files onto.</p>
-  <img class="di-img" src="screenshots/dynamic-island.png?v=194" alt="MacWake Dynamic Island">
-</div>
+  <picture>
+    <source srcset="screenshots/dynamic-island.webp?v=194" type="image/webp">
+    <img class="di-img" src="screenshots/dynamic-island.png?v=194" width="1388" height="420" loading="lazy"
+         alt="MacWake Dynamic Island in the MacBook notch showing battery level, health, temperatures and the file Shelf">
+  </picture>
+</section>
 
 <!-- FEATURES -->
-<div class="features">
+<section class="features" id="features" aria-labelledby="features-title">
   <div class="features-head">
     <div class="label" style="text-align:center;">Features</div>
-    <h2>Everything your battery wants you to know.</h2>
+    <h2 id="features-title">Everything your battery wants you to know.</h2>
   </div>
   <div class="grid">
     <div class="feat hl">
@@ -411,33 +605,93 @@
     <div class="feat">
       <div class="feat-ic">🔒</div>
       <h3>100% Private</h3>
-      <p>No cloud, no account. Your battery data never leaves your Mac.</p>
+      <p>No cloud, no account. Your battery data never leaves your Mac. The direct download sends only anonymous usage counts; the App Store version sends nothing.</p>
     </div>
   </div>
-</div>
+</section>
+
+<!-- FAQ -->
+<section class="faq" id="faq" aria-labelledby="faq-title">
+  <h2 id="faq-title">Questions, answered.</h2>
+  <details>
+    <summary>Is MacWake free?</summary>
+    <p>Yes. MacWake is free to download and use, with no account, no subscription and no ads. The source code is on GitHub.</p>
+  </details>
+  <details>
+    <summary>Which Macs does MacWake support?</summary>
+    <p>Any Mac running macOS 14 Sonoma or later, Apple Silicon or Intel — the download is a Universal build. Charge control (charge limit, Sailing Mode, manual discharge, calibration) needs Apple Silicon; monitoring, health history, sessions and the widget work everywhere.</p>
+  </details>
+  <details>
+    <summary>How does the charge limit work on M4 Macs?</summary>
+    <p>Where the Mac exposes a charge-inhibit key, MacWake simply pauses charging and the Mac stays on adapter power. On M4 and later, the only mechanism is cutting adapter input, so the battery runs down to the limit while the cable stays attached. Settings shows which method your Mac uses.</p>
+  </details>
+  <details>
+    <summary>Does MacWake need an administrator password?</summary>
+    <p>No password prompts. Charge control uses a small notarized background helper that you approve once in System Settings. Battery monitoring needs no special permission at all.</p>
+  </details>
+  <details>
+    <summary>What is the 3D Mac model?</summary>
+    <p>Since version 1.94 the menu panel opens on a live 3D model of your own Mac — detected automatically and drawn to Apple's published dimensions. Battery cells, chip and SSD temperature, fan speed and MagSafe charging are all driven by real readings. Click a part to zoom in, drag to turn it.</p>
+  </details>
+  <details>
+    <summary>Does MacWake collect my data?</summary>
+    <p>Your battery data stays on your Mac. The direct-download version sends anonymous usage signals through TelemetryDeck, with no personal data and no advertising identifiers; the Mac App Store version sends nothing. Details are in the <a href="privacy-policy.html">privacy policy</a>.</p>
+  </details>
+  <details>
+    <summary>How do I install MacWake?</summary>
+    <p>Run <code>brew tap Jarvis322/tap</code> and <code>brew install --cask macwake</code>, or download the notarized DMG and drag MacWake to Applications. Existing users get new versions through Check for Updates.</p>
+  </details>
+</section>
 
 <!-- CTA -->
-<section class="cta">
-  <img class="cta-icon" src="icon.png" alt="MacWake">
-  <h2>Start protecting your battery.</h2>
+<section class="cta" id="download" aria-labelledby="download-title">
+  <img class="cta-icon" src="icon.png" alt="" width="76" height="76" loading="lazy">
+  <h2 id="download-title">Start protecting your battery.</h2>
   <p>Free download. No sign-up. Open it and it just works.</p>
   <a class="cta-dl" href="https://github.com/Jarvis322/MacWake/releases/download/v1.94/Wake-1.94.dmg">↓ &nbsp;Download MacWake — Free</a>
   <p class="cta-code">or &nbsp;<code>brew install --cask macwake</code></p>
   <p class="cta-note">Requires macOS 14 Sonoma · Apple Silicon &amp; Intel · Notarized</p>
 </section>
 
+</main>
+
 <!-- FOOTER -->
 <footer>
   <span>© 2026 MacWake. All rights reserved.</span>
   <div class="footer-links">
-    <a href="https://github.com/sponsors/Jarvis322" target="_blank" style="color:var(--accent-deep);font-weight:600;">♥ Sponsor</a>
-    <a href="https://github.com/Jarvis322/MacWake" target="_blank">GitHub</a>
-    <a href="https://github.com/Jarvis322/MacWake/releases" target="_blank">Releases</a>
+    <a href="https://github.com/sponsors/Jarvis322" target="_blank" rel="noopener" style="color:var(--accent-deep);font-weight:600;">♥ Sponsor</a>
+    <a href="https://github.com/Jarvis322/MacWake" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://github.com/Jarvis322/MacWake/releases" target="_blank" rel="noopener">Releases</a>
+    <a href="https://yigitech.dev" rel="author">yigitech.dev</a>
     <a href="privacy-policy.html">Privacy Policy</a>
   </div>
 </footer>
 
 <script>
+  // Mobile menu
+  const header = document.querySelector('.site-header');
+  const toggle = document.querySelector('.nav-toggle');
+  toggle.addEventListener('click', () => {
+    const open = header.classList.toggle('open');
+    toggle.setAttribute('aria-expanded', open);
+  });
+  document.querySelectorAll('.nav-links a').forEach(a => a.addEventListener('click', () => {
+    header.classList.remove('open'); toggle.setAttribute('aria-expanded', false);
+  }));
+
+  // Mark the menu item for the section in view
+  const links = [...document.querySelectorAll('.nav-links a')];
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      links.forEach(a => {
+        if (a.getAttribute('href') === '#' + entry.target.id) a.setAttribute('aria-current', 'true');
+        else a.removeAttribute('aria-current');
+      });
+    });
+  }, { rootMargin: '-45% 0px -50% 0px' });
+  links.forEach(a => { const t = document.querySelector(a.getAttribute('href')); if (t) observer.observe(t); });
+
   function switchTab(tab, btn) {
     document.querySelectorAll('.itab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.ipanel').forEach(p => p.classList.remove('active'));
