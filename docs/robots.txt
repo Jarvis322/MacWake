@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /superpowers/
+
+Sitemap: https://macwake.yigitech.dev/sitemap.xml
