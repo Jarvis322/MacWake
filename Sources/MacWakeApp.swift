@@ -185,6 +185,8 @@ struct MacWakeApp: App {
             set: { _ in }
         )) {
             MacWakeMenuView(tracker: tracker)
+                // Set from outside so the view's own `colorScheme` reads dark as well.
+                .environment(\.colorScheme, .dark)
         } label: {
             HStack(spacing: 4) {
                 if tracker.showsMenuBarIcon {

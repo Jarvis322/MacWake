@@ -6,17 +6,13 @@ import Combine
 /// dependency graph, so its 1s wattage timer doesn't force them to redraw every tick.
 enum SettingsBuildingBlocks {
     static func iconTile(_ icon: String, _ tint: Color) -> some View {
-        RoundedRectangle(cornerRadius: 7, style: .continuous)
-            .fill(tint.gradient)
-            .frame(width: 26, height: 26)
-            .overlay(Image(systemName: icon).font(.system(size: 12.5, weight: .semibold)).foregroundColor(.white))
+        DepthIcon(symbol: icon, tint: tint)
     }
 
     @ViewBuilder
     static func settingsCard<C: View>(@ViewBuilder _ content: () -> C) -> some View {
         VStack(spacing: 0) { content() }
-            .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Color.primary.opacity(0.05)))
-            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Color.primary.opacity(0.05), lineWidth: 1))
+            .depthSurface(cornerRadius: 12)
     }
 
     static func rowDivider() -> some View { Divider().padding(.leading, 49) }
@@ -45,11 +41,16 @@ enum SettingsBuildingBlocks {
 struct SegmentedControl<Value: Hashable>: View {
     @Binding var selection: Value
     let options: [(Value, LocalizedStringKey)]
+    @Namespace private var thumb
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.depthMotionEnabled) private var motionEnabled
 
     var body: some View {
         HStack(spacing: 2) {
             ForEach(options, id: \.0) { value, label in
-                Button { selection = value } label: {
+                Button {
+                    withAnimation(motionEnabled && !reduceMotion ? DepthMotion.spring : nil) { selection = value }
+                } label: {
                     Text(label)
                         .font(.system(size: 11, weight: .medium))
                         .lineLimit(1)
@@ -57,10 +58,17 @@ struct SegmentedControl<Value: Hashable>: View {
                         .frame(height: 20)
                         .frame(maxWidth: .infinity)
                         .foregroundColor(selection == value ? .white : .primary)
-                        .background(
-                            RoundedRectangle(cornerRadius: 5, style: .continuous)
-                                .fill(selection == value ? Color.accentColor : Color.clear)
-                        )
+                        .background {
+                            if selection == value {
+                                RoundedRectangle(cornerRadius: 5, style: .continuous)
+                                    .fill(Color.accentColor.gradient)
+                                    .overlay(RoundedRectangle(cornerRadius: 5, style: .continuous)
+                                        .strokeBorder(LinearGradient(colors: [.white.opacity(0.45), .clear],
+                                                                     startPoint: .top, endPoint: .bottom), lineWidth: 0.75))
+                                    .shadow(color: Color.accentColor.opacity(0.35), radius: 2, y: 1)
+                                    .matchedGeometryEffect(id: "thumb", in: thumb)
+                            }
+                        }
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -162,6 +170,11 @@ struct MacWakeMenuView: View {
     @Environment(\.colorScheme) var colorScheme
     @State private var isLaunchAtLoginEnabled: Bool = LaunchAgentManager.isEnabled
     @State private var selectedTab: Int = 0
+    @State private var focusedPart: MacPart?
+    @AppStorage("macFinish") private var savedFinish: String = ""
+    private var finish: MacFinish { MacChassisProfile.current.finish(saved: savedFinish) }
+    @Namespace private var tabThumb
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var isScrolledToBottom = false
     // Two-step confirms are drawn inline: a `confirmationDialog` presented from this
     // MenuBarExtra(.window) panel never takes clicks, because the panel doesn't become key.
@@ -214,6 +227,18 @@ struct MacWakeMenuView: View {
         ZStack {
             VisualEffectView()
                 .ignoresSafeArea()
+
+            // Deep navy glass, always dark: the 3D scene's lighting is built for it.
+            LinearGradient(colors: [Color(red: 0.09, green: 0.10, blue: 0.19), Color(red: 0.035, green: 0.04, blue: 0.09)],
+                           startPoint: .top, endPoint: .bottom)
+                .opacity(0.94)
+                .ignoresSafeArea()
+
+            // Ambient light in the selected tab's hue, so switching tabs tints the panel.
+            RadialGradient(colors: [tabHue.opacity(0.28), tabHue.opacity(0)],
+                           center: .top, startRadius: 0, endRadius: 380)
+                .ignoresSafeArea()
+                .allowsHitTesting(false)
             
             VStack(spacing: 11) {
                 // Header (Always Visible)
@@ -239,6 +264,11 @@ struct MacWakeMenuView: View {
                     )
                 }
                 
+                if selectedTab != 4 {
+                    sceneSection
+                        .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .top)))
+                }
+
                 // Tab Selection Bar
                 tabSelectorBar
                 
@@ -273,12 +303,16 @@ struct MacWakeMenuView: View {
                                     value: inner.frame(in: .named("tabScroll")).maxY
                                 )
                             })
-                            // All five tabs share one ScrollView instance; without a
-                            // per-tab identity, switching tabs keeps the previous tab's
-                            // scroll offset instead of opening at the top.
-                            .id(selectedTab)
                         }
                         .coordinateSpace(name: "tabScroll")
+                        // A per-tab identity gives each tab its own scroll view, so switching
+                        // opens at the top instead of keeping the previous tab's offset — and
+                        // lets the outgoing tab cross-fade out while the new one rises in.
+                        .id(selectedTab)
+                        .transition(.asymmetric(
+                            insertion: .opacity.combined(with: .offset(y: 10)),
+                            removal: .opacity
+                        ))
 
                         // Bottom fade + chevron: only while there's more to scroll.
                         if !isScrolledToBottom {
@@ -315,8 +349,12 @@ struct MacWakeMenuView: View {
             }
             .padding(14)
         }
-        .frame(width: 360, height: 540)
+        .frame(width: 360, height: 680)
         .ignoresSafeArea()
+        .environment(\.depthMotionEnabled, tracker.enableAnimations)
+        .animation(motionAllowed ? DepthMotion.spring : nil, value: tracker.highTempAlert)
+        .animation(motionAllowed ? DepthMotion.spring : nil, value: tracker.continuousACAlert)
+        .animation(motionAllowed ? DepthMotion.spring : nil, value: tracker.slowChargingAlert)
         .onAppear {
             tracker.updateDynamicWatts()
             isLaunchAtLoginEnabled = LaunchAgentManager.isEnabled
@@ -381,20 +419,197 @@ struct MacWakeMenuView: View {
 
     // MARK: - Tab Selector Bar
     private var tabSelectorBar: some View {
-        HStack(spacing: 4) {
-            TabButton(title: "Session", icon: "chart.bar.fill", isSelected: selectedTab == 0, activeColor: greenColor) { selectedTab = 0 }
-            TabButton(title: "History", icon: "clock.fill", isSelected: selectedTab == 1, activeColor: orangeColor) { selectedTab = 1 }
-            TabButton(title: "Hardware", icon: "cpu", isSelected: selectedTab == 2, activeColor: blueColor) { selectedTab = 2 }
+        HStack(spacing: 6) {
+            TabButton(title: "Session", icon: "chart.bar.fill", isSelected: selectedTab == 0, activeColor: .green, namespace: tabThumb) { selectTab(0) }
+            TabButton(title: "History", icon: "clock.fill", isSelected: selectedTab == 1, activeColor: .orange, namespace: tabThumb) { selectTab(1) }
+            TabButton(title: "Hardware", icon: "cpu", isSelected: selectedTab == 2, activeColor: .blue, namespace: tabThumb) { selectTab(2) }
             // The Monitor tab needs SMC fan access and `top` process visibility — both
             // unavailable inside the App Store sandbox, so the tab is dropped there.
             if !Distribution.isAppStore {
-                TabButton(title: "Monitor", icon: "chart.line.uptrend.xyaxis", isSelected: selectedTab == 3, activeColor: .indigo) { selectedTab = 3 }
+                TabButton(title: "Monitor", icon: "chart.line.uptrend.xyaxis", isSelected: selectedTab == 3, activeColor: .indigo, namespace: tabThumb) { selectTab(3) }
             }
-            TabButton(title: "Settings", icon: "gearshape.fill", isSelected: selectedTab == 4, activeColor: .purple) { selectedTab = 4 }
+            TabButton(title: "Settings", icon: "gearshape.fill", isSelected: selectedTab == 4, activeColor: .purple, namespace: tabThumb) { selectTab(4) }
         }
-        .padding(4)
-        .background(Color.secondary.opacity(0.08))
-        .cornerRadius(8)
+    }
+
+    // MARK: - 3D Scene
+    private var sceneReadings: MacSceneReadings {
+        MacSceneReadings(
+            level: tracker.currentBatteryLevel,
+            plugged: tracker.isPluggedIn,
+            charging: tracker.isPluggedIn && tracker.isCharging,
+            cpuTemperature: tracker.cpuTemperature,
+            ssdTemperature: tracker.ssdTemperature,
+            hasFans: tracker.hasFans,
+            fanRPM: tracker.currentFanSpeed
+        )
+    }
+
+    private var sceneSection: some View {
+        ZStack(alignment: .bottom) {
+            MacInternalsView(
+                readings: sceneReadings,
+                selection: Binding(
+                    get: { focusedPart },
+                    set: { part in withAnimation(motionAllowed ? DepthMotion.spring : nil) { focusedPart = part } }
+                ),
+                active: timerActive,
+                motion: motionAllowed,
+                finish: finish
+            )
+
+            if let part = focusedPart {
+                partDetail(part)
+                    .padding(8)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            } else {
+                Text("SCENE_HINT")
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundColor(.white.opacity(0.45))
+                    .padding(.bottom, 7)
+                    .allowsHitTesting(false)
+                    .transition(.opacity)
+            }
+        }
+        .frame(height: 190)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .depthSurface(cornerRadius: 16)
+    }
+
+    private struct PartReading {
+        let symbol: String
+        let tint: Color
+        let title: LocalizedStringKey
+        let value: String
+        let detail: String
+    }
+
+    private func reading(for part: MacPart) -> PartReading {
+        func degrees(_ value: Double?) -> String { value.map { String(format: "%.0f°C", $0) } ?? "—" }
+        switch part {
+        case .battery:
+            return PartReading(
+                symbol: tracker.isCharging ? "battery.100.bolt" : "battery.75", tint: Color(nsColor: MacInternalsScene.levelColor(tracker.currentBatteryLevel)),
+                title: "SCENE_PART_BATTERY", value: "\(tracker.currentBatteryLevel)%",
+                detail: String(format: String(localized: "SCENE_BATTERY_DETAIL_FMT"), tracker.batteryHealth, tracker.batteryCycles, tracker.batteryTemperature))
+        case .soc:
+            return PartReading(
+                symbol: "cpu", tint: Color(nsColor: MacInternalsScene.heatColor(tracker.cpuTemperature, warm: 65, hot: 85)),
+                title: "SCENE_PART_SOC", value: degrees(tracker.cpuTemperature),
+                detail: tracker.gpuTemperature.map { String(format: String(localized: "SCENE_GPU_FMT"), $0) } ?? String(localized: "SCENE_SOC_DETAIL"))
+        case .ssd:
+            return PartReading(
+                symbol: "internaldrive.fill", tint: Color(nsColor: MacInternalsScene.heatColor(tracker.ssdTemperature, warm: 55, hot: 70)),
+                title: "SCENE_PART_SSD", value: degrees(tracker.ssdTemperature),
+                detail: String(localized: "SCENE_SSD_DETAIL"))
+        case .port:
+            let watts = tracker.dynamicWatts.map { String(format: "%.1f W", $0) } ?? tracker.powerAdapterWatts.map { "\($0) W" }
+            return PartReading(
+                symbol: "powerplug.fill", tint: tracker.isPluggedIn ? (tracker.isCharging ? .orange : .green) : .gray,
+                title: "SCENE_PART_PORT",
+                value: tracker.isPluggedIn ? (watts ?? String(localized: "Charging")) : String(localized: "SCENE_PORT_UNPLUGGED"),
+                detail: tracker.magSafeCableFirmware.map { String(format: String(localized: "SCENE_CABLE_FW_FMT"), $0) }
+                    ?? (tracker.isPluggedIn ? statusText : String(localized: "SCENE_PORT_DETAIL")))
+        case .display:
+            let profile = MacChassisProfile.current
+            return PartReading(
+                symbol: "laptopcomputer", tint: Color(nsColor: finish.color),
+                title: LocalizedStringKey(profile.productName),
+                value: profile.chip?.replacingOccurrences(of: "Apple ", with: "") ?? "",
+                detail: String(localized: String.LocalizationValue(finish.nameKey)))
+        case .fan:
+            return PartReading(
+                symbol: tracker.hasFans ? "fanblades.fill" : "square.stack.3d.down.forward.fill", tint: tracker.hasFans ? .cyan : .orange,
+                title: tracker.hasFans ? "SCENE_PART_FAN" : "SCENE_PART_SPREADER",
+                value: tracker.hasFans ? (tracker.currentFanSpeed.map { String(format: "%.0f RPM", $0) } ?? "—") : String(localized: "Fanless"),
+                detail: String(localized: tracker.hasFans ? "SCENE_FAN_DETAIL" : "SCENE_SPREADER_DETAIL"))
+        }
+    }
+
+    private func partDetail(_ part: MacPart) -> some View {
+        let info = reading(for: part)
+        return HStack(spacing: 10) {
+            Button {
+                withAnimation(motionAllowed ? DepthMotion.spring : nil) { focusedPart = nil }
+            } label: {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundColor(.white.opacity(0.8))
+                    .frame(width: 24, height: 24)
+                    .background(Circle().fill(Color.white.opacity(0.1)))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(Text("SCENE_BACK"))
+
+            DepthIcon(symbol: info.symbol, tint: info.tint, size: 28)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(info.title)
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.6))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                Text(info.detail)
+                    .font(.system(size: 9))
+                    .foregroundColor(.white.opacity(0.45))
+                    .lineLimit(2)
+                if part == .display { finishSwatches }
+            }
+            Spacer(minLength: 4)
+            Text(info.value)
+                .font(.system(size: 22, weight: .bold, design: .rounded))
+                .foregroundStyle(LinearGradient(colors: [.white, info.tint], startPoint: .top, endPoint: .bottom))
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+                .rollingDigits(info.value)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
+            .strokeBorder(LinearGradient(colors: [info.tint.opacity(0.6), .white.opacity(0.05)],
+                                         startPoint: .top, endPoint: .bottom), lineWidth: 0.75))
+        .shadow(color: info.tint.opacity(0.3), radius: 8, y: 2)
+        .accessibilityElement(children: .combine)
+    }
+
+    /// macOS doesn't record the enclosure colour, so the model's is picked here.
+    private var finishSwatches: some View {
+        HStack(spacing: 5) {
+            ForEach(MacChassisProfile.current.finishes, id: \.self) { option in
+                Button {
+                    withAnimation(motionAllowed ? DepthMotion.spring : nil) { savedFinish = option.rawValue }
+                } label: {
+                    Circle()
+                        .fill(Color(nsColor: option.color).gradient)
+                        .frame(width: 14, height: 14)
+                        .overlay(Circle().strokeBorder(Color.white.opacity(option == finish ? 0.95 : 0.25),
+                                                       lineWidth: option == finish ? 1.5 : 0.75))
+                        .scaleEffect(option == finish ? 1.12 : 1)
+                }
+                .buttonStyle(.plain)
+                .help(Text(LocalizedStringKey(option.nameKey)))
+                .accessibilityLabel(Text(LocalizedStringKey(option.nameKey)))
+                .accessibilityAddTraits(option == finish ? .isSelected : [])
+            }
+        }
+        .padding(.top, 2)
+    }
+
+    private var tabHue: Color {
+        switch selectedTab {
+        case 0: return .green
+        case 1: return .orange
+        case 2: return .blue
+        case 3: return .indigo
+        default: return .purple
+        }
+    }
+
+    private var motionAllowed: Bool { tracker.enableAnimations && !reduceMotion }
+
+    private func selectTab(_ tab: Int) {
+        withAnimation(motionAllowed ? DepthMotion.spring : nil) { selectedTab = tab }
     }
 
     // MARK: - Tab Contents
@@ -506,8 +721,7 @@ struct MacWakeMenuView: View {
                 }
                 .padding(10)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.secondary.opacity(0.05))
-                .cornerRadius(8)
+                .depthSurface(cornerRadius: 10)
             } else {
                 VStack(spacing: 0) {
                     ForEach(Array(usages.enumerated()), id: \.element.id) { index, usage in
@@ -554,8 +768,7 @@ struct MacWakeMenuView: View {
         }
         .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.secondary.opacity(0.05))
-        .cornerRadius(8)
+        .depthSurface(cornerRadius: 10)
     }
     #endif
 
@@ -1505,7 +1718,13 @@ struct MacWakeMenuView: View {
 
     // MARK: - Header
     private var headerSection: some View {
-        HStack {
+        HStack(spacing: 10) {
+            Image(nsImage: NSApp.applicationIconImage)
+                .resizable()
+                .frame(width: 34, height: 34)
+                .shadow(color: .black.opacity(0.18), radius: 3, y: 2)
+                .accessibilityHidden(true)
+
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
                     Text("MacWake")
@@ -1535,17 +1754,21 @@ struct MacWakeMenuView: View {
             Spacer()
             
             // Battery Status Badge
-            HStack(spacing: 4) {
-                Image(systemName: tracker.isPluggedIn ? "battery.100.bolt" : "battery.75")
-                    .foregroundColor(tracker.isPluggedIn ? blueColor : (tracker.currentBatteryLevel < 20 ? .red : greenColor))
+            HStack(spacing: 7) {
+                DepthBattery(
+                    level: tracker.currentBatteryLevel,
+                    tint: tracker.isPluggedIn ? .blue : (tracker.currentBatteryLevel < 20 ? .red : .green),
+                    charging: tracker.isPluggedIn
+                )
                 Text("\(tracker.currentBatteryLevel)%")
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
+                    .font(.system(.subheadline, design: .rounded))
+                    .fontWeight(.bold)
+                    .rollingDigits(tracker.currentBatteryLevel)
             }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(Color.secondary.opacity(0.1))
-            .cornerRadius(8)
+            .padding(.horizontal, 9)
+            .padding(.vertical, 6)
+            .depthSurface(cornerRadius: 10)
+            .accessibilityElement(children: .combine)
         }
     }
 
@@ -1640,33 +1863,34 @@ struct MacWakeMenuView: View {
                     title: "Screen On",
                     value: formatDuration(session.screenOnDuration),
                     subtitle: "Active time",
-                    color: greenColor
+                    color: greenColor,
+                    icon: "sun.max.fill"
                 )
                 
                 statCard(
                     title: "Total Time",
                     value: formatDuration(totalDuration),
                     subtitle: String(format: String(localized: "SINCE_FMT"), formatTime(session.startTime)),
-                    color: .primary
+                    color: .primary,
+                    icon: "clock.fill"
                 )
             }
 
             if let remaining = tracker.remainingBatteryEstimate {
-                HStack {
-                    Image(systemName: "hourglass")
-                        .foregroundColor(.purple)
+                HStack(spacing: 8) {
+                    DepthIcon(symbol: "hourglass", tint: .purple, size: 20)
                     Text("Estimated remaining")
                         .font(.caption)
                         .foregroundColor(.secondary)
                     Spacer()
                     Text(formatDuration(remaining))
-                        .font(.caption)
-                        .fontWeight(.semibold)
+                        .font(.system(.caption, design: .rounded))
+                        .fontWeight(.bold)
                         .foregroundColor(.purple)
+                        .rollingDigits(remaining)
                 }
                 .padding(8)
-                .background(Color.purple.opacity(0.08))
-                .cornerRadius(6)
+                .depthSurface(cornerRadius: 9, tint: .purple)
             }
             
             // Detail Stats Row
@@ -1682,9 +1906,8 @@ struct MacWakeMenuView: View {
             .padding(.horizontal, 4)
 
             if let efficiency = session.screenMinutesPerPercent {
-                HStack {
-                    Image(systemName: "gauge.with.dots.needle.67percent")
-                        .foregroundColor(blueColor)
+                HStack(spacing: 8) {
+                    DepthIcon(symbol: "gauge.with.dots.needle.67percent", tint: .blue, size: 20)
                     Text(String(format: String(localized: "EFF_SCREEN_FMT"), formatDecimal(efficiency)))
                         .font(.caption)
                         .foregroundColor(.secondary)
@@ -1694,8 +1917,7 @@ struct MacWakeMenuView: View {
                         .fontWeight(.medium)
                 }
                 .padding(8)
-                .background(blueColor.opacity(0.08))
-                .cornerRadius(6)
+                .depthSurface(cornerRadius: 9, tint: .blue)
             }
             
             // Custom Timeline Chart
@@ -1723,9 +1945,8 @@ struct MacWakeMenuView: View {
     
     private var noActiveSessionSection: some View {
         VStack(spacing: 8) {
-            Image(systemName: "bolt.batteryblock.fill")
-                .font(.largeTitle)
-                .foregroundColor(.secondary)
+            DepthOrb(symbol: "bolt.fill", tint: .blue, size: 56, ripples: true)
+                .padding(.bottom, 4)
             Text("Mac is Plugged In")
                 .font(.subheadline)
                 .fontWeight(.semibold)
@@ -1805,6 +2026,7 @@ struct MacWakeMenuView: View {
                     value: "\(tracker.batteryHealth)%",
                     subtitle: "Max capacity",
                     color: greenColor,
+                    icon: "heart.fill",
                     info: healthDiagnosticNote
                 )
                 
@@ -1812,14 +2034,16 @@ struct MacWakeMenuView: View {
                     title: "Cycles",
                     value: "\(tracker.batteryCycles)",
                     subtitle: "Total count",
-                    color: blueColor
+                    color: blueColor,
+                    icon: "arrow.triangle.2.circlepath"
                 )
                 
                 statCard(
                     title: "Temperature",
                     value: String(format: "%.1f°C", tracker.batteryTemperature),
                     subtitle: tracker.batteryTemperature > 42 ? "Hot" : "Normal",
-                    color: tracker.batteryTemperature > 42 ? .red : orangeColor
+                    color: tracker.batteryTemperature > 42 ? .red : orangeColor,
+                    icon: "thermometer.medium"
                 )
             }
 
@@ -1897,8 +2121,7 @@ struct MacWakeMenuView: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(10)
-                    .background(Color.secondary.opacity(0.08))
-                    .cornerRadius(8)
+                    .depthSurface(cornerRadius: 10)
                     
                     // Mini Fan History Graph
                     if !tracker.fanSpeedHistory.isEmpty {
@@ -1924,8 +2147,7 @@ struct MacWakeMenuView: View {
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(10)
-                        .background(Color.secondary.opacity(0.08))
-                        .cornerRadius(8)
+                        .depthSurface(cornerRadius: 10)
                     }
                 }
             } else {
@@ -1945,8 +2167,7 @@ struct MacWakeMenuView: View {
                 }
                 .padding(10)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.secondary.opacity(0.05))
-                .cornerRadius(8)
+                .depthSurface(cornerRadius: 10)
             }
         }
     }
@@ -1961,9 +2182,7 @@ struct MacWakeMenuView: View {
             VStack(spacing: 6) {
                 ForEach(Array(tracker.adapterHistory.prefix(2))) { adapter in
                     HStack {
-                        Image(systemName: "powerplug.fill")
-                            .foregroundColor(blueColor)
-                            .frame(width: 18)
+                        DepthIcon(symbol: "powerplug.fill", tint: .blue, size: 22)
  
                         VStack(alignment: .leading, spacing: 1) {
                             HStack(spacing: 4) {
@@ -2043,8 +2262,7 @@ struct MacWakeMenuView: View {
                             }
                         }
                         .padding(8)
-                        .background(Color.secondary.opacity(0.05))
-                        .cornerRadius(6)
+                        .depthSurface(cornerRadius: 9)
                     }
                 }
             }
@@ -2120,19 +2338,31 @@ struct MacWakeMenuView: View {
     
     // MARK: - Helpers
     private func statCard(title: String, value: String, subtitle: String, color: Color,
-                          info: String? = nil) -> some View {
+                          icon: String? = nil, info: String? = nil) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(LocalizedStringKey(title))
-                .font(.caption2)
-                .foregroundColor(.secondary)
+            HStack(spacing: 4) {
+                Text(LocalizedStringKey(title))
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                    .lineLimit(1)
+                Spacer(minLength: 2)
+                if let icon {
+                    DepthIcon(symbol: icon, tint: vivid(color), size: 18)
+                }
+            }
             Text(value)
-                .font(.title2)
+                .font(.system(.title2, design: .rounded))
                 .fontWeight(.bold)
                 .foregroundColor(color)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                .rollingDigits(value)
             HStack(spacing: 3) {
                 Text(LocalizedStringKey(subtitle))
                     .font(.caption2)
                     .foregroundColor(.secondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
                 if let info {
                     Image(systemName: "info.circle")
                         .font(.system(size: 9))
@@ -2143,8 +2373,19 @@ struct MacWakeMenuView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(10)
-        .background(Color.secondary.opacity(0.08))
-        .cornerRadius(8)
+        .depthSurface(cornerRadius: 10, tint: color == .primary ? nil : vivid(color))
+    }
+
+    /// The text colours are deepened for legibility on the light panel; fills and glyphs
+    /// use the saturated system hue so the cards read lively rather than washed out.
+    private func vivid(_ color: Color) -> Color {
+        switch color {
+        case greenColor: return .green
+        case blueColor: return .blue
+        case orangeColor: return .orange
+        case .primary: return .gray
+        default: return color
+        }
     }
 
     private func summaryStat(title: String, value: String, color: Color) -> some View {
@@ -2158,11 +2399,11 @@ struct MacWakeMenuView: View {
                 .foregroundColor(color)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
+                .rollingDigits(value)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(8)
-        .background(Color.secondary.opacity(0.06))
-        .cornerRadius(6)
+        .depthSurface(cornerRadius: 8, tint: vivid(color))
     }
     
     private func detailStat(label: String, value: String) -> some View {
@@ -2173,15 +2414,13 @@ struct MacWakeMenuView: View {
             Text(value)
                 .font(.caption)
                 .fontWeight(.medium)
+                .rollingDigits(value)
         }
     }
 
     private func slowChargingWarningCard(_ alert: String) -> some View {
         HStack(alignment: .top, spacing: 10) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundColor(orangeColor)
-                .font(.title3)
-                .padding(.top, 2)
+            DepthIcon(symbol: "exclamationmark.triangle.fill", tint: orangeColor, size: 26, pulsing: true)
             
             VStack(alignment: .leading, spacing: 3) {
                 Text("Slow Charging Alert")
@@ -2197,12 +2436,8 @@ struct MacWakeMenuView: View {
         }
         .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(orangeColor.opacity(0.1))
-        .cornerRadius(8)
-        .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(orangeColor.opacity(0.2), lineWidth: 1)
-        )
+        .depthSurface(cornerRadius: 10, tint: orangeColor)
+        .transition(.move(edge: .top).combined(with: .opacity))
     }
     
     private func legendItem(color: Color, label: String) -> some View {
@@ -2279,9 +2514,7 @@ struct MacWakeMenuView: View {
                 VStack(spacing: 6) {
                     ForEach(Array(tracker.healthHistory.sorted(by: { $0.date > $1.date }).prefix(3))) { record in
                         HStack {
-                            Image(systemName: "heart.text.square.fill")
-                                .foregroundColor(.red)
-                                .font(.system(size: 14))
+                            DepthIcon(symbol: "heart.text.square.fill", tint: .red, size: 22)
                             
                             VStack(alignment: .leading, spacing: 1) {
                                 Text(String(format: String(localized: "BATTERY_HEALTH_FMT"), record.health))
@@ -2299,8 +2532,7 @@ struct MacWakeMenuView: View {
                                 .foregroundColor(.secondary)
                         }
                         .padding(8)
-                        .background(Color.secondary.opacity(0.04))
-                        .cornerRadius(6)
+                        .depthSurface(cornerRadius: 9)
                     }
                 }
             }
@@ -2309,10 +2541,7 @@ struct MacWakeMenuView: View {
 
     private func smartProtectionWarningCard(title: String, message: String, icon: String, color: Color) -> some View {
         HStack(alignment: .top, spacing: 10) {
-            Image(systemName: icon)
-                .foregroundColor(color)
-                .font(.title3)
-                .padding(.top, 2)
+            DepthIcon(symbol: icon, tint: color, size: 26, pulsing: true)
             
             VStack(alignment: .leading, spacing: 3) {
                 Text(LocalizedStringKey(title))
@@ -2328,12 +2557,8 @@ struct MacWakeMenuView: View {
         }
         .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(color.opacity(0.1))
-        .cornerRadius(8)
-        .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(color.opacity(0.2), lineWidth: 1)
-        )
+        .depthSurface(cornerRadius: 10, tint: color)
+        .transition(.move(edge: .top).combined(with: .opacity))
     }
 }
 
@@ -2352,24 +2577,51 @@ struct TabButton: View {
     let icon: String
     let isSelected: Bool
     let activeColor: Color
+    let namespace: Namespace.ID
     let action: () -> Void
-    
+
+    @State private var hovering = false
+
     var body: some View {
         Button(action: action) {
             VStack(spacing: 3) {
                 Image(systemName: icon)
-                    .font(.system(size: 13))
+                    .font(.system(size: 13, weight: isSelected ? .semibold : .regular))
+                    .symbolEffect(.bounce, value: isSelected)
+                    .shadow(color: isSelected ? .black.opacity(0.3) : .clear, radius: 1, y: 0.8)
                 Text(LocalizedStringKey(title))
                     .font(.system(size: 9, weight: .semibold))
             }
-            .foregroundColor(isSelected ? activeColor : .secondary)
+            .foregroundColor(isSelected ? .white : (hovering ? .primary : .secondary))
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 6)
-            .background(isSelected ? activeColor.opacity(0.1) : Color.clear)
+            .padding(.vertical, 8)
+            .background {
+                if isSelected {
+                    // One pill that slides between tabs instead of five that blink on and off.
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(activeColor.gradient)
+                        .saturation(1.3)
+                        .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .fill(LinearGradient(colors: [.white.opacity(0.28), .clear, .black.opacity(0.12)],
+                                                 startPoint: .top, endPoint: .bottom)))
+                        .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .strokeBorder(LinearGradient(colors: [.white.opacity(0.55), .white.opacity(0.05)],
+                                                         startPoint: .top, endPoint: .bottom), lineWidth: 0.75))
+                        .shadow(color: activeColor.opacity(0.5), radius: 4, y: 2)
+                        .matchedGeometryEffect(id: "tabThumb", in: namespace)
+                }
+            }
+            // Every tab is its own tile, like a row of scene presets; the lit pill sits on top.
+            .background {
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(Color.white.opacity(hovering ? 0.1 : 0.06))
+                    .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .strokeBorder(Color.white.opacity(0.08), lineWidth: 0.75))
+            }
             .contentShape(Rectangle())
-            .cornerRadius(6)
         }
         .buttonStyle(.plain)
+        .onHover { hovering = $0 }
     }
 }
 
@@ -2404,10 +2656,22 @@ struct TimelineBarView: View {
                     }
                 }
             }
-            .cornerRadius(6)
+            .overlay(LinearGradient(
+                stops: [
+                    .init(color: .white.opacity(0.4), location: 0),
+                    .init(color: .white.opacity(0), location: 0.5),
+                    .init(color: .black.opacity(0.18), location: 1),
+                ],
+                startPoint: .top, endPoint: .bottom
+            ))
+            .saturation(1.4)
+            .brightness(0.05)
+            .clipShape(Capsule())
+            .overlay(Capsule().strokeBorder(Color.white.opacity(0.25), lineWidth: 0.5))
+            .shadow(color: .black.opacity(0.15), radius: 2, y: 1)
         }
     }
-    
+
     private func colorFor(state: String) -> Color {
         switch state {
         case "active":
@@ -2436,10 +2700,17 @@ struct VisualEffectView: NSViewRepresentable {
         view.blendingMode = .withinWindow
         view.state = .active
         view.material = .popover
+        view.appearance = NSAppearance(named: .darkAqua)
         return view
     }
-    
-    func updateNSView(_ nsView: NSVisualEffectView, context: Context) {}
+
+    func updateNSView(_ nsView: NSVisualEffectView, context: Context) {
+        // The panel is always dark, so AppKit-backed controls inside it (switches, sliders,
+        // menus) have to be told too — the SwiftUI colour scheme alone doesn't reach them.
+        if let window = nsView.window, window.appearance?.name != .darkAqua {
+            window.appearance = NSAppearance(named: .darkAqua)
+        }
+    }
 }
 
 extension Color {
