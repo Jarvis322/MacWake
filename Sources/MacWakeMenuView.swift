@@ -203,7 +203,7 @@ struct MacWakeMenuView: View {
     @State private var showLanguageRestartError = false
     #endif
     private let timer = Timer.publish(every: 1.0, on: .main, in: .common).autoconnect()
-    @State private var timerActive = true
+    @State private var timerActive = false
     @State private var secondsTick = 0
     
     private var greenColor: Color { .dynamicGreen(for: colorScheme) }
@@ -317,27 +317,24 @@ struct MacWakeMenuView: View {
         }
         .frame(width: 360, height: 540)
         .ignoresSafeArea()
-        .onAppear {
+        // .menuBarExtraStyle(.window) only orders the panel out on close, so onAppear and
+        // onDisappear don't track open/close and the 1s timer kept re-rendering forever.
+        .background(PanelVisibilityObserver { visible in
+            timerActive = visible
+            guard visible else { return }
             tracker.updateDynamicWatts()
             isLaunchAtLoginEnabled = LaunchAgentManager.isEnabled
             chargeLimit.refreshStatus()
             #if !APPSTORE
             isCLIInstalled = CLIInstaller.isInstalled
-            #endif
-            timerActive = true
-            #if !APPSTORE
-            // .menuBarExtraStyle(.window) keeps this view (and selectedTab) alive across
-            // popover open/close, so reopening parked on Monitor needs an explicit refresh —
-            // onChange(of: selectedTab) only fires on an actual tab change.
+            // The view (and selectedTab) survives close, so reopening parked on Monitor
+            // needs an explicit refresh — onChange(of: selectedTab) only fires on a change.
             if selectedTab == 3 {
                 secondsTick = 0
                 processMonitor.refresh()
             }
             #endif
-        }
-        .onDisappear {
-            timerActive = false
-        }
+        })
         .onReceive(timer) { _ in
             guard timerActive else { return }
             tracker.updateDynamicWatts()
@@ -2440,6 +2437,49 @@ struct VisualEffectView: NSViewRepresentable {
     }
     
     func updateNSView(_ nsView: NSVisualEffectView, context: Context) {}
+}
+
+// MARK: - Panel Visibility
+/// Reports whether the hosting window is actually on screen, using its occlusion state.
+struct PanelVisibilityObserver: NSViewRepresentable {
+    let onChange: (Bool) -> Void
+
+    func makeNSView(context: Context) -> ObservingView {
+        let view = ObservingView()
+        view.onChange = onChange
+        return view
+    }
+
+    func updateNSView(_ nsView: ObservingView, context: Context) {
+        nsView.onChange = onChange
+    }
+
+    final class ObservingView: NSView {
+        var onChange: ((Bool) -> Void)?
+        private var isVisible: Bool?
+        private var occlusionObserver: NSObjectProtocol?
+
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            if let occlusionObserver { NotificationCenter.default.removeObserver(occlusionObserver) }
+            occlusionObserver = nil
+            if let window {
+                occlusionObserver = NotificationCenter.default.addObserver(
+                    forName: NSWindow.didChangeOcclusionStateNotification, object: window, queue: .main
+                ) { [weak self] _ in
+                    MainActor.assumeIsolated { self?.sync() }
+                }
+            }
+            sync()
+        }
+
+        private func sync() {
+            let visible = window?.occlusionState.contains(.visible) ?? false
+            guard visible != isVisible else { return }
+            isVisible = visible
+            onChange?(visible)
+        }
+    }
 }
 
 extension Color {
