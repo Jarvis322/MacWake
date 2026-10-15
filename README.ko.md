@@ -123,6 +123,12 @@ brew install --cask macwake
 
 [GitHub Releases](https://github.com/Jarvis322/MacWake/releases/latest)에서 최신 최신 DMG를 다운로드하고 DMG를 연 다음 **MacWake.app**을 Applications 폴더로 드래그하십시오.
 
+### 방법 3 — Mac App Store
+
+<a href="https://apps.apple.com/app/wake-battery-health/id6783888652"><img src="https://macwake.yigitech.dev/badges/mac-app-store-black.svg" alt="Download on the Mac App Store" height="44"></a>
+
+샌드박스에서 실행되는 모니터링 중심 버전입니다: 배터리 상태, 기록, 위젯, Dynamic Island. Apple 샌드박스는 충전 제어 도우미와 센서 접근을 허용하지 않으므로 충전 한도, 팬 제어, 3D 모델은 직접 다운로드 버전에만 있습니다. [전체 비교](https://macwake.yigitech.dev/#download).
+
 ### 요구 사항
 *   **macOS 14.0 (Sonoma)** 이상
 *   Apple Silicon 또는 Intel — 다운로드는 유니버설 빌드이며 두 아키텍처에서 모두 네이티브로 실행됩니다

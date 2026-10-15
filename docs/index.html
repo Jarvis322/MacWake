@@ -62,7 +62,8 @@
       "url": "https://yigitech.dev"
     },
     "sameAs": [
-      "https://github.com/Jarvis322/MacWake"
+      "https://github.com/Jarvis322/MacWake",
+      "https://apps.apple.com/app/wake-battery-health/id6783888652"
     ]
   },
   {
@@ -85,6 +86,14 @@
         "acceptedAnswer": {
           "@type": "Answer",
           "text": "Yes. MacWake is free to download and use, with no account, no subscription and no ads. The source code is on GitHub."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What's the difference between the App Store and direct download versions?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Both are free. The direct download is the full app: charge limit, Sailing Mode, manual discharge, fan control, CPU and SSD temperatures, the command-line tool and the live 3D model. The Mac App Store version runs in Apple's sandbox, which doesn't allow the helper or sensor access those need, so it focuses on monitoring — battery health, history, the widget, alerts and the Dynamic Island — and is updated through the App Store."
         }
       },
       {
@@ -386,6 +395,43 @@
     .faq details p { padding: 0 0 22px; color: var(--text2); font-size: 16px; line-height: 1.65; }
     .faq code { font-family: "SF Mono", monospace; font-size: 14px; background: var(--bg-soft); border: 1px solid var(--border); padding: 1px 6px; border-radius: 5px; }
 
+    /* MAC APP STORE BADGE: Apple's artwork, unaltered, at least 40px tall */
+    .mas-badge { display: inline-block; line-height: 0; }
+    .mas-badge img { height: 48px; width: auto; }
+    .hero-alt { margin-top: 18px; display: flex; align-items: center; justify-content: center; gap: 12px; font-size: 13px; color: var(--text3); }
+
+    /* INSTALL CHOICE */
+    .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; max-width: 880px; margin: 44px auto 0; text-align: left; }
+    .choice { border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; background: var(--card); display: flex; flex-direction: column; }
+    .choice.full { border-color: rgba(29,185,84,.35); box-shadow: 0 10px 30px rgba(29,185,84,.08); }
+    .choice-tag { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--accent-deep); margin-bottom: 8px; }
+    .choice.store .choice-tag { color: var(--text3); }
+    .choice h3 { font-size: 22px; font-weight: 700; letter-spacing: -.01em; margin-bottom: 8px; }
+    .choice > p { font-size: 15px; color: var(--text2); line-height: 1.55; margin-bottom: 22px; flex: 1; }
+    .choice .cta-dl { padding: 13px 26px; font-size: 15px; align-self: flex-start; }
+    .choice .cta-code { margin-top: 14px; text-align: left; }
+    .choice-note { font-size: 12.5px; color: var(--text3); margin-top: 14px; }
+    .compare { max-width: 880px; margin: 40px auto 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--card); text-align: left; }
+    .compare table { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+    .compare caption { text-align: left; padding: 18px 22px 6px; font-size: 13px; font-weight: 600; color: var(--text3); caption-side: top; }
+    .compare th, .compare td { padding: 13px 22px; border-top: 1px solid var(--border); vertical-align: top; }
+    .compare thead th { border-top: 0; font-size: 12.5px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .04em; }
+    .compare tbody th { font-weight: 500; color: var(--text); width: 52%; }
+    .compare td { color: var(--text2); width: 24%; }
+    .compare .y { color: var(--accent-deep); font-weight: 600; }
+    .compare .n { color: var(--text3); }
+    .compare .short { display: none; }
+    .choice .cta-code code { white-space: nowrap; }
+    @media (max-width: 780px) {
+      .choices { grid-template-columns: 1fr; }
+      .compare table { font-size: 13px; table-layout: fixed; }
+      .compare th, .compare td { padding: 11px 10px; overflow-wrap: anywhere; }
+      .compare tbody th { width: 46%; }
+      .compare td { width: 27%; }
+      .compare .long { display: none; } .compare .short { display: inline; }
+      .choice .cta-code code { font-size: 12px; }
+    }
+
     /* CTA */
     .cta {
       padding: 120px 24px; text-align: center;
@@ -482,6 +528,11 @@
       <p style="font-size:12px;color:var(--text3);margin-top:12px;">Open the DMG and drag MacWake to your Applications folder.</p>
     </div>
     <div class="install-footer"><span class="ck">✓</span> Free &nbsp;·&nbsp; No account &nbsp;·&nbsp; Battery data stays on your Mac</div>
+  </div>
+
+  <div class="hero-alt">
+    <span>Prefer the App Store?</span>
+    <a class="mas-badge" href="https://apps.apple.com/app/wake-battery-health/id6783888652" target="_blank" rel="noopener"><img src="badges/mac-app-store-black.svg" width="156" height="40" alt="Download on the Mac App Store"></a>
   </div>
 
   <div class="ss-wrap">
@@ -621,6 +672,10 @@
     <p>Yes. MacWake is free to download and use, with no account, no subscription and no ads. The source code is on GitHub.</p>
   </details>
   <details>
+    <summary>What&rsquo;s the difference between the App Store and direct download versions?</summary>
+    <p>Both are free. The direct download is the full app: charge limit, Sailing Mode, manual discharge, fan control, CPU and SSD temperatures, the command-line tool and the live 3D model. The Mac App Store version runs in Apple's sandbox, which doesn't allow the helper or sensor access those need, so it focuses on monitoring — battery health, history, the widget, alerts and the Dynamic Island — and is updated through the App Store. See the <a href="#download">comparison table</a>.</p>
+  </details>
+  <details>
     <summary>Which Macs does MacWake support?</summary>
     <p>Any Mac running macOS 14 Sonoma or later, Apple Silicon or Intel — the download is a Universal build. Charge control (charge limit, Sailing Mode, manual discharge, calibration) needs Apple Silicon; monitoring, health history, sessions and the widget work everywhere.</p>
   </details>
@@ -650,10 +705,49 @@
 <section class="cta" id="download" aria-labelledby="download-title">
   <img class="cta-icon" src="icon.png" alt="" width="76" height="76" loading="lazy">
   <h2 id="download-title">Start protecting your battery.</h2>
-  <p>Free download. No sign-up. Open it and it just works.</p>
-  <a class="cta-dl" href="https://github.com/Jarvis322/MacWake/releases/download/v1.94/Wake-1.94.dmg">↓ &nbsp;Download MacWake — Free</a>
-  <p class="cta-code">or &nbsp;<code>brew install --cask macwake</code></p>
-  <p class="cta-note">Requires macOS 14 Sonoma · Apple Silicon &amp; Intel · Notarized</p>
+  <p>Free either way. Pick the version that fits how you use your Mac.</p>
+
+  <div class="choices">
+    <div class="choice full">
+      <div class="choice-tag">Recommended · Full version</div>
+      <h3>Direct download</h3>
+      <p>Everything MacWake does, including charge limit, Sailing Mode, fan control and the live 3D model. Charge control runs through a small notarized helper you approve once.</p>
+      <a class="cta-dl" href="https://github.com/Jarvis322/MacWake/releases/download/v1.94/Wake-1.94.dmg">↓ &nbsp;Download Wake 1.94</a>
+      <p class="cta-code">or &nbsp;<code>brew install --cask macwake</code></p>
+    </div>
+    <div class="choice store">
+      <div class="choice-tag">Sandboxed · Monitoring</div>
+      <h3>Mac App Store</h3>
+      <p>Battery health, history, widget and Dynamic Island, installed and updated by the App Store. Apple's sandbox doesn't allow the helper or sensor access, so charge control and fan features aren't in this version.</p>
+      <a class="mas-badge" href="https://apps.apple.com/app/wake-battery-health/id6783888652" target="_blank" rel="noopener"><img src="badges/mac-app-store-black.svg" width="156" height="40" alt="Download on the Mac App Store"></a>
+      <p class="choice-note">Listed as &ldquo;Wake &ndash; Battery Health&rdquo;. New features arrive after Apple's review.</p>
+    </div>
+  </div>
+
+  <div class="compare">
+    <table>
+      <caption>Direct download vs. Mac App Store</caption>
+      <thead><tr><th scope="col">Feature</th><th scope="col"><span class="long">Direct download</span><span class="short">Direct</span></th><th scope="col"><span class="long">Mac App Store</span><span class="short">App Store</span></th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Battery health, cycles, temperature, sessions &amp; history</th><td class="y">✓</td><td class="y">✓</td></tr>
+        <tr><th scope="row">Desktop widget, alerts &amp; charging animation</th><td class="y">✓</td><td class="y">✓</td></tr>
+        <tr><th scope="row">Dynamic Island &amp; Shelf</th><td class="y">✓ Full</td><td class="y">✓ Power column</td></tr>
+        <tr><th scope="row">Customizable menu bar</th><td class="y">✓</td><td class="y">✓</td></tr>
+        <tr><th scope="row">Charge limit, Sailing Mode, discharge &amp; calibration</th><td class="y">✓</td><td class="n">—</td></tr>
+        <tr><th scope="row">Heat Guard &amp; scheduled full charge</th><td class="y">✓</td><td class="n">—</td></tr>
+        <tr><th scope="row">Energy Mode switch</th><td class="y">✓</td><td class="n">—</td></tr>
+        <tr><th scope="row">CPU, GPU &amp; SSD temperatures, fan speed &amp; control</th><td class="y">✓</td><td class="n">—</td></tr>
+        <tr><th scope="row">Live 3D model of your Mac</th><td class="y">✓ Since 1.94</td><td class="n">— Not yet</td></tr>
+        <tr><th scope="row">Top apps, Cleaning Mode, command-line tool</th><td class="y">✓</td><td class="n">—</td></tr>
+        <tr><th scope="row">MagSafe cable firmware</th><td class="y">✓</td><td class="n">—</td></tr>
+        <tr><th scope="row">Updates</th><td>In-app (Sparkle)</td><td>App Store</td></tr>
+        <tr><th scope="row">Usage analytics</th><td>Anonymous (TelemetryDeck)</td><td>None</td></tr>
+        <tr><th scope="row">Sandboxed &amp; reviewed by Apple</th><td>Notarized by Apple</td><td class="y">✓</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="cta-note">Requires macOS 14 Sonoma · Apple Silicon &amp; Intel · Charge control needs Apple Silicon</p>
 </section>
 
 </main>
@@ -665,6 +759,7 @@
     <a href="https://github.com/sponsors/Jarvis322" target="_blank" rel="noopener" style="color:var(--accent-deep);font-weight:600;">♥ Sponsor</a>
     <a href="https://github.com/Jarvis322/MacWake" target="_blank" rel="noopener">GitHub</a>
     <a href="https://github.com/Jarvis322/MacWake/releases" target="_blank" rel="noopener">Releases</a>
+    <a href="https://apps.apple.com/app/wake-battery-health/id6783888652" target="_blank" rel="noopener">Mac App Store</a>
     <a href="https://yigitech.dev" rel="author">yigitech.dev</a>
     <a href="privacy-policy.html">Privacy Policy</a>
   </div>

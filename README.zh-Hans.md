@@ -123,6 +123,12 @@ brew install --cask macwake
 
 从 [GitHub Releases](https://github.com/Jarvis322/MacWake/releases/latest) 下载最新的 最新 DMG，打开 DMG，然后将 **MacWake.app** 拖到“应用程序”文件夹。
 
+### 方式 3 — Mac App Store
+
+<a href="https://apps.apple.com/app/wake-battery-health/id6783888652"><img src="https://macwake.yigitech.dev/badges/mac-app-store-black.svg" alt="Download on the Mac App Store" height="44"></a>
+
+沙盒中运行、以监测为主的版本：电池健康、历史记录、小组件和灵动岛。Apple 的沙盒不允许充电控制助手和传感器访问，因此充电上限、风扇控制和 3D 模型仅在直接下载版本中提供。[完整对比](https://macwake.yigitech.dev/#download)。
+
 ### 系统要求
 *   **macOS 14.0 (Sonoma)** 或更高版本
 *   Apple Silicon 或 Intel — 下载包为通用（Universal）构建，在两种架构上均原生运行
