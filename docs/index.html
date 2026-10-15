@@ -6,8 +6,9 @@
   <title>MacWake — Battery Health Monitor for Mac</title>
   <meta name="description" content="Keep your MacBook battery healthy for the long run. Charge limit, temperature, fan speed, and charge history — right from your menu bar.">
   <meta property="og:title" content="MacWake — Battery Health Monitor for Mac">
-  <meta property="og:description" content="Charge limit, temperature, fan speed, and charging habits. Free for macOS 14+.">
-  <meta property="og:image" content="https://jarvis322.github.io/MacWake/screenshots/menubar-popover.png?v=148">
+  <meta property="og:description" content="Charge limit, temperature, fan speed — and a live 3D model of your Mac. Free for macOS 14+.">
+  <meta property="og:video" content="https://jarvis322.github.io/MacWake/media/macwake-3d.mp4">
+  <meta property="og:image" content="https://jarvis322.github.io/MacWake/screenshots/menubar-popover.png?v=194">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -170,6 +171,22 @@
       border: 1px solid var(--border); box-shadow: var(--shadow-md);
     }
 
+    /* 3D SECTION */
+    .model3d { background: #0b0d1a; color: #f5f5f7; }
+    .model3d .section { padding: 100px 24px; }
+    .model3d .label { color: #4ade80; }
+    .model3d .section-h { color: #fff; }
+    .model3d .section-p { color: #a1a1aa; max-width: 620px; }
+    .model3d-media { margin-top: 44px; }
+    .model3d-media .vertical { display: none; }
+    .model3d video { width: 100%; border-radius: var(--radius); border: 1px solid rgba(255,255,255,.08); box-shadow: 0 30px 80px rgba(0,0,0,.5); display: block; background: #05060d; }
+    .model3d-points { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 28px; }
+    .model3d-points div { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); border-radius: 16px; padding: 18px; }
+    .model3d-points h3 { font-size: 15px; font-weight: 600; margin-bottom: 6px; color: #fff; }
+    .model3d-points p { font-size: 13.5px; color: #a1a1aa; line-height: 1.55; }
+    /* Phones get the vertical cut, which fills a portrait screen. */
+    @media(max-width:780px){ .model3d-media .wide { display: none; } .model3d-media .vertical { display: block; max-width: 420px; margin: 0 auto; } .model3d-points { grid-template-columns: 1fr; } }
+
     /* FEATURES */
     .features { max-width: 1080px; margin: 0 auto; padding: 0 24px 100px; }
     .features-head { text-align: center; margin-bottom: 56px; }
@@ -240,7 +257,7 @@
       <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
       GitHub
     </a>
-    <a class="nav-dl" href="https://github.com/Jarvis322/MacWake/releases/download/v1.36/Wake-1.36.dmg">Download</a>
+    <a class="nav-dl" href="https://github.com/Jarvis322/MacWake/releases/download/v1.94/Wake-1.94.dmg">Download</a>
   </div>
 </nav>
 
@@ -248,7 +265,7 @@
 <section class="hero">
   <div class="hero-badge">
     <span class="hero-badge-dot"></span>
-    Free · Open Source · macOS 14+
+    New in 1.94 · A live 3D model of your Mac
   </div>
   <h1>Your Mac's battery,<br><em>finally visible.</em></h1>
   <p class="hero-sub">MacWake lives in your menu bar and looks after your battery — charge limit, sailing mode, energy mode, temperature, fan control, and more, all in one quiet place.</p>
@@ -267,10 +284,10 @@
     <div id="panel-dmg" class="ipanel">
       <div class="dmg-row">
         <div class="dmg-info">
-          <h4>Wake-1.36.dmg</h4>
-          <p>4.0 MB · Developer ID signed · Notarized</p>
+          <h4>Wake-1.94.dmg</h4>
+          <p>7.8 MB · Developer ID signed · Notarized</p>
         </div>
-        <a class="dmg-btn" href="https://github.com/Jarvis322/MacWake/releases/download/v1.36/Wake-1.36.dmg">↓ Download</a>
+        <a class="dmg-btn" href="https://github.com/Jarvis322/MacWake/releases/download/v1.94/Wake-1.94.dmg">↓ Download</a>
       </div>
       <p style="font-size:12px;color:var(--text3);margin-top:12px;">Open the DMG and drag MacWake to your Applications folder.</p>
     </div>
@@ -278,16 +295,34 @@
   </div>
 
   <div class="ss-wrap">
-    <img src="screenshots/menubar-popover.png?v=148" alt="MacWake panel">
+    <img src="screenshots/menubar-popover.png?v=194" alt="MacWake panel">
   </div>
 </section>
+
+<!-- 3D MODEL -->
+<div class="model3d">
+  <div class="section">
+    <div class="label">New in 1.94</div>
+    <h2 class="section-h">Your Mac, inside out.</h2>
+    <p class="section-p">The panel opens on a live 3D model of your own Mac. Battery cells fill with the charge, the chip and SSD glow by temperature, the fan spins at its real speed, and MagSafe lights up while charging. Click a part to fly in; drag to turn it.</p>
+    <div class="model3d-media">
+      <video class="wide" src="media/macwake-3d.mp4" poster="media/macwake-3d-poster.jpg" autoplay muted loop playsinline preload="metadata" aria-label="MacWake 3D Mac model demo"></video>
+      <video class="vertical" src="media/macwake-3d-vertical.mp4" poster="media/macwake-3d-poster.jpg" autoplay muted loop playsinline preload="metadata" aria-label="MacWake 3D Mac model, vertical demo"></video>
+    </div>
+    <div class="model3d-points">
+      <div><h3>🔋 Every part is live</h3><p>Charge, health, cycles, chip and SSD temperature, fan speed and MagSafe power — read straight from your Mac.</p></div>
+      <div><h3>💻 It's your Mac</h3><p>Air, Pro 13/14/16, Mac mini, Mac Studio and iMac, drawn to Apple's published dimensions, notch measured from your screen.</p></div>
+      <div><h3>🎨 Your colour</h3><p>macOS doesn't record the enclosure colour, so click the display and pick the finish you actually own.</p></div>
+    </div>
+  </div>
+</div>
 
 <!-- DYNAMIC ISLAND -->
 <div class="section" style="padding-top:40px;">
   <div class="label">Dynamic Island</div>
   <h2 class="section-h">Lives in your notch.</h2>
   <p class="section-p">On notch MacBooks, MacWake blends into the hardware. Hover to expand — live power, battery health, temperatures, and a Shelf you can drop files onto.</p>
-  <img class="di-img" src="screenshots/dynamic-island.png?v=148" alt="MacWake Dynamic Island">
+  <img class="di-img" src="screenshots/dynamic-island.png?v=194" alt="MacWake Dynamic Island">
 </div>
 
 <!-- FEATURES -->
@@ -298,6 +333,11 @@
   </div>
   <div class="grid">
     <div class="feat hl">
+      <div class="feat-ic">🧊</div>
+      <h3>Live 3D Model</h3>
+      <p>Your exact Mac in 3D at the top of the panel — battery cells, chip heat, fan and MagSafe all driven by real readings. Click a part to zoom in, drag to turn.</p>
+    </div>
+    <div class="feat">
       <div class="feat-ic">🔋</div>
       <h3>Charge Limit</h3>
       <p>Cap charging at 50–95% to cut long-term wear, across the full Apple Silicon M-series. Picks the best method your Mac actually supports. Where the SMC offers a charge-inhibit key, charging pauses and the Mac stays on adapter power; where it doesn&rsquo;t (M4 and later so far), the limit is held by cutting adapter input, so the battery discharges down to it. Settings tells you which one you have.</p>
@@ -380,7 +420,7 @@
   <img class="cta-icon" src="icon.png" alt="MacWake">
   <h2>Start protecting your battery.</h2>
   <p>Free download. No sign-up. Open it and it just works.</p>
-  <a class="cta-dl" href="https://github.com/Jarvis322/MacWake/releases/download/v1.36/Wake-1.36.dmg">↓ &nbsp;Download MacWake — Free</a>
+  <a class="cta-dl" href="https://github.com/Jarvis322/MacWake/releases/download/v1.94/Wake-1.94.dmg">↓ &nbsp;Download MacWake — Free</a>
   <p class="cta-code">or &nbsp;<code>brew install --cask macwake</code></p>
   <p class="cta-note">Requires macOS 14 Sonoma · Apple Silicon &amp; Intel · Notarized</p>
 </section>
