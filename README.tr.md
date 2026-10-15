@@ -10,6 +10,20 @@
 
 ---
 
+## 🧊 Mac'inin Canlı 3D Modeli
+
+<p align="center">
+  <a href="https://jarvis322.github.io/MacWake/media/macwake-3d.mp4"><img src="Screenshots/macwake-3d.gif" alt="MacWake 3D Mac model" width="720"></a>
+</p>
+
+<p align="center"><a href="https://jarvis322.github.io/MacWake/media/macwake-3d.mp4">▶️ Videonun tamamını izle</a></p>
+
+1.94'te yeni: panel artık **kendi Mac'inin 3D modeliyle** açılıyor. Pil hücreleri şarjla doluyor, çip ve SSD sıcaklığa göre parlıyor, fan gerçek hızında dönüyor ve şarj olurken MagSafe kablosu, ledi ve içeri akan enerji görünüyor. **Bir parçaya tıkla**, kamera yaklaşıp canlı değerini göstersin; modeli **sürükleyerek** çevir.
+
+Mac'in algılanıyor ve Apple'ın açıkladığı ölçülerle çiziliyor — MacBook Air, MacBook Pro 13/14/16 inç, Mac mini, Mac Studio ve iMac — çentik de kendi ekranından ölçülüyor. macOS kasa rengini kaydetmediği için rengini ekrana tıklayıp seçebilirsin.
+
+---
+
 ## 🖥️ Dynamic Island ve Menü Çubuğu
 
 Çentikte bir **Dynamic Island** yer alır: daraltılmış durumdayken donanımla bütünleşir, imleç üzerine geldiğinde veya tıklandığında esnek bir yay hareketiyle genişler ve dokunsal geri bildirim verir. Canlı güç değerlerini, pil sağlığını ve pil sıcaklığını gösterirken araç takımı, oturum sıfırlama, animasyonlar ve bildirimler için hızlı anahtarlar da sunar.

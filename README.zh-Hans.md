@@ -10,6 +10,20 @@
 
 ---
 
+## 🧊 你的 Mac 的实时 3D 模型
+
+<p align="center">
+  <a href="https://jarvis322.github.io/MacWake/media/macwake-3d.mp4"><img src="Screenshots/macwake-3d.gif" alt="MacWake 3D Mac model" width="720"></a>
+</p>
+
+<p align="center"><a href="https://jarvis322.github.io/MacWake/media/macwake-3d.mp4">▶️ 观看完整视频</a></p>
+
+1.94 新功能：面板现在以**你自己的 Mac 的 3D 模型**打开。电池电芯随电量充满，芯片和 SSD 按温度发光，风扇以真实转速旋转，充电时 MagSafe 会显示线缆、指示灯和流入的电流。**点击部件**即可放大查看实时读数；**拖动**可旋转模型。
+
+会识别你的 Mac 并按 Apple 公布的尺寸绘制——MacBook Air、13/14/16 英寸 MacBook Pro、Mac mini、Mac Studio 和 iMac——刘海按你自己的屏幕测量。macOS 不记录机身颜色，点击显示屏即可选择你的颜色。
+
+---
+
 ## 🖥️ Dynamic Island 与菜单栏
 
 **Dynamic Island** 位于刘海区域：收起时与硬件融为一体，悬停或点击时通过富有弹性的弹簧动效展开，并提供触觉反馈。它会呈现实时功率、电池健康状况和电池温度，同时提供桌面小组件、会话重置、动画和通知的快捷开关。

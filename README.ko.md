@@ -10,6 +10,20 @@
 
 ---
 
+## 🧊 내 Mac의 실시간 3D 모델
+
+<p align="center">
+  <a href="https://jarvis322.github.io/MacWake/media/macwake-3d.mp4"><img src="Screenshots/macwake-3d.gif" alt="MacWake 3D Mac model" width="720"></a>
+</p>
+
+<p align="center"><a href="https://jarvis322.github.io/MacWake/media/macwake-3d.mp4">▶️ 전체 영상 보기</a></p>
+
+1.94의 새 기능: 패널이 이제 **내 Mac의 3D 모델**로 열립니다. 배터리 셀은 충전량에 따라 차오르고, 칩과 SSD는 온도에 따라 빛나며, 팬은 실제 속도로 회전하고, 충전 중에는 MagSafe 케이블과 LED, 흘러드는 전류가 표시됩니다. **부품을 클릭**하면 확대되어 실시간 값을 보여 주고, **드래그**하면 모델을 돌릴 수 있습니다.
+
+Mac을 감지해 Apple이 공개한 치수로 그립니다 — MacBook Air, MacBook Pro 13/14/16형, Mac mini, Mac Studio, iMac — 노치는 내 화면에서 측정합니다. macOS는 본체 색상을 기록하지 않으므로 디스플레이를 클릭해 색상을 고르세요.
+
+---
+
 ## 🖥️ Dynamic Island 및 메뉴 막대
 
 노치 안의 **Dynamic Island**는 접힌 상태에서 하드웨어와 자연스럽게 어우러집니다. 포인터를 올리거나 클릭하면 탄력 있는 스프링 효과로 펼쳐지고 햅틱 피드백을 제공합니다. 실시간 전력, 배터리 성능 상태 및 배터리 온도를 표시하며 위젯, 세션 초기화, 애니메이션 및 알림을 위한 빠른 토글도 제공합니다.

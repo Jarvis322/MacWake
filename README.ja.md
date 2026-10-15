@@ -10,6 +10,20 @@
 
 ---
 
+## 🧊 Mac のライブ 3D モデル
+
+<p align="center">
+  <a href="https://jarvis322.github.io/MacWake/media/macwake-3d.mp4"><img src="Screenshots/macwake-3d.gif" alt="MacWake 3D Mac model" width="720"></a>
+</p>
+
+<p align="center"><a href="https://jarvis322.github.io/MacWake/media/macwake-3d.mp4">▶️ 動画をすべて見る</a></p>
+
+1.94 の新機能：パネルが**お使いの Mac の 3D モデル**で開くようになりました。バッテリーセルは充電量に応じて満ち、チップと SSD は温度に応じて光り、ファンは実際の速度で回転し、充電中は MagSafe のケーブル、LED、流れ込む電流が表示されます。**パーツをクリック**するとズームしてリアルタイムの値を表示し、**ドラッグ**でモデルを回転できます。
+
+お使いの Mac を検出し、Apple の公表寸法で描画します——MacBook Air、MacBook Pro 13/14/16 インチ、Mac mini、Mac Studio、iMac——ノッチはご自身の画面から計測します。macOS は本体カラーを記録しないため、ディスプレイをクリックして色を選べます。
+
+---
+
 ## 🖥️ Dynamic Island とメニューバー
 
 ノッチ内には **Dynamic Island** があり、折りたたみ時はハードウェアになじみます。ホバーまたはクリックすると弾むようなスプリング動作で展開し、触覚フィードバックを返します。リアルタイムの電力、バッテリーの健全性、バッテリー温度を表示するほか、ウィジェット、セッションのリセット、アニメーション、通知のクイック切り替えも利用できます。

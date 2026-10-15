@@ -10,6 +10,20 @@
 
 ---
 
+## 🧊 A Live 3D Model of Your Mac
+
+<p align="center">
+  <a href="https://jarvis322.github.io/MacWake/media/macwake-3d.mp4"><img src="Screenshots/macwake-3d.gif" alt="MacWake 3D Mac model" width="720"></a>
+</p>
+
+<p align="center"><a href="https://jarvis322.github.io/MacWake/media/macwake-3d.mp4">▶️ Watch the full video</a></p>
+
+New in 1.94: the panel opens on a **3D model of your own Mac**. Battery cells fill with the charge, the chip and SSD glow by temperature, the fan spins at its real speed, and MagSafe shows the cable, its LED and current flowing in while charging. **Click a part** to fly in and read it live; **drag** to turn the model.
+
+Your Mac is detected and drawn to Apple's published dimensions — MacBook Air, MacBook Pro 13/14/16-inch, Mac mini, Mac Studio and iMac — with the notch measured from your own screen. macOS doesn't record the enclosure colour, so click the display to pick yours.
+
+---
+
 ## 🖥️ Dynamic Island & Menu Bar
 
 A **Dynamic Island** lives in the notch: it stays
