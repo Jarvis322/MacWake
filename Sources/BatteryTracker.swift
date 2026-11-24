@@ -578,35 +578,38 @@ class BatteryTracker: ObservableObject {
             }
             self.acPowerStartTime = persisted.acPowerStartTime
 
-            // Recovery Check: If there is an active session, check if we rebooted
             if var session = self.currentSession {
+                // Close the last tracked segment at the last heartbeat. Nothing is known about
+                // the time after it — the app was quit, crashed or the Mac was off — so it must
+                // not run on from the persisted lastStateChange, or the next heartbeat would
+                // count the whole time the app wasn't running as screen-on time.
+                let gap = persisted.lastHeartbeat.timeIntervalSince(persisted.lastStateChange)
+                if gap > 0 {
+                    if persisted.appState == "active" {
+                        session.screenOnDuration += gap
+                    } else if persisted.appState == "screenSleep" || persisted.appState == "systemSleep" {
+                        session.sleepDuration += gap
+                    }
+                }
+                self.currentSession = session
+                self.lastStateChange = Date()
+
                 if let bootTime = getSystemBootTime(), bootTime > persisted.lastHeartbeat {
                     print("System reboot detected. Boot time: \(bootTime), Last Heartbeat: \(persisted.lastHeartbeat)")
 
-                    // 1. Close active tracking segment up to last heartbeat
-                    let gap = persisted.lastHeartbeat.timeIntervalSince(persisted.lastStateChange)
-                    if gap > 0 {
-                        if persisted.appState == "active" {
-                            session.screenOnDuration += gap
-                        } else if persisted.appState == "screenSleep" || persisted.appState == "systemSleep" {
-                            session.sleepDuration += gap
-                        }
-                    }
-
-                    // 2. The time between last heartbeat and boot was shutdown
+                    // The time between last heartbeat and boot was shutdown
                     let shutdownGap = bootTime.timeIntervalSince(persisted.lastHeartbeat)
                     if shutdownGap > 0 {
                         session.shutdownDuration += shutdownGap
                     }
 
-                    // 3. Log shutdown and boot events (avoid duplicates if already cleanly logged)
+                    // Log shutdown and boot events (avoid duplicates if already cleanly logged)
                     if session.events.last?.type != "shutdown" && session.events.last?.type != "reboot" && session.events.last?.type != "logout" {
                         session.events.append(Event(timestamp: persisted.lastHeartbeat, type: "shutdown", battery: session.events.last?.battery ?? 100))
                     }
                     session.events.append(Event(timestamp: bootTime, type: "boot", battery: getBatteryLevel()))
 
                     self.currentSession = session
-                    self.lastStateChange = Date() // Fix: Start tracking from current launch time, not bootTime
                     self.appState = "active" // assume active on boot
                 }
             }
