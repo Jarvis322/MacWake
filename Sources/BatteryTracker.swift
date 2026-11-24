@@ -264,7 +264,7 @@ class BatteryTracker: ObservableObject {
                 // Determine the state of this interval
                 let state: String
                 switch currentEvent.type {
-                case "unplugged", "screenWake", "systemWake", "boot":
+                case "unplugged", "screenWake", "systemWake", "boot", "login":
                     state = "active"
                 case "screenSleep", "systemSleep":
                     state = "sleep"
@@ -611,6 +611,12 @@ class BatteryTracker: ObservableObject {
 
                     self.currentSession = session
                     self.appState = "active" // assume active on boot
+                } else if let lastType = session.events.last?.type,
+                          ["shutdown", "reboot", "logout"].contains(lastType) {
+                    // Logged back in without a reboot: without an event here the timeline
+                    // drew the rest of the session as shut down while it was in use.
+                    session.events.append(Event(timestamp: Date(), type: "login", battery: getBatteryLevel()))
+                    self.currentSession = session
                 }
             }
 
