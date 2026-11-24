@@ -1427,6 +1427,10 @@ class BatteryTracker: ObservableObject {
             return
         }
         
+        // didWake and screensDidWake both arrive on an ordinary wake; the second one would
+        // log a duplicate wake event.
+        guard newState != appState else { return }
+
         let now = Date()
         let previousState = appState
         transitionState(to: newState, timestamp: now)
