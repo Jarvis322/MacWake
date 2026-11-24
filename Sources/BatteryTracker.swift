@@ -1610,7 +1610,11 @@ class BatteryTracker: ObservableObject {
     func resetCurrentSession() {
         let now = Date()
         let level = getBatteryLevel()
-        
+
+        // Bank the time since the last heartbeat, or up to 30s of it is lost from the
+        // archived session.
+        transitionState(to: appState, timestamp: now)
+
         if var session = currentSession {
             session.endTime = now
             session.endBatteryLevel = level
@@ -1620,7 +1624,17 @@ class BatteryTracker: ObservableObject {
                 history.removeLast()
             }
         }
-        
+
+        // A battery session opened on AC would show as the live session instead of
+        // "charging", and the next unplug would replace it without saving it.
+        guard !isPluggedIn else {
+            self.currentSession = nil
+            self.appState = "charging"
+            self.lastStateChange = now
+            saveData()
+            return
+        }
+
         let newSession = Session(
             id: UUID(),
             startTime: now,
@@ -1634,9 +1648,9 @@ class BatteryTracker: ObservableObject {
         )
         
         self.currentSession = newSession
-        self.appState = isPluggedIn ? "charging" : "active"
+        self.appState = "active"
         self.lastStateChange = now
-        
+
         saveData()
     }
 
