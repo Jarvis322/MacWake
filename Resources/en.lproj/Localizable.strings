@@ -174,3 +174,19 @@
 "FINISH_YELLOW" = "Yellow";
 "FINISH_ORANGE" = "Orange";
 "FINISH_PURPLE" = "Purple";
+
+/* Screen time goals */
+"SCREEN_GOALS_TITLE" = "Screen Time Goals";
+"SCREEN_GOALS_SHOW" = "Show Screen Time Goals";
+"SCREEN_GOALS_HELP" = "Shows today's, this week's and this month's progress in History.";
+"SCREEN_GOALS_HEADER" = "SCREEN TIME GOALS";
+"SCREEN_GOALS_FOOTNOTE" = "Screen-on time while on battery.";
+"GOAL_PROGRESS_FMT" = "%1$@ of %2$@";
+"GOAL_REACHED" = "Goal reached";
+"GOAL_HOURS_FMT" = "%d h";
+"GOAL_PERIOD_DAILY" = "Today";
+"GOAL_PERIOD_WEEKLY" = "This Week";
+"GOAL_PERIOD_MONTHLY" = "This Month";
+"GOAL_SETTING_DAILY" = "Daily Goal";
+"GOAL_SETTING_WEEKLY" = "Weekly Goal";
+"GOAL_SETTING_MONTHLY" = "Monthly Goal";

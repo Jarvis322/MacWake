@@ -508,3 +508,19 @@
 "FINISH_YELLOW" = "黄色";
 "FINISH_ORANGE" = "橙色";
 "FINISH_PURPLE" = "紫色";
+
+/* Screen time goals */
+"SCREEN_GOALS_TITLE" = "亮屏时长目标";
+"SCREEN_GOALS_SHOW" = "显示亮屏时长目标";
+"SCREEN_GOALS_HELP" = "在历史中显示今天、本周和本月的进度。";
+"SCREEN_GOALS_HEADER" = "亮屏时长目标";
+"SCREEN_GOALS_FOOTNOTE" = "使用电池时屏幕亮起的时长。";
+"GOAL_PROGRESS_FMT" = "%1$@ / %2$@";
+"GOAL_REACHED" = "已达成目标";
+"GOAL_HOURS_FMT" = "%d 小时";
+"GOAL_PERIOD_DAILY" = "今天";
+"GOAL_PERIOD_WEEKLY" = "本周";
+"GOAL_PERIOD_MONTHLY" = "本月";
+"GOAL_SETTING_DAILY" = "每日目标";
+"GOAL_SETTING_WEEKLY" = "每周目标";
+"GOAL_SETTING_MONTHLY" = "每月目标";

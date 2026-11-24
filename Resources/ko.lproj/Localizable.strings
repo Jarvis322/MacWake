@@ -508,3 +508,19 @@
 "FINISH_YELLOW" = "옐로";
 "FINISH_ORANGE" = "오렌지";
 "FINISH_PURPLE" = "퍼플";
+
+/* Screen time goals */
+"SCREEN_GOALS_TITLE" = "화면 켜짐 시간 목표";
+"SCREEN_GOALS_SHOW" = "화면 켜짐 시간 목표 보기";
+"SCREEN_GOALS_HELP" = "오늘, 이번 주, 이번 달의 진행 상황을 기록에 표시합니다.";
+"SCREEN_GOALS_HEADER" = "화면 켜짐 시간 목표";
+"SCREEN_GOALS_FOOTNOTE" = "배터리 사용 중 화면이 켜져 있던 시간.";
+"GOAL_PROGRESS_FMT" = "%1$@ / %2$@";
+"GOAL_REACHED" = "목표 달성";
+"GOAL_HOURS_FMT" = "%d시간";
+"GOAL_PERIOD_DAILY" = "오늘";
+"GOAL_PERIOD_WEEKLY" = "이번 주";
+"GOAL_PERIOD_MONTHLY" = "이번 달";
+"GOAL_SETTING_DAILY" = "일간 목표";
+"GOAL_SETTING_WEEKLY" = "주간 목표";
+"GOAL_SETTING_MONTHLY" = "월간 목표";

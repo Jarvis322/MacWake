@@ -625,6 +625,12 @@ struct MacWakeMenuView: View {
 
     private var historyTabContent: some View {
         VStack(alignment: .leading, spacing: 11) {
+            if tracker.showScreenTimeGoals {
+                screenTimeGoalsSection
+
+                Divider()
+            }
+
             weeklySummarySection
             
             Divider()
@@ -1013,6 +1019,15 @@ struct MacWakeMenuView: View {
                     toggleRow("power", .green, "Launch at Login", launchAtLoginBinding, subtitle: "LAUNCH_AT_LOGIN_HELP")
                     rowDivider()
                     toggleRow("sparkles", .purple, "Enable Animations", $tracker.enableAnimations, subtitle: "ANIMATIONS_HELP")
+                }
+                settingsSection("SCREEN_GOALS_TITLE", icon: "target") {
+                    toggleRow("target", .green, "SCREEN_GOALS_SHOW", $tracker.showScreenTimeGoals, subtitle: "SCREEN_GOALS_HELP")
+                    if tracker.showScreenTimeGoals {
+                        ForEach(ScreenTimeGoal.allCases) { goal in
+                            rowDivider()
+                            goalStepperRow(goal)
+                        }
+                    }
                 }
                 #if !APPSTORE
                 VStack(alignment: .leading, spacing: 7) { cliSection }
@@ -1973,6 +1988,73 @@ struct MacWakeMenuView: View {
         case .notAuthorized, .none:
             return String(localized: "UNPLUG_DESC")
         }
+    }
+
+    // MARK: - Screen Time Goals
+    private var screenTimeGoalsSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("SCREEN_GOALS_HEADER")
+                .font(.caption2)
+                .fontWeight(.bold)
+                .foregroundColor(.secondary)
+
+            ForEach(tracker.goalProgress) { item in
+                goalProgressRow(item)
+            }
+
+            Text("SCREEN_GOALS_FOOTNOTE")
+                .font(.caption2)
+                .foregroundColor(.secondary)
+        }
+    }
+
+    private func goalProgressRow(_ item: BatteryTracker.GoalProgress) -> some View {
+        let value = String(
+            format: String(localized: "GOAL_PROGRESS_FMT"),
+            formatDuration(item.actual),
+            String(format: String(localized: "GOAL_HOURS_FMT"), Int(item.target / 3600))
+        )
+        return VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 4) {
+                Text(LocalizedStringKey(item.goal.periodTitle))
+                    .font(.caption)
+                Spacer()
+                if item.isComplete {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.caption)
+                        .foregroundColor(greenColor)
+                        .accessibilityHidden(true)
+                }
+                Text(value)
+                    .font(.caption.monospacedDigit())
+                    .foregroundColor(.secondary)
+            }
+            ProgressView(value: item.progress)
+                .tint(item.isComplete ? greenColor : blueColor)
+                .accessibilityHidden(true)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityValue(item.isComplete ? Text("GOAL_REACHED") : Text(verbatim: ""))
+    }
+
+    private func goalStepperRow(_ goal: ScreenTimeGoal) -> some View {
+        let hours = tracker.screenGoalHours[goal] ?? goal.defaultHours
+        return HStack(spacing: 11) {
+            iconTile(goal.icon, .green)
+            Text(LocalizedStringKey(goal.settingTitle)).font(.subheadline)
+            Spacer(minLength: 8)
+            Stepper(
+                value: Binding(get: { hours }, set: { tracker.setScreenGoalHours($0, for: goal) }),
+                in: goal.hourRange,
+                step: goal.hourStep
+            ) {
+                Text(String(format: String(localized: "GOAL_HOURS_FMT"), hours))
+                    .font(.caption.monospacedDigit())
+                    .foregroundColor(.secondary)
+            }
+            .controlSize(.small)
+        }
+        .padding(.horizontal, 12).padding(.vertical, 8)
     }
 
     // MARK: - Weekly Summary

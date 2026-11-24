@@ -508,3 +508,19 @@
 "FINISH_YELLOW" = "イエロー";
 "FINISH_ORANGE" = "オレンジ";
 "FINISH_PURPLE" = "パープル";
+
+/* Screen time goals */
+"SCREEN_GOALS_TITLE" = "画面オン時間の目標";
+"SCREEN_GOALS_SHOW" = "画面オン時間の目標を表示";
+"SCREEN_GOALS_HELP" = "今日・今週・今月の進捗を履歴に表示します。";
+"SCREEN_GOALS_HEADER" = "画面オン時間の目標";
+"SCREEN_GOALS_FOOTNOTE" = "バッテリー駆動中に画面がオンだった時間。";
+"GOAL_PROGRESS_FMT" = "%1$@ / %2$@";
+"GOAL_REACHED" = "目標達成";
+"GOAL_HOURS_FMT" = "%d時間";
+"GOAL_PERIOD_DAILY" = "今日";
+"GOAL_PERIOD_WEEKLY" = "今週";
+"GOAL_PERIOD_MONTHLY" = "今月";
+"GOAL_SETTING_DAILY" = "1日の目標";
+"GOAL_SETTING_WEEKLY" = "1週間の目標";
+"GOAL_SETTING_MONTHLY" = "1か月の目標";

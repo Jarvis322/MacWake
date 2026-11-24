@@ -202,6 +202,24 @@ class BatteryTracker: ObservableObject {
         didSet { UserDefaults.standard.set(menuBarCompact, forKey: "menuBarCompact") }
     }
     
+    @Published var showScreenTimeGoals: Bool = UserDefaults.standard.object(forKey: "showScreenTimeGoals") as? Bool ?? true {
+        didSet { UserDefaults.standard.set(showScreenTimeGoals, forKey: "showScreenTimeGoals") }
+    }
+    @Published private(set) var screenGoalHours: [ScreenTimeGoal: Int] = Dictionary(
+        uniqueKeysWithValues: ScreenTimeGoal.allCases.map { goal in
+            let saved = UserDefaults.standard.integer(forKey: goal.defaultsKey)
+            return (goal, saved == 0 ? goal.defaultHours : goal.clampedHours(saved))
+        }
+    )
+
+    func setScreenGoalHours(_ hours: Int, for goal: ScreenTimeGoal) {
+        let clamped = goal.clampedHours(hours)
+        screenGoalHours[goal] = clamped
+        UserDefaults.standard.set(clamped, forKey: goal.defaultsKey)
+    }
+
+    private var screenTimeLedger = ScreenTimeLedger()
+
     private var lastStateChange: Date = Date()
     private var heartbeatTimer: Timer?
     private var powerSourceRunLoopSource: CFRunLoopSource?
@@ -329,8 +347,8 @@ class BatteryTracker: ObservableObject {
     }
 
     struct GoalProgress: Identifiable {
-        var id: String { title }
-        var title: String
+        var id: String { goal.id }
+        var goal: ScreenTimeGoal
         var target: TimeInterval
         var actual: TimeInterval
 
@@ -356,6 +374,7 @@ class BatteryTracker: ObservableObject {
         var fanSpeedHistory: [FanSpeedSample]?
         var healthHistory: [HealthRecord]?
         var acPowerStartTime: Date?
+        var screenTimeLedger: ScreenTimeLedger?
     }
 
     private var dataURL: URL {
@@ -577,6 +596,11 @@ class BatteryTracker: ObservableObject {
                 self.batteryHealth = lastKnownHealth
             }
             self.acPowerStartTime = persisted.acPowerStartTime
+            self.screenTimeLedger = persisted.screenTimeLedger
+                ?? Self.backfilledLedger(from: persisted.history + [persisted.currentSession].compactMap { $0 })
+            if let cutoff = Calendar.current.date(byAdding: .day, value: -ScreenTimeLedger.retentionDays, to: Date()) {
+                self.screenTimeLedger.prune(before: cutoff)
+            }
 
             if var session = self.currentSession {
                 // Close the last tracked segment at the last heartbeat. Nothing is known about
@@ -586,7 +610,7 @@ class BatteryTracker: ObservableObject {
                 let gap = persisted.lastHeartbeat.timeIntervalSince(persisted.lastStateChange)
                 if gap > 0 {
                     if persisted.appState == "active" {
-                        session.screenOnDuration += gap
+                        creditScreenOn(&session, from: persisted.lastStateChange, to: persisted.lastHeartbeat)
                     } else if persisted.appState == "screenSleep" || persisted.appState == "systemSleep" {
                         session.sleepDuration += gap
                     }
@@ -652,7 +676,8 @@ class BatteryTracker: ObservableObject {
             lastRapidDrainAlert: lastRapidDrainAlert,
             fanSpeedHistory: fanSpeedHistory,
             healthHistory: healthHistory,
-            acPowerStartTime: acPowerStartTime
+            acPowerStartTime: acPowerStartTime,
+            screenTimeLedger: screenTimeLedger
         )
         do {
             let encoder = JSONEncoder()
@@ -1465,7 +1490,7 @@ class BatteryTracker: ObservableObject {
         if var session = currentSession, delta > 0 {
             // Check old state
             if appState == "active" {
-                session.screenOnDuration += delta
+                creditScreenOn(&session, from: lastStateChange, to: timestamp)
             } else if appState == "screenSleep" || appState == "systemSleep" {
                 session.sleepDuration += delta
             }
@@ -1522,7 +1547,7 @@ class BatteryTracker: ObservableObject {
         
         if var session = currentSession, delta > 0 {
             if appState == "active" && !isPluggedIn {
-                session.screenOnDuration += delta
+                creditScreenOn(&session, from: lastStateChange, to: now)
                 self.lastStateChange = now
                 self.currentSession = session
             } else if (appState == "screenSleep" || appState == "systemSleep") && !isPluggedIn {
@@ -1715,21 +1740,39 @@ class BatteryTracker: ObservableObject {
     }
 
     var goalProgress: [GoalProgress] {
-        let calendar = Calendar.current
         let now = Date()
-        let dayStart = calendar.startOfDay(for: now)
-        let weekStart = calendar.dateInterval(of: .weekOfYear, for: now)?.start ?? dayStart
-        let monthStart = calendar.dateInterval(of: .month, for: now)?.start ?? dayStart
-
-        return [
-            GoalProgress(title: "Daily", target: 4 * 3600, actual: summarySince(dayStart).screenOnDuration),
-            GoalProgress(title: "Weekly", target: 25 * 3600, actual: summarySince(weekStart).screenOnDuration),
-            GoalProgress(title: "Monthly", target: 100 * 3600, actual: summarySince(monthStart).screenOnDuration)
-        ]
+        var ledger = screenTimeLedger
+        if currentSession != nil, appState == "active", !isPluggedIn {
+            ledger.add(from: lastStateChange, to: now)
+        }
+        return ScreenTimeGoal.allCases.map { goal in
+            GoalProgress(
+                goal: goal,
+                target: TimeInterval(screenGoalHours[goal] ?? goal.defaultHours) * 3600,
+                actual: ledger.total(since: goal.periodStart(containing: now))
+            )
+        }
     }
 
-    private func summarySince(_ startDate: Date) -> UsageSummary {
-        UsageSummary(sessions: recentSessionsIncludingCurrent.filter { ($0.endTime ?? Date()) >= startDate })
+    /// The single place screen-on time is credited, so a session's total and the per-day
+    /// ledger the goals read can never disagree.
+    private func creditScreenOn(_ session: inout Session, from start: Date, to end: Date) {
+        guard end > start else { return }
+        session.screenOnDuration += end.timeIntervalSince(start)
+        screenTimeLedger.add(from: start, to: end)
+    }
+
+    /// Rebuilds per-day screen time for data saved before the ledger existed: each session's
+    /// exact total, spread over the stretches its timeline marks as active.
+    private static func backfilledLedger(from sessions: [Session]) -> ScreenTimeLedger {
+        var ledger = ScreenTimeLedger()
+        for session in sessions {
+            let active = session.getTimelineSegments(currentAppState: "", lastStateChange: Date())
+                .filter { $0.state == "active" }
+                .map { DateInterval(start: $0.startTime, end: $0.endTime) }
+            ledger.add(seconds: session.screenOnDuration, spreadOver: active)
+        }
+        return ledger
     }
 
     private func recordBatterySample(level: Int, timestamp: Date) {

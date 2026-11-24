@@ -498,3 +498,19 @@
 "FINISH_YELLOW" = "Sarı";
 "FINISH_ORANGE" = "Turuncu";
 "FINISH_PURPLE" = "Mor";
+
+/* Screen time goals */
+"SCREEN_GOALS_TITLE" = "Ekran Süresi Hedefleri";
+"SCREEN_GOALS_SHOW" = "Ekran Süresi Hedeflerini Göster";
+"SCREEN_GOALS_HELP" = "Bugünün, bu haftanın ve bu ayın ilerlemesini Geçmiş'te gösterir.";
+"SCREEN_GOALS_HEADER" = "EKRAN SÜRESİ HEDEFLERİ";
+"SCREEN_GOALS_FOOTNOTE" = "Pildeyken ekranın açık kaldığı süre.";
+"GOAL_PROGRESS_FMT" = "%1$@ / %2$@";
+"GOAL_REACHED" = "Hedefe ulaşıldı";
+"GOAL_HOURS_FMT" = "%d sa";
+"GOAL_PERIOD_DAILY" = "Bugün";
+"GOAL_PERIOD_WEEKLY" = "Bu Hafta";
+"GOAL_PERIOD_MONTHLY" = "Bu Ay";
+"GOAL_SETTING_DAILY" = "Günlük Hedef";
+"GOAL_SETTING_WEEKLY" = "Haftalık Hedef";
+"GOAL_SETTING_MONTHLY" = "Aylık Hedef";
